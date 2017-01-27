@@ -1,18 +1,39 @@
+
+
+
 class Impeller:
-    def __init__(self, flow, head, efficiency, ps, Ts, fluid):
+    def __init__(self, curves, b, D):
         """
-        Impeller instance is initialized with the non-dimensional curves.
+        Impeller instance is initialized with the dimensional curves.
+
+        Parameters
+        ----------
+        curves : list
+            List with curves instances.
+        b : float
+            Impeller width.
+        D : float
+            Impeller diameter.
+
+        Returns
+        -------
+
+        Attributes
+        ----------
+
+        Examples
+        --------
         """
-        self.flow = flow
-        self.head = head
-        self.efficiency = efficiency
+        self.curves = curves
+
+        # calculate non dimensional curves
+        # flow coefficient
+        phi = None
 
     @classmethod
-    def from_dimensional_curves(cls, flow, head, efficiency,
-                                ps, Ts, pd,
-                                fluid):
+    def from_non_dimensional_curves(cls, flow, head, efficiency):
         """
-        Constructor to initialize an impeller from a dimensional curve.
+        Constructor to initialize an impeller from a non dimensional curve.
         """
         # TODO calculate non dimensional curves
         return cls(flow, head, efficiency)
