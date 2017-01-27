@@ -16,8 +16,8 @@ def test_state_si_air(state_si_air):
     p = 101008
     T = 273
     rho = 1.2893965217814896
-    assert_allclose(state_si_air.p(), 101008)
-    assert_allclose(state_si_air.T(), 273)
+    assert_allclose(state_si_air.p(), p)
+    assert_allclose(state_si_air.T(), T)
     assert_allclose(state_si_air.rhomass(), rho)
 
 
@@ -34,6 +34,6 @@ def test_state_en_air(state_en_air):
     p = 101008
     T = 273
     rho = 1.2893965217814896
-    assert_allclose(state_en_air.p(), 101008)
-    assert_allclose(state_en_air.T(), 273)
+    assert_allclose(state_en_air.p(), p)
+    assert_allclose(state_en_air.T(), T)
     assert_allclose(state_en_air.rhomass(), rho)
