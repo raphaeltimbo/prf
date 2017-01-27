@@ -2,20 +2,19 @@ from prf.state import *
 
 
 class Curves:
-    def __init__(self, N, curves, ps, Ts, fluid):
+    def __init__(self, curves, ps, Ts, fluid):
         """
         Construct curves given a speed and an array with
         flow, head and efficiency.
         Parameters
         ----------
-        N : float
-            Speed for the curves.
         curves : array
             Array with the curves as:
-            array([flow],
-                  [head],
-                  [efficiency])
-               ps : float
+            array([speed],          -> RPM
+                  [flow],           -> kg/h
+                  [head],           -> J/kg
+                  [efficiency])     -> %
+        ps : float
             Suction pressure.
         Ts : float
             Suction temperature.
@@ -33,7 +32,6 @@ class Curves:
         --------
 
         """
-        self.N = N
         self.curves = curves
         self.ps = ps
         self.Ts = Ts
@@ -41,6 +39,9 @@ class Curves:
 
         # construct state
         self.suc_state = State.define('HEOS', self.flow, self.ps, self.Ts)
-        self.flow = curves[0]
-        self.head = curves[1]
-        self.efficiency = curves[2]
+        self.speed = curves[0]
+        self.flow = curves[1]
+        self.head = curves[2]
+        self.efficiency = curves[3]
+
+    # TODO add constructor -> from_discharge_conditions
