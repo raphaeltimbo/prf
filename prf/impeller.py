@@ -1,6 +1,3 @@
-
-
-
 class Impeller:
     def __init__(self, curves, b, D):
         """
