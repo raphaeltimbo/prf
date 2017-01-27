@@ -1,5 +1,5 @@
 class Impeller:
-    def __init__(self, flow, head, efficiency):
+    def __init__(self, flow, head, efficiency, ps, Ts, fluid):
         """
         Impeller instance is initialized with the non-dimensional curves.
         """
