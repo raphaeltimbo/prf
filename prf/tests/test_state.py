@@ -1,4 +1,5 @@
 import pytest
+import CoolProp.CoolProp as CP
 from prf.state import *
 from copy import copy
 from numpy.testing import assert_allclose
@@ -95,9 +96,18 @@ def test_copy(state_si_main_test):
     assert_allclose(state_si_main_test.T(), T)
     assert_allclose(state_si_main_test.rhomass(), rhomass)
 
-    # s2 = copy(state_si_main_test)
-    # s2.update(CP.)
+    s1 = copy(state_si_main_test)
+    s2 = copy(state_si_main_test)
 
+    s2.update(CP.PT_INPUTS, 200000, 300)
+    assert_allclose(s2.p(), 200000)
+    assert_allclose(s2.T(), 300)
+    assert_allclose(s2.rhomass(), 4.687447306413212)
+    assert state_si_main_test != s2
 
+    assert_allclose(s1.p(), p)
+    assert_allclose(s1.T(), T)
+    assert_allclose(s1.rhomass(), rhomass)
+    assert state_si_main_test != s1
 
 # TODO add test to copy method

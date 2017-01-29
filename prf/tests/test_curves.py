@@ -33,5 +33,6 @@ def test_n_exp(suc_1, disch_1):
 def test_head_pol(suc_1, disch_1):
     assert_allclose(head_pol(suc_1, disch_1), 55282.59221757925)
 
+
 def test_ef_pol(suc_1, disch_1):
     assert_allclose(ef_pol(suc_1, disch_1), 0.7111884556585154)
