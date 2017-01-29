@@ -16,9 +16,18 @@ for mix1, mix2 in combinations(mixture, 2):
 
 class State(CP.AbstractState):
     # new class to add methods to AbstractState
+    # no call to super(). see :
+    # http://stackoverflow.com/questions/18260095/
     def __init__(self, EOS, fluid):
         self.EOS = EOS
         self.fluid = fluid
+
+    def fluid_dict(self):
+        # preserve the dictionary from define method
+        fluid_dict = {}
+        for k, v in zip(self.fluid_names(), self.get_mole_fractions()):
+            fluid_dict[k] = v
+        return fluid_dict
 
     @classmethod
     def define(cls, EOS, fluid, p, T, **kwargs):
@@ -78,3 +87,5 @@ class State(CP.AbstractState):
 
         return state
 
+    def __copy__(self):
+        return self.define(self.EOS, self.fluid_dict(), self.p(), self.T())

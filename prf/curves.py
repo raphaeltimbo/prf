@@ -127,7 +127,7 @@ def head_pol(suc, disch):
 
     Returns:
     --------
-    n_exp : float
+    head_pol : float
         Polytropic head.
 
     Examples:
@@ -145,9 +145,33 @@ def head_pol(suc, disch):
 
 
 def ef_pol(suc, disch):
+    """Polytropic efficiency.
+
+    Calculates the polytropic efficiency given suction and discharge state.
+
+    Parameters:
+    -----------
+    suc : State
+        Suction state.
+    disch : State
+        Discharge state.
+
+    Returns:
+    --------
+    ef_pol : float
+        Polytropic head.
+
+    Examples:
+    ---------
+
+    """
     wp = head_pol(suc, disch)
     dh = disch.hmass() - suc.hmass()
     return wp/dh
+
+def head_isen(suc, disch):
+    # define new state do isentropic discharge
+    disch_s = State('HEOS', disch.fluid)
 
 
 # TODO add head_isen
