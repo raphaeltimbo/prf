@@ -1,8 +1,17 @@
 import CoolProp.CoolProp as CP
 import pint
+from itertools import combinations
 
+# define pint unit registry
 ureg = pint.UnitRegistry()
 Q_ = pint.UnitRegistry().Quantity
+
+# apply estimation of binary interaction parameters
+mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
+for mix1, mix2 in combinations(mixture, 2):
+    cas1 = CP.get_fluid_param_string(mix1, 'CAS')
+    cas2 = CP.get_fluid_param_string(mix2, 'CAS')
+    CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
 
 
 class State(CP.AbstractState):

@@ -65,3 +65,23 @@ def test_state_si_main_op(state_si_main_op):
     assert_allclose(state_si_main_op.p(), p)
     assert_allclose(state_si_main_op.T(), T)
     assert_allclose(state_si_main_op.rhomass(), rhomass)
+
+
+@pytest.fixture
+def state_si_main_test():
+    fluid = {'CarbonDioxide': 0.76064,
+             'R134a': 0.23581,
+             'Nitrogen': 0.00284,
+             'Oxygen': 0.00071}
+    units = {'p_units': 'bar', 'T_units': 'degK'}
+
+    return State.define('HEOS', fluid, 1.839, 291.5, **units)
+
+
+def test_state_si_main_test(state_si_main_test):
+    p = 183900
+    T = 291.5
+    rhomass = 4.436646748577415
+    assert_allclose(state_si_main_test.p(), p)
+    assert_allclose(state_si_main_test.T(), T)
+    assert_allclose(state_si_main_test.rhomass(), rhomass)
