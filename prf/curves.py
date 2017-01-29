@@ -143,8 +143,7 @@ def head_pol(suc, disch):
 
     return (n/(n-1))*(p2*v2 - p1*v1)
 
-# TODO add tests for n_exp
-# TODO add tests for head_pol
+
 # TODO add ef_pol
 # TODO add head_isen
 # TODO add ef_isen
