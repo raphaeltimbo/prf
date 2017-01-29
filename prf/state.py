@@ -1,11 +1,11 @@
-import CoolProp.CoolProp as cp
+import CoolProp.CoolProp as CP
 import pint
 
 ureg = pint.UnitRegistry()
 Q_ = pint.UnitRegistry().Quantity
 
 
-class State(cp.AbstractState):
+class State(CP.AbstractState):
     # new class to add methods to AbstractState
     def __init__(self, EOS, fluid):
         self.EOS = EOS
@@ -65,7 +65,7 @@ class State(cp.AbstractState):
 
         state = cls(EOS, _fluid)
         state.set_mole_fractions(molar_fractions)
-        state.update(cp.PT_INPUTS, p_.magnitude, T_.magnitude)
+        state.update(CP.PT_INPUTS, p_.magnitude, T_.magnitude)
 
         return state
 

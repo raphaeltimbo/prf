@@ -37,3 +37,31 @@ def test_state_en_air(state_en_air):
     assert_allclose(state_en_air.p(), p)
     assert_allclose(state_en_air.T(), T)
     assert_allclose(state_en_air.rhomass(), rho)
+
+
+@pytest.fixture
+def state_si_main_op():
+    fluid = {'Methane': 0.69945,
+             'Ethane': 0.09729,
+             'Propane': 0.05570,
+             'n-Butane': 0.01780,
+             'Isobutane': 0.01020,
+             'n-Pentane': 0.00390,
+             'Isopentane': 0.00360,
+             'n-Hexane': 0.00180,
+             'Nitrogen': 0.01490,
+             'HydrogenSulfide': 0.00017,
+             'CarbonDioxide': 0.09259,
+             'Water': 0.00200}
+    units = {'p_units': 'bar', 'T_units': 'degC'}
+
+    return State.define('HEOS', fluid, 16.99, 38.4, **units)
+
+
+def test_state_si_main_op(state_si_main_op):
+    p = 1699000
+    T = 311.5499999
+    rhomass = 16.162687790285435
+    assert_allclose(state_si_main_op.p(), p)
+    assert_allclose(state_si_main_op.T(), T)
+    assert_allclose(state_si_main_op.rhomass(), rhomass)
