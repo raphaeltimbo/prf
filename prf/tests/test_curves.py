@@ -1,4 +1,5 @@
 import pytest
+from prf.state import *
 from prf.curves import *
 from numpy.testing import assert_allclose
 

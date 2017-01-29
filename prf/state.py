@@ -2,6 +2,8 @@ import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
 
+__all__ = ['State']
+
 # define pint unit registry
 ureg = pint.UnitRegistry()
 Q_ = pint.UnitRegistry().Quantity

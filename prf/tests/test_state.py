@@ -1,6 +1,6 @@
 import pytest
 from prf.state import *
-import numpy as np
+from copy import copy
 from numpy.testing import assert_allclose
 
 
@@ -85,3 +85,19 @@ def test_state_si_main_test(state_si_main_test):
     assert_allclose(state_si_main_test.p(), p)
     assert_allclose(state_si_main_test.T(), T)
     assert_allclose(state_si_main_test.rhomass(), rhomass)
+
+
+def test_copy(state_si_main_test):
+    p = 183900
+    T = 291.5
+    rhomass = 4.436646748577415
+    assert_allclose(state_si_main_test.p(), p)
+    assert_allclose(state_si_main_test.T(), T)
+    assert_allclose(state_si_main_test.rhomass(), rhomass)
+
+    # s2 = copy(state_si_main_test)
+    # s2.update(CP.)
+
+
+
+# TODO add test to copy method
