@@ -144,7 +144,12 @@ def head_pol(suc, disch):
     return (n/(n-1))*(p2*v2 - p1*v1)
 
 
-# TODO add ef_pol
+def ef_pol(suc, disch):
+    wp = head_pol(suc, disch)
+    dh = disch.hmass() - suc.hmass()
+    return wp/dh
+
+
 # TODO add head_isen
 # TODO add ef_isen
 # TODO add schultz_factor
