@@ -2,7 +2,7 @@ import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
 
-__all__ = ['State']
+__all__ = ['State', 'fluid_list']
 
 # define pint unit registry
 ureg = pint.UnitRegistry()
@@ -14,6 +14,9 @@ for mix1, mix2 in combinations(mixture, 2):
     cas1 = CP.get_fluid_param_string(mix1, 'CAS')
     cas2 = CP.get_fluid_param_string(mix2, 'CAS')
     CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
+
+
+fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
 
 class State(CP.AbstractState):

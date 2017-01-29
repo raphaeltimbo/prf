@@ -1,4 +1,6 @@
 import numpy as np
+import CoolProp as CP
+from copy import copy
 from prf.state import *
 
 
@@ -172,9 +174,39 @@ def ef_pol(suc, disch):
     dh = disch.hmass() - suc.hmass()
     return wp/dh
 
+
 def head_isen(suc, disch):
-    # define new state do isentropic discharge
-    disch_s = State('HEOS', disch.fluid)
+    """Polytropic head.
+
+    Calculates the polytropic head given a suction and a discharge state.
+
+    Parameters:
+    -----------
+    suc : State
+        Suction state.
+    disch : State
+        Discharge state.
+
+    Returns:
+    --------
+    head_pol : float
+        Polytropic head.
+
+    Examples:
+    ---------
+    >>> fluid ={'CarbonDioxide': 0.76064,
+    ...         'R134a': 0.23581,
+    ...         'Nitrogen': 0.00284,
+    ...         'Oxygen': 0.00071}
+    >>> suc = State.define('REFPROP', fluid, 183900, 291.5)
+    >>> disch = State.define('REFPROP', fluid, 590200, 380.7)
+    >>> head_isen(suc, disch)
+    """
+    # define state to isentropic discharge
+    disch_s = copy(disch)
+    disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
+
+    return head_pol(suc, disch_s)
 
 
 # TODO add head_isen
