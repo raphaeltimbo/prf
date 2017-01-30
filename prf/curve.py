@@ -49,8 +49,13 @@ class Curve:
         self.flow_m = curve[1]
         self.ps = curve[2]
         self.Ts = curve[3]
-        self.head = curve[4]
-        self.efficiency = curve[5]
+        self.pd = curve[4]
+        self.Td = curve[5]
+        self.head = curve[6]
+        self.efficiency = curve[7]
+        self.suc = curve[8]
+        self.disch = curve[9]
+
 
     @classmethod
     def from_discharge(cls, fluid, curve, **kwargs):
