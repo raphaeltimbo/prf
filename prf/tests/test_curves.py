@@ -48,3 +48,7 @@ def test_ef_isen(suc_1, disch_1):
 
 def test_schultz_f(suc_1, disch_1):
     assert_allclose(schultz_f(suc_1, disch_1), 1.001)
+
+
+def test_head_pol_schultz(suc_1, disch_1):
+    assert_allclose(head_pol_schultz(suc_1, disch_1), 55377.434270913633)

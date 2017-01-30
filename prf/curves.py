@@ -283,5 +283,39 @@ def schultz_f(suc, disch):
     return h2s_h1/h_isen
 
 
+def head_pol_schultz(suc, disch):
+    """Polytropic head corrected by the Schultz factor.
+
+    Calculates the polytropic head corrected by the Schultz factor
+    given a suction and a discharge state.
+
+    Parameters:
+    -----------
+    suc : State
+        Suction state.
+    disch : State
+        Discharge state.
+
+    Returns:
+    --------
+    head_pol_schultz : float
+        Polytropic head corrected by the Schultz factor.
+
+    Examples:
+    ---------
+    >>> fluid ={'CarbonDioxide': 0.76064,
+    ...         'R134a': 0.23581,
+    ...         'Nitrogen': 0.00284,
+    ...         'Oxygen': 0.00071}
+    >>> suc = State.define(fluid, 183900, 291.5)
+    >>> disch = State.define(fluid, 590200, 380.7)
+    >>> head_pol_schultz(suc, disch) # doctest: +ELLIPSIS
+    55377.434...
+    """
+    f = schultz_f(suc, disch)
+    head = head_pol(suc, disch)
+
+    return f*head
+
 # TODO add schultz_factor
 # TODO add head_pol_schultz
