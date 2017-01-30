@@ -36,3 +36,7 @@ def test_head_pol(suc_1, disch_1):
 
 def test_ef_pol(suc_1, disch_1):
     assert_allclose(ef_pol(suc_1, disch_1), 0.7112136965155706)
+
+
+def test_head_isen(suc_1, disch_1):
+    assert_allclose(head_isen(suc_1, disch_1), 53166.29655014263)
