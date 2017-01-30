@@ -18,6 +18,8 @@ for mix1, mix2 in combinations(mixture, 2):
 
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
+# TODO implement refprop names
+
 
 class State(CP.AbstractState):
     # new class to add methods to AbstractState
