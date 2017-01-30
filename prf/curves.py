@@ -9,25 +9,29 @@ __all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
 
 
 class Curves:
-    def __init__(self, curves, ps, Ts, fluid):
+    def __init__(self, fluid, curves):
         """
         Construct curves given a speed and an array with
         flow, head and efficiency.
         Parameters
         ----------
-        curves : array
-            Array with the curves as:
-            array([speed],          -> RPM
-                  [flow_m],         -> kg/h
-                  [head],           -> J/kg
-                  [efficiency])     -> %
+        fluid : dict
+            Dictionary with constituent and composition
+            (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
         ps : float
             Suction pressure.
         Ts : float
             Suction temperature.
-        fluid : dict
-            Dictionary with constituent and composition
-            (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
+        curves : array
+            Array with the curves as:
+            array([speed],          -> RPM
+                  [flow_m],         -> kg/s
+                  [ps],             -> Pa
+                  [Ts],             -> K
+                  [pd],             -> Pa
+                  [Td],             -> K
+                  [head],           -> J/kg
+                  [efficiency])     -> %
 
         Returns
         -------
@@ -40,37 +44,37 @@ class Curves:
 
         """
         self.curves = curves
-        self.ps = ps
-        self.Ts = Ts
         self.fluid = fluid
-
-        # construct state
-        self.suc_state = State.define('HEOS', self.flow_m, self.ps, self.Ts)
         self.speed = curves[0]
         self.flow_m = curves[1]
-        self.head = curves[2]
-        self.efficiency = curves[3]
+        self.ps = curves[2]
+        self.Ts = curves[3]
+        self.head = curves[4]
+        self.efficiency = curves[5]
 
     @classmethod
-    def from_discharge(cls, curves, ps, Ts, fluid, **kwargs):
+    def from_discharge(cls, fluid, curves, **kwargs):
         """
-                Construct curves given a speed and an array with
+        Construct curves given a speed and an array with
         flow, head and efficiency.
+
         Parameters
         ----------
-        curves : array
-            Array with the curves as:
-            array([speed],          -> RPM
-                  [flow_m],         -> kg/h
-                  [pd],             -> Pa
-                  [Td])             -> K
+        fluid : dict
+            Dictionary with constituent and composition
+            (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
         ps : float
             Suction pressure.
         Ts : float
             Suction temperature.
-        fluid : dict
-            Dictionary with constituent and composition
-            (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
+        curves : array
+            Array with the curves as:
+            array([speed],          -> RPM
+                  [flow_m],         -> kg/s
+                  [ps],             -> Pa
+                  [Ts],             -> K
+                  [pd],             -> Pa
+                  [Td])             -> K
 
         Returns
         -------
@@ -81,10 +85,25 @@ class Curves:
         Examples
         --------
         """
-        # suction state
-        # suc = State('HEOS', ps, Ts, fluid, **kwargs)
-
+        curves_head = np.zeros([8, len(curves.T)])
+        curves_head[:6] = curves[:6]
         # calculate head and efficiency for each point
+
+        speed_units = kwargs.get('p_units', ureg.Pa)
+
+        for point, point_new in zip(curves.T, curves_head.T):
+            ps = point[2]
+            Ts = point[3]
+            suc = State.define(fluid, ps, Ts, **kwargs)
+
+            pd = point[4]
+            Td = point[5]
+            disch = State.define(fluid, pd, Td, **kwargs)
+
+            point_new[6] = head_pol_schultz(suc, disch)
+            point_new[7] = ef_pol(suc, disch)
+
+        return cls(fluid, curves_head)
 
     # TODO add **kwargs for units
     # TODO add constructor -> from_discharge_conditions
@@ -317,5 +336,7 @@ def head_pol_schultz(suc, disch):
 
     return f*head
 
-# TODO add schultz_factor
-# TODO add head_pol_schultz
+# TODO add head Mallen
+# TODO add head Huntington
+# TODO add head reference
+# TODO add power

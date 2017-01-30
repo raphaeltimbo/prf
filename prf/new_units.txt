@@ -1,0 +1,1 @@
+RPM = Hz * 60 = CPM = rpm

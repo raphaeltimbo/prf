@@ -1,12 +1,17 @@
+import os
 import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
+
 
 __all__ = ['State', 'fluid_list']
 
 # define pint unit registry
 ureg = pint.UnitRegistry()
 Q_ = pint.UnitRegistry().Quantity
+
+new_units = os.path.join(os.path.dirname(__file__), 'new_units')
+ureg.load_definitions(new_units)
 
 # apply estimation of binary interaction parameters
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
