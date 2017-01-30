@@ -12,7 +12,7 @@ def suc_1():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define('HEOS', fluid, 1.839, 291.5, **units)
+    return State.define(fluid, 1.839, 291.5, EOS='HEOS', **units)
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def disch_1():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define('HEOS', fluid, 5.902, 380.7, **units)
+    return State.define(fluid, 5.902, 380.7, EOS='HEOS', **units)
 
 
 def test_n_exp(suc_1, disch_1):

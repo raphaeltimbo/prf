@@ -10,7 +10,7 @@ def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
     p = 101008
     T = 273
-    return State.define('HEOS', fluid, p, T)
+    return State.define(fluid, p, T, EOS='HEOS')
 
 
 def test_state_si_air(state_si_air):
@@ -28,7 +28,7 @@ def state_en_air():
     p = 14.649971812683193
     T = 31.73000040000001
     units = {'p_units': 'psi', 'T_units': 'degF'}
-    return State.define('HEOS', fluid, p, T, **units)
+    return State.define(fluid, p, T, EOS='HEOS', **units)
 
 
 def test_state_en_air(state_en_air):
@@ -56,7 +56,7 @@ def state_si_main_op():
              'Water': 0.00200}
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
-    return State.define('HEOS', fluid, 16.99, 38.4, **units)
+    return State.define(fluid, 16.99, 38.4, EOS='HEOS', **units)
 
 
 def test_state_si_main_op(state_si_main_op):
@@ -76,7 +76,7 @@ def state_si_main_test():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define('HEOS', fluid, 1.839, 291.5, **units)
+    return State.define(fluid, 1.839, 291.5, EOS='HEOS', **units)
 
 
 def test_state_si_main_test(state_si_main_test):
@@ -127,7 +127,7 @@ def state_si_main_op_REFPROP():
              'Water': 0.00200}
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
-    return State.define('REFPROP', fluid, 16.99, 38.4, **units)
+    return State.define(fluid, 16.99, 38.4, EOS='REFPROP', **units)
 
 
 def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):

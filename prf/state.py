@@ -56,7 +56,7 @@ class State(CP.AbstractState):
         return fluid_dict
 
     @classmethod
-    def define(cls, EOS, fluid, p, T, **kwargs):
+    def define(cls, fluid, p, T, EOS='REFPROP', **kwargs):
         """Constructor for state.
 
         Creates a state and set molar fractions, p and T.
@@ -80,7 +80,7 @@ class State(CP.AbstractState):
         Examples:
         ---------
         >>> fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
-        >>> s = State.define('HEOS', fluid, 101008, 273)
+        >>> s = State.define(fluid, 101008, 273, EOS='HEOS')
         >>> s.rhomass()
         1.2893965217814896
         """
@@ -117,4 +117,4 @@ class State(CP.AbstractState):
         return state
 
     def __copy__(self):
-        return self.define(self.EOS, self.fluid_dict(), self.p(), self.T())
+        return self.define(self.fluid_dict(), self.p(), self.T(), self.EOS)
