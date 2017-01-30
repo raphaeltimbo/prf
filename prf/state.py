@@ -18,6 +18,25 @@ for mix1, mix2 in combinations(mixture, 2):
 
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
+
+def normalize_mix(molar_fractions):
+    """
+    Normalize the molar fractions so that the sum is 1.
+
+    Parameters:
+    -----------
+    molar_fractions : list
+        Molar fractions of the components.
+
+    Returns:
+    --------
+    molar_fractions: list
+        Molar fractions list will be modified in place.
+    """
+    total = sum(molar_fractions)
+    for i, comp in enumerate(molar_fractions):
+        molar_fractions[i] = comp / total
+
 # TODO implement refprop names
 
 
@@ -82,6 +101,8 @@ class State(CP.AbstractState):
         molar_fractions = []
 
         for k, v in fluid.items():
+            if EOS == 'REFPROP':
+                k = CP.get_REFPROPname(k)
             constituents.append(k)
             molar_fractions.append(v)
 
@@ -89,6 +110,7 @@ class State(CP.AbstractState):
         _fluid = '&'.join(constituents)
 
         state = cls(EOS, _fluid)
+        normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
         state.update(CP.PT_INPUTS, p_.magnitude, T_.magnitude)
 
