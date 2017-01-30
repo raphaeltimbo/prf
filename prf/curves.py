@@ -4,7 +4,8 @@ from copy import copy
 from prf.state import *
 
 
-__all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen']
+__all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
+           'schultz_f']
 
 
 class Curves:
@@ -81,7 +82,7 @@ class Curves:
         --------
         """
         # suction state
-        suc = State('HEOS', ps, Ts, fluid, **kwargs)
+        # suc = State('HEOS', ps, Ts, fluid, **kwargs)
 
         # calculate head and efficiency for each point
 
@@ -176,9 +177,9 @@ def ef_pol(suc, disch):
 
 
 def head_isen(suc, disch):
-    """Polytropic head.
+    """Isentropic head.
 
-    Calculates the polytropic head given a suction and a discharge state.
+    Calculates the Isentropic head given a suction and a discharge state.
 
     Parameters:
     -----------
@@ -189,8 +190,8 @@ def head_isen(suc, disch):
 
     Returns:
     --------
-    head_pol : float
-        Polytropic head.
+    head_isen : float
+        Isentropic head.
 
     Examples:
     ---------
@@ -198,9 +199,10 @@ def head_isen(suc, disch):
     ...         'R134a': 0.23581,
     ...         'Nitrogen': 0.00284,
     ...         'Oxygen': 0.00071}
-    >>> suc = State.define('REFPROP', fluid, 183900, 291.5)
-    >>> disch = State.define('REFPROP', fluid, 590200, 380.7)
-    >>> head_isen(suc, disch)
+    >>> suc = State.define(fluid, 183900, 291.5)
+    >>> disch = State.define(fluid, 590200, 380.7)
+    >>> head_isen(suc, disch) # doctest: +ELLIPSIS
+    53166.296...
     """
     # define state to isentropic discharge
     disch_s = copy(disch)
@@ -210,9 +212,75 @@ def head_isen(suc, disch):
 
 
 def ef_isen(suc, disch):
+    """Isentropic efficiency.
+
+    Calculates the Isentropic efficiency given a suction and a discharge state.
+
+    Parameters:
+    -----------
+    suc : State
+        Suction state.
+    disch : State
+        Discharge state.
+
+    Returns:
+    --------
+    ef_isen : float
+        Isentropic efficiency.
+
+    Examples:
+    ---------
+    >>> fluid ={'CarbonDioxide': 0.76064,
+    ...         'R134a': 0.23581,
+    ...         'Nitrogen': 0.00284,
+    ...         'Oxygen': 0.00071}
+    >>> suc = State.define(fluid, 183900, 291.5)
+    >>> disch = State.define(fluid, 590200, 380.7)
+    >>> ef_isen(suc, disch) # doctest: +ELLIPSIS
+    0.684...
+    """
     ws = head_isen(suc, disch)
     dh = disch.hmass() - suc.hmass()
     return ws/dh
+
+
+def schultz_f(suc, disch):
+    """Schultz factor.
+
+    Calculates the Schultz factor given a suction and discharge state.
+    This factor is used to correct the polytropic head as per PTC 10.
+
+    Parameters:
+    -----------
+    suc : State
+        Suction state.
+    disch : State
+        Discharge state.
+
+    Returns:
+    --------
+    ef_isen : float
+        Isentropic efficiency.
+
+    Examples:
+    ---------
+    >>> fluid ={'CarbonDioxide': 0.76064,
+    ...         'R134a': 0.23581,
+    ...         'Nitrogen': 0.00284,
+    ...         'Oxygen': 0.00071}
+    >>> suc = State.define(fluid, 183900, 291.5)
+    >>> disch = State.define(fluid, 590200, 380.7)
+    >>> schultz_f(suc, disch) # doctest: +ELLIPSIS
+    1.001...
+    """
+    # define state to isentropic discharge
+    disch_s = copy(disch)
+    disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
+
+    h2s_h1 = disch_s.hmass() - suc.hmass()
+    h_isen = head_isen(suc, disch)
+
+    return h2s_h1/h_isen
 
 
 # TODO add schultz_factor
