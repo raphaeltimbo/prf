@@ -12,7 +12,7 @@ def suc_1():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define(fluid, 1.839, 291.5, EOS='HEOS', **units)
+    return State.define(fluid, 1.839, 291.5, **units)
 
 
 @pytest.fixture
@@ -23,16 +23,16 @@ def disch_1():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define(fluid, 5.902, 380.7, EOS='HEOS', **units)
+    return State.define(fluid, 5.902, 380.7, **units)
 
 
 def test_n_exp(suc_1, disch_1):
-    assert_allclose(n_exp(suc_1, disch_1), 1.2910807257829124)
+    assert_allclose(n_exp(suc_1, disch_1), 1.2911165566270133)
 
 
 def test_head_pol(suc_1, disch_1):
-    assert_allclose(head_pol(suc_1, disch_1), 55282.59221757925)
+    assert_allclose(head_pol(suc_1, disch_1), 55280.81425974899)
 
 
 def test_ef_pol(suc_1, disch_1):
-    assert_allclose(ef_pol(suc_1, disch_1), 0.7111884556585154)
+    assert_allclose(ef_pol(suc_1, disch_1), 0.7112136965155706)

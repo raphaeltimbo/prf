@@ -15,7 +15,7 @@ for mix1, mix2 in combinations(mixture, 2):
     cas2 = CP.get_fluid_param_string(mix2, 'CAS')
     CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
 
-
+CP.set_config_bool(CP.REFPROP_USE_GERG, True)
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
 
