@@ -4,7 +4,7 @@ from copy import copy
 from prf.state import *
 
 
-__all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen']
+__all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen']
 
 
 class Curves:
@@ -209,7 +209,11 @@ def head_isen(suc, disch):
     return head_pol(suc, disch_s)
 
 
-# TODO add head_isen
-# TODO add ef_isen
+def ef_isen(suc, disch):
+    ws = head_isen(suc, disch)
+    dh = disch.hmass() - suc.hmass()
+    return ws/dh
+
+
 # TODO add schultz_factor
 # TODO add head_pol_schultz
