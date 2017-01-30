@@ -4,14 +4,13 @@ import pint
 from itertools import combinations
 
 
-__all__ = ['State', 'fluid_list']
+__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'new_units']
 
 # define pint unit registry
+new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
 ureg = pint.UnitRegistry()
-Q_ = pint.UnitRegistry().Quantity
-
-new_units = os.path.join(os.path.dirname(__file__), 'new_units')
 ureg.load_definitions(new_units)
+Q_ = ureg.Quantity
 
 # apply estimation of binary interaction parameters
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']

@@ -85,12 +85,21 @@ class Curves:
         Examples
         --------
         """
+        speed_units = kwargs.get('speed_units', ureg.Hz)
+        flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
+
+        # create unit registers
+        speed_ = Q_(curves[0], speed_units)
+        flow_m_ = Q_(curves[1], flow_m_units)
+
+        # convert to base units (SI)
+        speed_.ito_base_units()
+        flow_m_.ito_base_units()
+
         curves_head = np.zeros([8, len(curves.T)])
         curves_head[:6] = curves[:6]
+
         # calculate head and efficiency for each point
-
-        speed_units = kwargs.get('p_units', ureg.Pa)
-
         for point, point_new in zip(curves.T, curves_head.T):
             ps = point[2]
             Ts = point[3]

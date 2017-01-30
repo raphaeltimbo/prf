@@ -1,1 +1,2 @@
-RPM = Hz * 60 = CPM = rpm
+RPM = rpm * 1
+hour = 60 * minute = h = hr
