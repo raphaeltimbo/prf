@@ -4,12 +4,12 @@ from copy import copy
 from prf.state import *
 
 
-__all__ = ['Curves', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
-           'schultz_f']
+__all__ = ['Curve', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
+           'schultz_f', 'head_pol_schultz']
 
 
-class Curves:
-    def __init__(self, fluid, curves):
+class Curve:
+    def __init__(self, fluid, curve):
         """
         Construct curves given a speed and an array with
         flow, head and efficiency.
@@ -22,7 +22,7 @@ class Curves:
             Suction pressure.
         Ts : float
             Suction temperature.
-        curves : array
+        curve : array
             Array with the curves as:
             array([speed],          -> RPM
                   [flow_m],         -> kg/s
@@ -43,17 +43,17 @@ class Curves:
         --------
 
         """
-        self.curves = curves
+        self.curves = curve
         self.fluid = fluid
-        self.speed = curves[0]
-        self.flow_m = curves[1]
-        self.ps = curves[2]
-        self.Ts = curves[3]
-        self.head = curves[4]
-        self.efficiency = curves[5]
+        self.speed = curve[0]
+        self.flow_m = curve[1]
+        self.ps = curve[2]
+        self.Ts = curve[3]
+        self.head = curve[4]
+        self.efficiency = curve[5]
 
     @classmethod
-    def from_discharge(cls, fluid, curves, **kwargs):
+    def from_discharge(cls, fluid, curve, **kwargs):
         """
         Construct curves given a speed and an array with
         flow, head and efficiency.
@@ -67,7 +67,7 @@ class Curves:
             Suction pressure.
         Ts : float
             Suction temperature.
-        curves : array
+        curve : array
             Array with the curves as:
             array([speed],          -> RPM
                   [flow_m],         -> kg/s
@@ -89,18 +89,18 @@ class Curves:
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
 
         # create unit registers
-        speed_ = Q_(curves[0], speed_units)
-        flow_m_ = Q_(curves[1], flow_m_units)
+        speed_ = Q_(curve[0], speed_units)
+        flow_m_ = Q_(curve[1], flow_m_units)
 
         # convert to base units (SI)
         speed_.ito_base_units()
         flow_m_.ito_base_units()
 
-        curves_head = np.zeros([8, len(curves.T)])
-        curves_head[:6] = curves[:6]
+        curves_head = np.zeros([10, len(curve.T)], dtype=object)
+        curves_head[:6] = curve[:6]
 
         # calculate head and efficiency for each point
-        for point, point_new in zip(curves.T, curves_head.T):
+        for point, point_new in zip(curve.T, curves_head.T):
             ps = point[2]
             Ts = point[3]
             suc = State.define(fluid, ps, Ts, **kwargs)
@@ -111,6 +111,8 @@ class Curves:
 
             point_new[6] = head_pol_schultz(suc, disch)
             point_new[7] = ef_pol(suc, disch)
+            point_new[8] = suc
+            point_new[9] = disch
 
         return cls(fluid, curves_head)
 

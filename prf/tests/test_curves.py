@@ -1,6 +1,6 @@
 import pytest
 from prf.state import *
-from prf.curves import *
+from prf.curve import *
 from numpy.testing import assert_allclose
 
 
@@ -47,7 +47,7 @@ def test_ef_isen(suc_1, disch_1):
 
 
 def test_schultz_f(suc_1, disch_1):
-    assert_allclose(schultz_f(suc_1, disch_1), 1.001)
+    assert_allclose(schultz_f(suc_1, disch_1), 1.0017478040647996)
 
 
 def test_head_pol_schultz(suc_1, disch_1):
