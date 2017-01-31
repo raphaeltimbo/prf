@@ -1,5 +1,6 @@
 import numpy as np
 import CoolProp as CP
+from collections import namedtuple
 from copy import copy
 from prf.state import *
 
@@ -11,7 +12,7 @@ __all__ = ['Curve', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
 class Curve:
     def __init__(self, fluid, curve):
         """
-        Construct curves given a speed and an array with
+        Construct curve given a speed and an array with
         flow, head and efficiency.
         Parameters
         ----------
@@ -23,7 +24,7 @@ class Curve:
         Ts : float
             Suction temperature.
         curve : array
-            Array with the curves as:
+            Array with the curve as:
             array([speed],          -> RPM
                   [flow_m],         -> kg/s
                   [ps],             -> Pa
@@ -43,7 +44,7 @@ class Curve:
         --------
 
         """
-        self.curves = curve
+        self.curve = curve
         self.fluid = fluid
         self.speed = curve[0]
         self.flow_m = curve[1]
@@ -56,11 +57,35 @@ class Curve:
         self.suc = curve[8]
         self.disch = curve[9]
 
+    def points(self):
+        point = namedtuple('point', ['speed',
+                                     'flow_m',
+                                     'ps',
+                                     'Ts',
+                                     'pd',
+                                     'Td',
+                                     'head',
+                                     'efficiency',
+                                     'suc',
+                                     'disch'])
+
+        for i in range(len(self.curve.T)):
+            yield point(speed=self.speed[i],
+                        flow_m=self.flow_m[i],
+                        ps=self.ps[i],
+                        Ts=self.Ts[i],
+                        pd=self.pd[i],
+                        Td=self.Td[i],
+                        head=self.head[i],
+                        efficiency=self.efficiency[i],
+                        suc=self.suc[i],
+                        disch=self.disch[i])
+
 
     @classmethod
     def from_discharge(cls, fluid, curve, **kwargs):
         """
-        Construct curves given a speed and an array with
+        Construct curve given a speed and an array with
         flow, head and efficiency.
 
         Parameters
@@ -73,7 +98,7 @@ class Curve:
         Ts : float
             Suction temperature.
         curve : array
-            Array with the curves as:
+            Array with the curve as:
             array([speed],          -> RPM
                   [flow_m],         -> kg/s
                   [ps],             -> Pa
