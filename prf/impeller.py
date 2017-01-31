@@ -119,6 +119,10 @@ class Impeller:
         return head / self.tip_speed(speed)
 
     def curve(self, suc):
+        """Curve.
+
+        Calculates a new curve based on the given suction state.
+        """
         pass
 
     @classmethod
