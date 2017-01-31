@@ -118,6 +118,9 @@ class Impeller:
         """
         return head / self.tip_speed(speed)
 
+    def mach(self, suc):
+        pass
+
     def curve(self, suc):
         """Curve.
 
