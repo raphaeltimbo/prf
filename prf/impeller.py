@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Impeller:
-    def __init__(self, curves, b, D, e):
+    def __init__(self, curves, b, D, e=0.87e-6):
         """
         Impeller instance is initialized with the dimensional curve.
 
@@ -28,20 +28,32 @@ class Impeller:
         --------
         """
         self.curves = curves
+        self.b = b
+        self.D = D
+        self.e = e
         self.non_dim_curves = []
         # calculate non dimensional curve
         # flow coefficient
         for curve in curves:
+            non_dim_curve = np.zeros([3, len(curve.n)])
             # calculate non dim curve and append
-            for i in curve:
-                pass
-
+            for point in curve.points():
+                non_dim_curve[0, point.n] = self.flow_coeff(point.flow_m,
+                                                            point.suc,
+                                                            point.speed)
+            self.non_dim_curves.append(non_dim_curve)
 
     def flow_coeff(self, flow_m, suc, speed):
         v = 1 / suc.rhomass()
 
         phi = (flow_m * v /
                (np.pi**2 * self.D**3 * speed * 15))
+
+        return phi
+
+    def tip_speeds(self, speed):
+        return (np.pi * speed * self.D / 60)**2
+
 
 
     @classmethod

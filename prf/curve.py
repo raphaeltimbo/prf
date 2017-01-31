@@ -56,6 +56,7 @@ class Curve:
         self.efficiency = curve[7]
         self.suc = curve[8]
         self.disch = curve[9]
+        self.n = curve[10]
 
     def points(self):
         point = namedtuple('point', ['speed',
@@ -67,7 +68,8 @@ class Curve:
                                      'head',
                                      'efficiency',
                                      'suc',
-                                     'disch'])
+                                     'disch',
+                                     'n'])
 
         for i in range(len(self.curve.T)):
             yield point(speed=self.speed[i],
@@ -79,7 +81,8 @@ class Curve:
                         head=self.head[i],
                         efficiency=self.efficiency[i],
                         suc=self.suc[i],
-                        disch=self.disch[i])
+                        disch=self.disch[i],
+                        n=self.n[i])
 
 
     @classmethod
@@ -126,10 +129,11 @@ class Curve:
         speed_.ito_base_units()
         flow_m_.ito_base_units()
 
-        curves_head = np.zeros([10, len(curve.T)], dtype=object)
+        curves_head = np.zeros([11, len(curve.T)], dtype=object)
         curves_head[:6] = curve[:6]
 
         # calculate head and efficiency for each point
+        i = 0
         for point, point_new in zip(curve.T, curves_head.T):
             ps = point[2]
             Ts = point[3]
@@ -143,6 +147,8 @@ class Curve:
             point_new[7] = ef_pol(suc, disch)
             point_new[8] = suc
             point_new[9] = disch
+            point_new[10] = i
+            i += 1
 
         return cls(fluid, curves_head)
 
