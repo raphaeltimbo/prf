@@ -60,12 +60,12 @@ class Impeller:
         suc : state
             Suction state.
         speed : float
-            Speed in rad/sec
+            Speed in rad/s.
 
         Returns:
         --------
         flow_coeff : float
-            Flow coefficient.
+            Flow coefficient (non dimensional).
 
         Examples:
         ---------
@@ -74,15 +74,48 @@ class Impeller:
         v = 1 / suc.rhomass()
 
         flow_coeff = (flow_m * v /
-                     (np.pi**2 * self.D**3 * speed * 15))
+                      (np.pi**2 * self.D**3 * speed * 15))
 
         return flow_coeff
 
     def tip_speed(self, speed):
+        """Impeller tip speed.
 
+        Calculates the impeller tip speed for a given speed.
+
+        Parameters:
+        -----------
+        speed : float
+            Speed in rad/s.
+
+        Returns:
+        --------
+        tip_speed : float
+            Impeller tip speed. (meter**2 radian**2/second**2)
+
+        Examples:
+        ---------
+
+        """
         return (np.pi * speed * self.D / 60)**2
 
     def head_coeff(self, head, speed):
+        """Head coefficient.
+
+        Calculates the head coefficient given a head and speed.
+
+        Parameters:
+        -----------
+        head : float
+            Head in J/kg.
+        speed : float
+            Speed in rad/s.
+
+        Returns:
+        --------
+        head_coeff : float
+            Head coefficient (non dimensional).
+        """
         return head / self.tip_speed(speed)
 
     def curve(self, suc):
