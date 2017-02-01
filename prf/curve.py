@@ -32,7 +32,7 @@ class Curve:
                   [pd],             -> Pa
                   [Td],             -> K
                   [head],           -> J/kg
-                  [efficiency])     -> %
+                  [efficiency])
 
         Returns
         -------
@@ -89,17 +89,13 @@ class Curve:
     def from_discharge(cls, fluid, curve, **kwargs):
         """
         Construct curve given a speed and an array with
-        flow, head and efficiency.
+        flow, suction and discharge conditions.
 
         Parameters
         ----------
         fluid : dict
             Dictionary with constituent and composition
             (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
-        ps : float
-            Suction pressure.
-        Ts : float
-            Suction temperature.
         curve : array
             Array with the curve as:
             array([speed],          -> RPM
@@ -129,12 +125,12 @@ class Curve:
         speed_.ito_base_units()
         flow_m_.ito_base_units()
 
-        curves_head = np.zeros([11, len(curve.T)], dtype=object)
-        curves_head[:6] = curve[:6]
+        curve_head = np.zeros([11, len(curve.T)], dtype=object)
+        curve_head[:6] = curve[:6]
 
         # calculate head and efficiency for each point
         i = 0
-        for point, point_new in zip(curve.T, curves_head.T):
+        for point, point_new in zip(curve.T, curve_head.T):
             ps = point[2]
             Ts = point[3]
             suc = State.define(fluid, ps, Ts, **kwargs)
@@ -150,7 +146,38 @@ class Curve:
             point_new[10] = i
             i += 1
 
-        return cls(fluid, curves_head)
+        return cls(fluid, curve_head)
+
+
+    @classmethod
+    def from_head_ef(cls):
+        """
+        Construct curve given a speed and an array with
+        flow, head and efficiency.
+
+        Parameters
+        ----------
+        fluid : dict
+            Dictionary with constituent and composition
+            (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
+        curve : array
+            Array with the curve as:
+            array([speed],          -> RPM
+                  [flow_m],         -> kg/s
+                  [head],           -> J/kg
+                  [efficiency])
+
+        Returns
+        -------
+
+        Attributes
+        ----------
+
+        Examples
+        --------
+        """
+        pass
+
 
     # TODO add **kwargs for units
     # TODO add constructor -> from_discharge_conditions

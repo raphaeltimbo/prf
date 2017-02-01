@@ -126,6 +126,7 @@ class Impeller:
 
         Calculates a new curve based on the given suction state.
         """
+
         pass
 
     @classmethod
