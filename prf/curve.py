@@ -114,6 +114,7 @@ class Curve:
         Examples
         --------
         """
+        # TODO change array to construct curves from suc and disch states.
         speed_units = kwargs.get('speed_units', ureg.Hz)
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
 

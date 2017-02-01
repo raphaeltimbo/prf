@@ -125,10 +125,20 @@ class Impeller:
         """
         # calculate new head and efficiency
         # use mach to check the best non dim curve to be used
-        for curve in self.curves:
-            pass
+        mach_new = self.mach(suc, speed)
 
-        #flow_v =
+        diff_mach = []
+        for curve in self.curves:
+            mach_ = self.mach(curve.suc[0], curve.speed[0])
+            diff_mach.append(mach_new - mach_)
+        idx = diff_mach.index(min(diff_mach))
+
+        non_dim_curve = self.non_dim_curves[idx]
+        curve_head_ef = np.zeros([4, len(curve.n)])
+
+        #for point in non_dim_curve.points():
+
+        #flow_v = non_dim_curve.flow_coeff
         #flow_m = flow_v * suc.rhomass()
 
         pass
