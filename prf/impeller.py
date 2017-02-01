@@ -112,18 +112,24 @@ class Impeller:
         """
         return head / self.tip_speed(speed)
 
-    def mach(self, suc):
-        pass
+    def mach(self, suc, speed):
+        return np.pi * self.D * speed / (60 * suc.speed_sound())
 
     def points(self, n):
         pass
 
-    def curve(self, suc):
+    def new_curve(self, suc, speed):
         """Curve.
 
-        Calculates a new curve based on the given suction state.
+        Calculates a new curve based on the given suction state and speed.
         """
         # calculate new head and efficiency
+        # use mach to check the best non dim curve to be used
+        for curve in self.curves:
+            pass
+
+        #flow_v =
+        #flow_m = flow_v * suc.rhomass()
 
         pass
 
@@ -159,10 +165,10 @@ class NonDimCurve:
         # calculate non dim curve and append
         for i, point in enumerate(curve.points()):
             non_dim_curve[0, i] = impeller.flow_coeff(point.flow_m,
-                                                   point.suc,
-                                                   point.speed)
+                                                      point.suc,
+                                                      point.speed)
             non_dim_curve[1, i] = impeller.head_coeff(point.head,
-                                                   point.speed)
+                                                      point.speed)
             non_dim_curve[2, i] = point.efficiency
 
         return non_dim_curve

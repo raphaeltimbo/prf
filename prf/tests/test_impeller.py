@@ -35,3 +35,9 @@ def test_impeller1(impeller1):
                                  [  7.58596759e-01,   8.16683236e-01]])
     assert_allclose(impeller1.non_dim_curves[0], non_dim_curves_0)
 
+
+def test_mach(impeller1):
+    mac = 0.06700529708077983
+    assert_allclose(impeller1.mach(impeller1.curves[0].suc[0],
+                                   impeller1.curves[0].speed[0]),
+                    mac)
