@@ -1,10 +1,13 @@
 import numpy as np
+from collections import namedtuple
 
 
 class Impeller:
     def __init__(self, curves, b, D, e=0.87e-6):
         """
         Impeller instance is initialized with the dimensional curve.
+        The created instance will hold instances of the dimensional curves
+        and of the non dimensional curves generated.
 
         Parameters
         ----------
@@ -20,6 +23,8 @@ class Impeller:
 
         Returns
         -------
+        non_dim_curves : list
+            List with non dimensional curve instances.
 
         Attributes
         ----------
@@ -33,19 +38,8 @@ class Impeller:
         self.D = D
         self.e = e
         self.non_dim_curves = []
-        # calculate non dimensional curve
-        # flow coefficient
         for curve in curves:
-            non_dim_curve = np.zeros([3, len(curve.n)])
-            # calculate non dim curve and append
-            for point in curve.points():
-                non_dim_curve[0, point.n] = self.flow_coeff(point.flow_m,
-                                                            point.suc,
-                                                            point.speed)
-                non_dim_curve[1, point.n] = self.head_coeff(point.head,
-                                                            point.speed)
-                non_dim_curve[2, point.n] = point.efficiency
-            self.non_dim_curves.append(non_dim_curve)
+            self.non_dim_curves.append(NonDimCurve.from_impeller(self, curve))
 
     def flow_coeff(self, flow_m, suc, speed):
         """Flow coefficient.
@@ -121,11 +115,15 @@ class Impeller:
     def mach(self, suc):
         pass
 
+    def points(self, n):
+        pass
+
     def curve(self, suc):
         """Curve.
 
         Calculates a new curve based on the given suction state.
         """
+        # calculate new head and efficiency
 
         pass
 
@@ -136,3 +134,36 @@ class Impeller:
         """
         # TODO calculate non dimensional curve
         return cls(flow, head, efficiency)
+
+
+class NonDimCurve:
+    def __init__(self, non_dim_curve):
+        # calculate non dimensional curve
+        self.non_dim_curve = non_dim_curve
+        self.flow_coeff = non_dim_curve[0]
+        self.head_coeff = non_dim_curve[1]
+        self.efficiency = non_dim_curve[2]
+
+    def points(self):
+        point = namedtuple('point', ['flow_coeff', 'head_coeff', 'efficiency'])
+
+        for i in range(len(self.non_dim_curve.T)):
+            yield point(flow_coeff=self.flow_coeff[i],
+                        head_coeff=self.head_coeff[i],
+                        efficiency=self.efficiency[i])
+
+    @classmethod
+    def from_impeller(cls, impeller, curve):
+        # flow coefficient
+        non_dim_curve = np.zeros([3, len(curve.n)])
+        # calculate non dim curve and append
+        for i, point in enumerate(curve.points()):
+            non_dim_curve[0, i] = impeller.flow_coeff(point.flow_m,
+                                                   point.suc,
+                                                   point.speed)
+            non_dim_curve[1, i] = impeller.head_coeff(point.head,
+                                                   point.speed)
+            non_dim_curve[2, i] = point.efficiency
+
+        return non_dim_curve
+

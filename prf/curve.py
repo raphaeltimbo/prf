@@ -148,7 +148,6 @@ class Curve:
 
         return cls(fluid, curve_head)
 
-
     @classmethod
     def from_head_ef(cls):
         """
@@ -177,7 +176,6 @@ class Curve:
         --------
         """
         pass
-
 
     # TODO add **kwargs for units
     # TODO add constructor -> from_discharge_conditions
