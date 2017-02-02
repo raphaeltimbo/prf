@@ -5,6 +5,17 @@ from copy import copy
 from numpy.testing import assert_allclose
 
 
+def test_convert_units():
+    p = 1698999.99999
+    T = 303.15
+
+    param = {'p': 16.99, 'T': 30}
+    units = {'p_units': 'bar', 'T_units': 'degC'}
+    converted = convert_to_base_units(param, units)
+    assert_allclose(converted['p'], p)
+    assert_allclose(converted['T'], T)
+
+
 @pytest.fixture
 def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}

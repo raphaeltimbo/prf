@@ -4,7 +4,7 @@ import pint
 from itertools import combinations
 
 
-__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'new_units']
+__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units', ]
 
 # define pint unit registry
 new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
@@ -42,6 +42,40 @@ def normalize_mix(molar_fractions):
         molar_fractions[i] = comp / total
 
 # TODO implement refprop names
+
+
+def convert_to_base_units(parameters, units):
+    """Convert units.
+
+    This function will convert parameters to base units.
+
+    Parameters:
+    ----------
+    parameters : dict
+        Dictionary with parameters and its value.
+    units : dict
+        Dictionary with the parameter units
+
+    Returns:
+    --------
+    parameters : dict
+        Dictionary with converted units.
+    """
+    # get units from kwargs. Set default if not provided.
+    p_units = units.get('p_units', ureg.Pa)
+    T_units = units.get('T_units', ureg.degK)
+
+    for param, value in parameters.items():
+        if param == 'p':
+            p_ = Q_(value, p_units)
+            p_.ito_base_units()
+            parameters[param] = p_.magnitude
+        if param == 'T':
+            T_ = Q_(value, T_units)
+            T_.ito_base_units()
+            parameters[param] = T_.magnitude
+
+    return parameters
 
 
 class State(CP.AbstractState):
@@ -99,7 +133,10 @@ class State(CP.AbstractState):
         # convert to base units (SI)
         p_.ito_base_units()
         T_.ito_base_units()
-
+        parameters = {'p': p, 'T': T}
+        #converted_values = convert_to_base_units(parameters, units=kwargs)
+        #p_ = converted_values['p']
+        #T_ = converted_values['T']
         # define constituents and molar fractions to create and update state
         constituents = []
         molar_fractions = []

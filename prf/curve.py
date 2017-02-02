@@ -72,18 +72,17 @@ class Curve:
                                      'n'])
 
         for i in range(len(self.curve.T)):
-            yield point(speed=self.speed[i],
-                        flow_m=self.flow_m[i],
-                        ps=self.ps[i],
-                        Ts=self.Ts[i],
-                        pd=self.pd[i],
-                        Td=self.Td[i],
-                        head=self.head[i],
-                        efficiency=self.efficiency[i],
-                        suc=self.suc[i],
-                        disch=self.disch[i],
-                        n=self.n[i])
-
+            yield i, point(speed=self.speed[i],
+                           flow_m=self.flow_m[i],
+                           ps=self.ps[i],
+                           Ts=self.Ts[i],
+                           pd=self.pd[i],
+                           Td=self.Td[i],
+                           head=self.head[i],
+                           efficiency=self.efficiency[i],
+                           suc=self.suc[i],
+                           disch=self.disch[i],
+                           n=self.n[i])
 
     @classmethod
     def from_discharge(cls, fluid, curve, **kwargs):
@@ -115,7 +114,7 @@ class Curve:
         --------
         """
         # TODO change array to construct curves from suc and disch states.
-        speed_units = kwargs.get('speed_units', ureg.Hz)
+        speed_units = kwargs.get('speed_units', ureg.rad / ureg.s)
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
 
         # create unit registers
@@ -162,8 +161,9 @@ class Curve:
             (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
         curve : array
             Array with the curve as:
-            array([speed],          -> RPM
+            array([speed],          -> rad/s
                   [flow_m],         -> kg/s
+                  [suc],
                   [head],           -> J/kg
                   [efficiency])
 
