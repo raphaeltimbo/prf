@@ -123,20 +123,10 @@ class State(CP.AbstractState):
         1.2893965217814896
         """
         # get units from kwargs. Set default if not provided.
-        p_units = kwargs.get('p_units', ureg.Pa)
-        T_units = kwargs.get('T_units', ureg.degK)
-
-        # create unit registers
-        p_ = Q_(p, p_units)
-        T_ = Q_(T, T_units)
-
-        # convert to base units (SI)
-        p_.ito_base_units()
-        T_.ito_base_units()
         parameters = {'p': p, 'T': T}
-        #converted_values = convert_to_base_units(parameters, units=kwargs)
-        #p_ = converted_values['p']
-        #T_ = converted_values['T']
+        converted_values = convert_to_base_units(parameters, units=kwargs)
+        p_ = converted_values['p']
+        T_ = converted_values['T']
         # define constituents and molar fractions to create and update state
         constituents = []
         molar_fractions = []
@@ -153,7 +143,7 @@ class State(CP.AbstractState):
         state = cls(EOS, _fluid)
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
-        state.update(CP.PT_INPUTS, p_.magnitude, T_.magnitude)
+        state.update(CP.PT_INPUTS, p_, T_)
 
         return state
 
