@@ -44,7 +44,7 @@ def normalize_mix(molar_fractions):
 # TODO implement refprop names
 
 
-def convert_to_base_units(parameters, units):
+def convert_to_base_units(func):
     """Convert units.
 
     This function will convert parameters to base units.
@@ -62,20 +62,30 @@ def convert_to_base_units(parameters, units):
         Dictionary with converted units.
     """
     # get units from kwargs. Set default if not provided.
-    p_units = units.get('p_units', ureg.Pa)
-    T_units = units.get('T_units', ureg.degK)
+    def inner(*args, units=None, **kwargs):
+        if units is None:
+            units = {}
+        p_units = units.get('p_units', ureg.Pa)
+        T_units = units.get('T_units', ureg.degK)
+        speed_units = units.get('speed_units', ureg.rad / ureg.s)
 
-    for param, value in parameters.items():
-        if param == 'p':
-            p_ = Q_(value, p_units)
-            p_.ito_base_units()
-            parameters[param] = p_.magnitude
-        if param == 'T':
-            T_ = Q_(value, T_units)
-            T_.ito_base_units()
-            parameters[param] = T_.magnitude
+        converted_args = []
+        for arg_name, value in zip(func.__code__.co_varnames, args):
+            if arg_name is 'p':
+                p_ = Q_(value, p_units)
+                p_.ito_base_units()
+                converted_args.append(p_.magnitude)
+            if arg_name is 'T':
+                T_ = Q_(value, T_units)
+                T_.ito_base_units()
+                converted_args.append(T_.magnitude)
+            if arg_name is 'speed':
+                speed_ = Q_(value, speed_units)
+                speed_.ito_base_units()
+                converted_args.append(speed_.magnitude)
+        return func(*converted_args)
 
-    return parameters
+    return inner
 
 
 class State(CP.AbstractState):
@@ -94,7 +104,8 @@ class State(CP.AbstractState):
         return fluid_dict
 
     @classmethod
-    def define(cls, fluid, p, T, EOS='REFPROP', **kwargs):
+    @convert_to_base_units
+    def define(cls, fluid, p, T, EOS='REFPROP', units=None, **kwargs):
         """Constructor for state.
 
         Creates a state and set molar fractions, p and T.
@@ -123,10 +134,13 @@ class State(CP.AbstractState):
         1.2893965217814896
         """
         # get units from kwargs. Set default if not provided.
-        parameters = {'p': p, 'T': T}
-        converted_values = convert_to_base_units(parameters, units=kwargs)
-        p_ = converted_values['p']
-        T_ = converted_values['T']
+        #if units is None:
+        #    units = {}
+
+        #parameters = {'p': p, 'T': T}
+        #converted_values = convert_to_base_units(parameters, units=units)
+        #p_ = converted_values['p']
+        #T_ = converted_values['T']
         # define constituents and molar fractions to create and update state
         constituents = []
         molar_fractions = []

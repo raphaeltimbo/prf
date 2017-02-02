@@ -8,12 +8,18 @@ from numpy.testing import assert_allclose
 def test_convert_units():
     p = 1698999.99999
     T = 303.15
+    speed = 104.71975511965977
 
-    param = {'p': 16.99, 'T': 30}
-    units = {'p_units': 'bar', 'T_units': 'degC'}
-    converted = convert_to_base_units(param, units)
-    assert_allclose(converted['p'], p)
-    assert_allclose(converted['T'], T)
+    units = {'T_units': 'degC', 'p_units': 'bar', 'speed_units': 'RPM'}
+
+    @convert_to_base_units
+    def func(p, T, speed):
+        return p, T, speed
+
+    p_, T_, speed_ = func(16.99, 30, 1000, units=units)
+    assert_allclose(p_, p)
+    assert_allclose(T_, T)
+    assert_allclose(speed_, speed)
 
 
 @pytest.fixture

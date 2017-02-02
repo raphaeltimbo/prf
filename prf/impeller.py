@@ -1,5 +1,6 @@
 import numpy as np
 from collections import namedtuple
+from .curve import *
 
 
 __all__ = ['Impeller', 'NonDimCurve']
@@ -121,15 +122,19 @@ class Impeller:
     def points(self, n):
         pass
 
-    def new_curve(self, suc, speed):
+    def new_curve(self, suc, speed, units=None):
         """Curve.
 
         Calculates a new curve based on the given suction state and speed.
         """
         # calculate new head and efficiency
         # use mach to check the best non dim curve to be used
+        if units is None:
+            units = {}
+        parameters = {'speed': speed}
+        converted_values = convert_to_base_units(parameters, units)
 
-
+        speed_ = converted_values['speed']
 
         mach_new = self.mach(suc, speed)
 
