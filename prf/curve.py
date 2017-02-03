@@ -11,6 +11,8 @@ __all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
 if __name__ == '__main__':
     class Point:
         def __init__(self, *args, **kwargs):
+            # TODO raise exception if speed is not given
+            # TODO give options to mass or volume flow
             self.speed = kwargs.get('speed')
             self.flow_m = kwargs.get('flow_m')
             self.suc = kwargs.get('suc')
