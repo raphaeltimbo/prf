@@ -13,10 +13,14 @@ def test_convert_units():
     units = {'T_units': 'degC', 'p_units': 'bar', 'speed_units': 'RPM'}
 
     @convert_to_base_units
-    def func(p, T, speed):
-        return p, T, speed
+    def func(**kwargs):
+        return kwargs
 
-    p_, T_, speed_ = func(16.99, 30, 1000, units=units)
+    converted = func(p=16.99, T=30, speed=1000, **units)
+    p_ = converted['p']
+    T_ = converted['T']
+    speed_ = converted['speed']
+
     assert_allclose(p_, p)
     assert_allclose(T_, T)
     assert_allclose(speed_, speed)
@@ -27,7 +31,7 @@ def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
     p = 101008
     T = 273
-    return State.define(fluid, p, T, EOS='HEOS')
+    return State.define(p=p, T=T, fluid=fluid, EOS='HEOS')
 
 
 def test_state_si_air(state_si_air):
@@ -45,7 +49,7 @@ def state_en_air():
     p = 14.649971812683193
     T = 31.73000040000001
     units = {'p_units': 'psi', 'T_units': 'degF'}
-    return State.define(fluid, p, T, EOS='HEOS', **units)
+    return State.define(fluid=fluid, p=p, T=T, EOS='HEOS', **units)
 
 
 def test_state_en_air(state_en_air):
@@ -73,7 +77,7 @@ def state_si_main_op():
              'Water': 0.00200}
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
-    return State.define(fluid, 16.99, 38.4, EOS='HEOS', **units)
+    return State.define(p=16.99, T=38.4, fluid=fluid, EOS='HEOS', **units)
 
 
 def test_state_si_main_op(state_si_main_op):
@@ -93,7 +97,7 @@ def state_si_main_test():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define(fluid, 1.839, 291.5, EOS='HEOS', **units)
+    return State.define(p=1.839, T=291.5, fluid=fluid, EOS='HEOS', **units)
 
 
 def test_state_si_main_test(state_si_main_test):
@@ -144,7 +148,7 @@ def state_si_main_op_REFPROP():
              'Water': 0.00200}
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
-    return State.define(fluid, 16.99, 38.4, EOS='REFPROP', **units)
+    return State.define(p=16.99, T=38.4, fluid=fluid, EOS='REFPROP', **units)
 
 
 def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):

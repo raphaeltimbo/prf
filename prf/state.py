@@ -62,28 +62,26 @@ def convert_to_base_units(func):
         Dictionary with converted units.
     """
     # get units from kwargs. Set default if not provided.
-    def inner(*args, units=None, **kwargs):
-        if units is None:
-            units = {}
-        p_units = units.get('p_units', ureg.Pa)
-        T_units = units.get('T_units', ureg.degK)
-        speed_units = units.get('speed_units', ureg.rad / ureg.s)
+    def inner(*args, **kwargs):
+        p_units = kwargs.get('p_units', ureg.Pa)
+        T_units = kwargs.get('T_units', ureg.degK)
+        speed_units = kwargs.get('speed_units', ureg.rad / ureg.s)
 
-        converted_args = []
-        for arg_name, value in zip(func.__code__.co_varnames, args):
-            if arg_name is 'p':
+        for arg_name, value in kwargs.items():
+            if arg_name == 'p':
                 p_ = Q_(value, p_units)
                 p_.ito_base_units()
-                converted_args.append(p_.magnitude)
-            if arg_name is 'T':
+                kwargs[arg_name] = p_.magnitude
+            elif arg_name is 'T':
                 T_ = Q_(value, T_units)
                 T_.ito_base_units()
-                converted_args.append(T_.magnitude)
-            if arg_name is 'speed':
+                kwargs[arg_name] = T_.magnitude
+            elif arg_name is 'speed':
                 speed_ = Q_(value, speed_units)
                 speed_.ito_base_units()
-                converted_args.append(speed_.magnitude)
-        return func(*converted_args)
+                kwargs[arg_name] = speed_.magnitude
+
+        return func(*args, **kwargs)
 
     return inner
 
@@ -105,7 +103,7 @@ class State(CP.AbstractState):
 
     @classmethod
     @convert_to_base_units
-    def define(cls, fluid, p, T, EOS='REFPROP', units=None, **kwargs):
+    def define(cls, **kwargs):
         """Constructor for state.
 
         Creates a state and set molar fractions, p and T.
@@ -129,19 +127,16 @@ class State(CP.AbstractState):
         Examples:
         ---------
         >>> fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
-        >>> s = State.define(fluid, 101008, 273, EOS='HEOS')
+        >>> s = State.define(fluid=fluid, p=101008, T=273, EOS='HEOS')
         >>> s.rhomass()
         1.2893965217814896
         """
-        # get units from kwargs. Set default if not provided.
-        #if units is None:
-        #    units = {}
-
-        #parameters = {'p': p, 'T': T}
-        #converted_values = convert_to_base_units(parameters, units=units)
-        #p_ = converted_values['p']
-        #T_ = converted_values['T']
         # define constituents and molar fractions to create and update state
+        fluid = kwargs.get('fluid')
+        EOS = kwargs.get('EOS', 'REFPROP')
+        p = kwargs.get('p')
+        T = kwargs.get('T')
+
         constituents = []
         molar_fractions = []
 
@@ -157,9 +152,9 @@ class State(CP.AbstractState):
         state = cls(EOS, _fluid)
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
-        state.update(CP.PT_INPUTS, p_, T_)
+        state.update(CP.PT_INPUTS, p, T)
 
         return state
 
     def __copy__(self):
-        return self.define(self.fluid_dict(), self.p(), self.T(), self.EOS)
+        return self.define(p=self.p(), T=self.T(), fluid=self.fluid_dict(), EOS=self.EOS)
