@@ -10,9 +10,9 @@ def suc_1():
              'R134a': 0.23581,
              'Nitrogen': 0.00284,
              'Oxygen': 0.00071}
-    units = {'p_units': 'bar', 'T_units': 'degK'}
+    units = {'p_units': 'bar', 'T_units': 'degK', }
 
-    return State.define(fluid, 1.839, 291.5, **units)
+    return State.define(fluid=fluid, p=1.839, T=291.5, **units)
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def disch_1():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define(fluid, 5.902, 380.7, **units)
+    return State.define(fluid=fluid, p=5.902, T=380.7, **units)
 
 
 def test_n_exp(suc_1, disch_1):
@@ -35,15 +35,15 @@ def test_head_pol(suc_1, disch_1):
 
 
 def test_ef_pol(suc_1, disch_1):
-    assert_allclose(ef_pol(suc_1, disch_1), 0.7112136965155706)
+    assert_allclose(eff_pol(suc_1, disch_1), 0.7112136965155706)
 
 
 def test_head_isen(suc_1, disch_1):
     assert_allclose(head_isen(suc_1, disch_1), 53166.29655014263)
 
 
-def test_ef_isen(suc_1, disch_1):
-    assert_allclose(ef_isen(suc_1, disch_1), 0.68400943086328725)
+def test_eff_isen(suc_1, disch_1):
+    assert_allclose(eff_isen(suc_1, disch_1), 0.68400943086328725)
 
 
 def test_schultz_f(suc_1, disch_1):
@@ -52,3 +52,25 @@ def test_schultz_f(suc_1, disch_1):
 
 def test_head_pol_schultz(suc_1, disch_1):
     assert_allclose(head_pol_schultz(suc_1, disch_1), 55377.434270913633)
+
+
+def test_point(suc_1, disch_1):
+    point = Point(suc=suc_1, disch=disch_1, speed=1, flow_m=1)
+    assert point.suc == suc_1
+    assert point.disch == disch_1
+    assert_allclose(point.flow_m, 1)
+    assert_allclose(point.speed, 1)
+
+
+def test_point_calc_1(suc_1, disch_1):
+    units = {'p_units': 'bar',
+             'T_units': 'degK',
+             'speed_units': 'RPM',
+             'flow_m_units': 'kg/h'}
+    point = Point(suc=suc_1, disch=disch_1, speed=1, flow_m=1, **units)
+    assert_allclose(point.head, 55377.434270913633)
+    assert_allclose(point.eff, 0.7112136965155706)
+    assert_allclose(point.flow_m, 0.0002777777777777778)
+    assert_allclose(point.speed, 0.10471975511965977)
+
+

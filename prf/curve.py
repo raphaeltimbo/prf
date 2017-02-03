@@ -8,28 +8,32 @@ from prf.state import *
 __all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
            'eff_isen', 'schultz_f', 'head_pol_schultz']
 
-if __name__ == '__main__':
-    class Point:
-        def __init__(self, *args, **kwargs):
-            # TODO raise exception if speed is not given
-            # TODO give options to mass or volume flow
-            self.speed = kwargs.get('speed')
-            self.flow_m = kwargs.get('flow_m')
-            self.suc = kwargs.get('suc')
-            self.disch = kwargs.get('disch')
-            self.head = kwargs.get('head')
-            self.eff = kwargs.get('eff')
 
-            if self.suc and self.disch is not None:
-                self.calc_from_suc_disch(self.suc, self.disch)
+class Point:
+    @convert_to_base_units
+    def __init__(self, *args, **kwargs):
+        # TODO raise exception if speed is not given
+        # TODO give options to mass or volume flow
+        try:
+            self.speed = kwargs['speed']
+            self.flow_m = kwargs['flow_m']
+        except KeyError as err:
+            raise Exception('Argument not provided', err.args[0]) from err
+        self.suc = kwargs.get('suc')
+        self.disch = kwargs.get('disch')
+        self.head = kwargs.get('head')
+        self.eff = kwargs.get('eff')
 
-        def calc_from_suc_disch(self, suc, disch):
-            self.head = head_pol_schultz(suc, disch)
-            self.eff = eff_pol(suc, disch)
+        if self.suc and self.disch is not None:
+            self.calc_from_suc_disch(self.suc, self.disch)
 
-        def calc_from_suc_head_eff(self, suc, head, eff):
-            # calculate discharge state from suction, head and efficiency
-            pass
+    def calc_from_suc_disch(self, suc, disch):
+        self.head = head_pol_schultz(suc, disch)
+        self.eff = eff_pol(suc, disch)
+
+    def calc_from_suc_head_eff(self, suc, head, eff):
+        # calculate discharge state from suction, head and efficiency
+        pass
 
 
 class Curve:

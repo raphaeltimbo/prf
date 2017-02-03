@@ -3,11 +3,11 @@ from collections import namedtuple
 from .curve import *
 
 
-__all__ = ['Impeller', 'NonDimCurve']
+__all__ = ['Impeller', 'NonDimPoint']
 
 
 class Impeller:
-    def __init__(self, curves, b, D, e=0.87e-6):
+    def __init__(self, points, b, D, e=0.87e-6):
         """
         Impeller instance is initialized with the dimensional curve.
         The created instance will hold instances of the dimensional curves
@@ -37,13 +37,13 @@ class Impeller:
         --------
         """
         # TODO define speed and suction state as properties and calculate current curve.
-        self.curves = curves
+        self.points = points
         self.b = b
         self.D = D
         self.e = e
-        self.non_dim_curves = []
-        for curve in curves:
-            self.non_dim_curves.append(NonDimCurve.from_impeller(self, curve))
+        self.non_dim_points = []
+        for point in points:
+            self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
     def flow_coeff(self, flow_m, suc, speed):
         """Flow coefficient.
@@ -174,34 +174,22 @@ class Impeller:
         return cls(flow, head, efficiency)
 
 
-class NonDimCurve:
-    def __init__(self, non_dim_curve):
+class NonDimPoint:
+    def __init__(self, *args, **kwargs):
         # calculate non dimensional curve
-        self.non_dim_curve = non_dim_curve
-        self.flow_coeff = non_dim_curve[0]
-        self.head_coeff = non_dim_curve[1]
-        self.efficiency = non_dim_curve[2]
-
-    def points(self):
-        point = namedtuple('point', ['flow_coeff', 'head_coeff', 'efficiency'])
-
-        for i in range(len(self.non_dim_curve.T)):
-            yield i, point(flow_coeff=self.flow_coeff[i],
-                           head_coeff=self.head_coeff[i],
-                           efficiency=self.efficiency[i])
+        self.flow_coeff = kwargs.get('flow_coeff')
+        self.head_coeff = kwargs.get('head_coeff')
+        self.eff = kwargs.get('eff')
 
     @classmethod
-    def from_impeller(cls, impeller, curve):
+    def from_impeller(cls, impeller, point):
         # flow coefficient
-        non_dim_curve = np.zeros([3, len(curve.n)])
         # calculate non dim curve and append
-        for i, point in curve.points():
-            non_dim_curve[0, i] = impeller.flow_coeff(point.flow_m,
-                                                      point.suc,
-                                                      point.speed)
-            non_dim_curve[1, i] = impeller.head_coeff(point.head,
-                                                      point.speed)
-            non_dim_curve[2, i] = point.efficiency
+        flow_coeff = impeller.flow_coeff(point.flow_m,
+                                         point.suc,
+                                         point.speed)
+        head_coeff = impeller.head_coeff(point.head,
+                                         point.speed)
+        eff = point.eff
 
-        return non_dim_curve
-
+        return cls(flow_coeff=flow_coeff, head_coeff=head_coeff, eff=eff)
