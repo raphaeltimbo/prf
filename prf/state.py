@@ -4,7 +4,7 @@ import pint
 from itertools import combinations
 
 
-__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units', ]
+__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units']
 
 # define pint unit registry
 new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
@@ -40,8 +40,6 @@ def normalize_mix(molar_fractions):
     total = sum(molar_fractions)
     for i, comp in enumerate(molar_fractions):
         molar_fractions[i] = comp / total
-
-# TODO implement refprop names
 
 
 def convert_to_base_units(func):
@@ -152,6 +150,7 @@ class State(CP.AbstractState):
         state = cls(EOS, _fluid)
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
+        # TODO add check to update according to kwargs (p, T, h, s etc.)
         state.update(CP.PT_INPUTS, p, T)
 
         return state

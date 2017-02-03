@@ -5,8 +5,29 @@ from copy import copy
 from prf.state import *
 
 
-__all__ = ['Curve', 'n_exp', 'head_pol', 'ef_pol', 'head_isen', 'ef_isen',
-           'schultz_f', 'head_pol_schultz']
+__all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
+           'eff_isen', 'schultz_f', 'head_pol_schultz']
+
+if __name__ == '__main__':
+    class Point:
+        def __init__(self, *args, **kwargs):
+            self.speed = kwargs.get('speed')
+            self.flow_m = kwargs.get('flow_m')
+            self.suc = kwargs.get('suc')
+            self.disch = kwargs.get('disch')
+            self.head = kwargs.get('head')
+            self.eff = kwargs.get('eff')
+
+            if self.suc and self.disch is not None:
+                self.calc_from_suc_disch(self.suc, self.disch)
+
+        def calc_from_suc_disch(self, suc, disch):
+            self.head = head_pol_schultz(suc, disch)
+            self.eff = eff_pol(suc, disch)
+
+        def calc_from_suc_head_eff(self, suc, head, eff):
+            # calculate discharge state from suction, head and efficiency
+            pass
 
 
 class Curve:
@@ -85,7 +106,8 @@ class Curve:
                            n=self.n[i])
 
     @classmethod
-    def from_discharge(cls, fluid, curve, **kwargs):
+    @convert_to_base_units
+    def from_discharge(cls, **kwargs):
         """
         Construct curve given a speed and an array with
         flow, suction and discharge conditions.
@@ -114,16 +136,8 @@ class Curve:
         --------
         """
         # TODO change array to construct curves from suc and disch states.
-        speed_units = kwargs.get('speed_units', ureg.rad / ureg.s)
-        flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
-
-        # create unit registers
-        speed_ = Q_(curve[0], speed_units)
-        flow_m_ = Q_(curve[1], flow_m_units)
-
-        # convert to base units (SI)
-        speed_.ito_base_units()
-        flow_m_.ito_base_units()
+        fluid = kwargs.get('fluid')
+        curve = kwargs.get('curve')
 
         curve_head = np.zeros([11, len(curve.T)], dtype=object)
         curve_head[:6] = curve[:6]
@@ -133,11 +147,11 @@ class Curve:
         for point, point_new in zip(curve.T, curve_head.T):
             ps = point[2]
             Ts = point[3]
-            suc = State.define(fluid, ps, Ts, **kwargs)
+            suc = State.define(fluid=fluid, p=ps, T=Ts, **kwargs)
 
             pd = point[4]
             Td = point[5]
-            disch = State.define(fluid, pd, Td, **kwargs)
+            disch = State.define(fluid=fluid, p=pd, T=Td, **kwargs)
 
             point_new[6] = head_pol_schultz(suc, disch)
             point_new[7] = ef_pol(suc, disch)
@@ -149,7 +163,7 @@ class Curve:
         return cls(fluid, curve_head)
 
     @classmethod
-    def from_head_ef(cls):
+    def from_head_eff(cls):
         """
         Construct curve given a speed and an array with
         flow, head and efficiency.
@@ -242,7 +256,7 @@ def head_pol(suc, disch):
     return (n/(n-1))*(p2*v2 - p1*v1)
 
 
-def ef_pol(suc, disch):
+def eff_pol(suc, disch):
     """Polytropic efficiency.
 
     Calculates the polytropic efficiency given suction and discharge state.
@@ -303,7 +317,7 @@ def head_isen(suc, disch):
     return head_pol(suc, disch_s)
 
 
-def ef_isen(suc, disch):
+def eff_isen(suc, disch):
     """Isentropic efficiency.
 
     Calculates the Isentropic efficiency given a suction and a discharge state.
