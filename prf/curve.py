@@ -6,7 +6,7 @@ from prf.state import *
 
 
 __all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
-           'eff_isen', 'schultz_f', 'head_pol_schultz']
+           'eff_isen', 'schultz_f', 'head_pol_schultz', 'convert_to_base_units']
 
 
 class Point:

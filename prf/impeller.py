@@ -122,48 +122,35 @@ class Impeller:
     def points(self, n):
         pass
 
-    def new_curve(self, suc, speed, units=None):
+    @convert_to_base_units
+    def new_point(self, suc, speed):
         """Curve.
 
         Calculates a new curve based on the given suction state and speed.
         """
         # calculate new head and efficiency
         # use mach to check the best non dim curve to be used
-        if units is None:
-            units = {}
-        parameters = {'speed': speed}
-        converted_values = convert_to_base_units(parameters, units)
-
-        speed_ = converted_values['speed']
-
         mach_new = self.mach(suc, speed)
 
         diff_mach = []
-        for curve in self.curves:
-            mach_ = self.mach(curve.suc[0], curve.speed[0])
+        for point in self.points:
+            mach_ = self.mach(point.suc, point.speed)
             diff_mach.append(mach_new - mach_)
         idx = diff_mach.index(min(diff_mach))
 
-        non_dim_curve = self.non_dim_curves[idx]
-        curve_head_ef = np.zeros([5, non_dim_curve.shape[1]])
+        non_dim_point = self.non_dim_point[idx]
 
         rho = suc.rhomass()
         tip_speed = self.tip_speed(speed)
 
-        for i, point in non_dim_curve.points():
-            curve_head_ef[0, i] = speed
+        # calculate the mass flow
+        phi = non_dim_point.flow_coeff
+        flow_v = phi * np.pi**2 * self.D**3 * speed / 15
+        flow_m = flow_v * rho
+        head = non_dim_point.head_coeff * tip_speed
+        eff = non_dim_point.eff
 
-            # calculate the mass flow
-            phi = non_dim_curve.flow_coeff
-            flow_v = phi * np.pi**2 * self.D**3 * speed / 15
-            flow_m = flow_v * rho
-            curve_head_ef[1, i] = flow_m
-
-            curve_head_ef[2, i] = suc
-            curve_head_ef[3, i] = non_dim_curve.head_coeff * tip_speed
-            curve_head_ef[4, i] = non_dim_curve.efficiency
-
-        return curve_head_ef
+        return Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
 
     @classmethod
     def from_non_dimensional_curves(cls, flow, head, efficiency):
