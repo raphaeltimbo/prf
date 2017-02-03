@@ -55,11 +55,11 @@ def test_head_pol_schultz(suc_1, disch_1):
 
 
 def test_point(suc_1, disch_1):
-    point = Point(suc=suc_1, disch=disch_1, speed=1, flow_m=1)
+    point = Point(suc=suc_1, disch=disch_1, speed=7666, flow_m=29833.2)
     assert point.suc == suc_1
     assert point.disch == disch_1
-    assert_allclose(point.flow_m, 1)
-    assert_allclose(point.speed, 1)
+    assert_allclose(point.flow_m, 29833.2)
+    assert_allclose(point.speed, 7666)
 
 
 def test_point_calc_1(suc_1, disch_1):
@@ -67,10 +67,10 @@ def test_point_calc_1(suc_1, disch_1):
              'T_units': 'degK',
              'speed_units': 'RPM',
              'flow_m_units': 'kg/h'}
-    point = Point(suc=suc_1, disch=disch_1, speed=1, flow_m=1, **units)
+    point = Point(suc=suc_1, disch=disch_1, speed=7666, flow_m=29833.2, **units)
     assert_allclose(point.head, 55377.434270913633)
     assert_allclose(point.eff, 0.7112136965155706)
-    assert_allclose(point.flow_m, 0.0002777777777777778)
-    assert_allclose(point.speed, 0.10471975511965977)
+    assert_allclose(point.flow_m, 8.287)
+    assert_allclose(point.speed, 802.7816427473118)
 
 

@@ -123,7 +123,7 @@ class Impeller:
         pass
 
     @convert_to_base_units
-    def new_point(self, suc, speed):
+    def new_point(self, suc, speed, **kwargs):
         """Curve.
 
         Calculates a new curve based on the given suction state and speed.
@@ -138,7 +138,7 @@ class Impeller:
             diff_mach.append(mach_new - mach_)
         idx = diff_mach.index(min(diff_mach))
 
-        non_dim_point = self.non_dim_point[idx]
+        non_dim_point = self.non_dim_points[idx]
 
         rho = suc.rhomass()
         tip_speed = self.tip_speed(speed)

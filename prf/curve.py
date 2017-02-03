@@ -24,6 +24,8 @@ class Point:
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
 
+        if self.disch is None:
+            self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
         if self.suc and self.disch is not None:
             self.calc_from_suc_disch(self.suc, self.disch)
 
@@ -33,7 +35,12 @@ class Point:
 
     def calc_from_suc_head_eff(self, suc, head, eff):
         # calculate discharge state from suction, head and efficiency
-        pass
+        h_suc = suc.hmass()
+        h_disch = head/eff + h_suc
+
+        def calc_disch()
+        disch = copy(suc)
+        disch.update(CP.HmassP_INPUTS)
 
 
 class Curve:
