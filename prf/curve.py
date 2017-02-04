@@ -2,6 +2,7 @@ import numpy as np
 import CoolProp as CP
 from collections import namedtuple
 from copy import copy
+from scipy.optimize import newton
 from prf.state import *
 
 
@@ -34,13 +35,45 @@ class Point:
         self.eff = eff_pol(suc, disch)
 
     def calc_from_suc_head_eff(self, suc, head, eff):
+        """Point from suction, head and efficiency.
+
+        This function will construct a point given its suction, head and
+        efficiency. Discharge state is calculated by an iterative process
+        where the discharge pressure is initially defined based on an
+        isentropic compression. After defining the pressure, polytropic
+        head is calculated and compared with the given head. A new pressure
+        is defined and the process is repeated.
+
+        Parameters
+        ----------
+        suc : state
+            Suction state.
+        head : float
+            Polytropic head.
+        eff : float
+            Polytropic efficiency.
+
+        Returns
+        -------
+
+        """
         # calculate discharge state from suction, head and efficiency
         h_suc = suc.hmass()
         h_disch = head/eff + h_suc
 
-        #def calc_disch()
-        #disch = copy(suc)
-        #disch.update(CP.HmassP_INPUTS)
+        # first disch state will consider and isentropic compression
+        s_disch = suc.smass()
+        disch = State.define(fluid=suc.fluid_dict(), h=h_disch, s=s_disch)
+
+        def update_pressure(p):
+            disch.update(CP.PT_INPUTS, p, disch.T())
+            new_head = head_pol_schultz(suc, disch)
+
+            return new_head - head
+
+        newton(update_pressure, disch.p())
+
+        self.disch = disch
 
 
 class Curve:

@@ -74,3 +74,32 @@ def test_point_calc_1(suc_1, disch_1):
     assert_allclose(point.speed, 802.7816427473118)
 
 
+@pytest.fixture
+def state_si_main_op():
+    fluid = {'Methane': 0.69945,
+             'Ethane': 0.09729,
+             'Propane': 0.05570,
+             'n-Butane': 0.01780,
+             'Isobutane': 0.01020,
+             'n-Pentane': 0.00390,
+             'Isopentane': 0.00360,
+             'n-Hexane': 0.00180,
+             'Nitrogen': 0.01490,
+             'HydrogenSulfide': 0.00017,
+             'CarbonDioxide': 0.09259,
+             'Water': 0.00200}
+    units = {'p_units': 'bar', 'T_units': 'degC'}
+
+    return (State.define(p=16.99, T=38.4, fluid=fluid, **units),  # suc
+            140349.53763396584,                                   # head
+            0.71121369651557265)                                  # eff
+
+
+def test_point_calc_from_suc_head_eff(state_si_main_op):
+    suc, head, eff = (state_si_main_op)
+    units = {'flow_m_units': 'kg/h', 'speed_units': 'RPM'}
+    point = Point(suc=suc, head=head, eff=eff, flow_m=175171, speed=12204, **units)
+    assert_allclose(point.disch.p(), 5272812.563810886)
+    assert_allclose(point.disch.T(), 425.3521217990619)
+    assert_allclose(point.speed, 1277.9998914803277)
+    assert_allclose(point.flow_m, 48.658611111111114)
