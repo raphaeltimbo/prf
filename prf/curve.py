@@ -38,9 +38,9 @@ class Point:
         h_suc = suc.hmass()
         h_disch = head/eff + h_suc
 
-        def calc_disch()
-        disch = copy(suc)
-        disch.update(CP.HmassP_INPUTS)
+        #def calc_disch()
+        #disch = copy(suc)
+        #disch.update(CP.HmassP_INPUTS)
 
 
 class Curve:
@@ -214,20 +214,20 @@ def n_exp(suc, disch):
 
     Calculates the polytropic exponent given a suction and a discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     n_exp : float
         Polytropic exponent.
 
-    Examples:
-    ---------
+    Examples
+    --------
 
     """
     ps = suc.p()
@@ -243,20 +243,20 @@ def head_pol(suc, disch):
 
     Calculates the polytropic head given a suction and a discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     head_pol : float
         Polytropic head.
 
-    Examples:
-    ---------
+    Examples
+    --------
 
     """
     n = n_exp(suc, disch)
@@ -274,20 +274,20 @@ def eff_pol(suc, disch):
 
     Calculates the polytropic efficiency given suction and discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     ef_pol : float
         Polytropic head.
 
-    Examples:
-    ---------
+    Examples
+    --------
 
     """
     wp = head_pol(suc, disch)
@@ -300,20 +300,20 @@ def head_isen(suc, disch):
 
     Calculates the Isentropic head given a suction and a discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     head_isen : float
         Isentropic head.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> fluid ={'CarbonDioxide': 0.76064,
     ...         'R134a': 0.23581,
     ...         'Nitrogen': 0.00284,
@@ -335,20 +335,20 @@ def eff_isen(suc, disch):
 
     Calculates the Isentropic efficiency given a suction and a discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     ef_isen : float
         Isentropic efficiency.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> fluid ={'CarbonDioxide': 0.76064,
     ...         'R134a': 0.23581,
     ...         'Nitrogen': 0.00284,
@@ -369,20 +369,20 @@ def schultz_f(suc, disch):
     Calculates the Schultz factor given a suction and discharge state.
     This factor is used to correct the polytropic head as per PTC 10.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     ef_isen : float
         Isentropic efficiency.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> fluid ={'CarbonDioxide': 0.76064,
     ...         'R134a': 0.23581,
     ...         'Nitrogen': 0.00284,
@@ -408,20 +408,20 @@ def head_pol_schultz(suc, disch):
     Calculates the polytropic head corrected by the Schultz factor
     given a suction and a discharge state.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     suc : State
         Suction state.
     disch : State
         Discharge state.
 
-    Returns:
-    --------
+    Returns
+    -------
     head_pol_schultz : float
         Polytropic head corrected by the Schultz factor.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> fluid ={'CarbonDioxide': 0.76064,
     ...         'R134a': 0.23581,
     ...         'Nitrogen': 0.00284,

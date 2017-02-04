@@ -81,18 +81,18 @@ class Impeller:
 
         Calculates the impeller tip speed for a given speed.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         speed : float
             Speed in rad/s.
 
-        Returns:
-        --------
+        Returns
+        -------
         tip_speed : float
             Impeller tip speed. (meter**2 radian**2/second**2)
 
-        Examples:
-        ---------
+        Examples
+        --------
 
         """
         return (np.pi * speed * self.D / 60)**2
@@ -102,15 +102,15 @@ class Impeller:
 
         Calculates the head coefficient given a head and speed.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         head : float
             Head in J/kg.
         speed : float
             Speed in rad/s.
 
-        Returns:
-        --------
+        Returns
+        -------
         head_coeff : float
             Head coefficient (non dimensional).
         """
@@ -180,3 +180,4 @@ class NonDimPoint:
         eff = point.eff
 
         return cls(flow_coeff=flow_coeff, head_coeff=head_coeff, eff=eff)
+

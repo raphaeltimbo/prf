@@ -27,13 +27,13 @@ def normalize_mix(molar_fractions):
     """
     Normalize the molar fractions so that the sum is 1.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     molar_fractions : list
         Molar fractions of the components.
 
-    Returns:
-    --------
+    Returns
+    -------
     molar_fractions: list
         Molar fractions list will be modified in place.
     """
@@ -47,15 +47,15 @@ def convert_to_base_units(func):
 
     This function will convert parameters to base units.
 
-    Parameters:
+    Parameters
     ----------
     parameters : dict
         Dictionary with parameters and its value.
     units : dict
         Dictionary with the parameter units
 
-    Returns:
-    --------
+    Returns
+    -------
     parameters : dict
         Dictionary with converted units.
     """
