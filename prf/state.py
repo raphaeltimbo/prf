@@ -139,6 +139,8 @@ class State(CP.AbstractState):
         EOS = kwargs.get('EOS', 'REFPROP')
         p = kwargs.get('p')
         T = kwargs.get('T')
+        h = kwargs.get('h')
+        s = kwargs.get('s')
 
         constituents = []
         molar_fractions = []
@@ -156,7 +158,10 @@ class State(CP.AbstractState):
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
         # TODO add check to update according to kwargs (p, T, h, s etc.)
-        state.update(CP.PT_INPUTS, p, T)
+        if p and T is not None:
+            state.update(CP.PT_INPUTS, p, T)
+        if h and s is not None:
+            state.update(CP.HmassSmass_INPUTS, h, s)
 
         return state
 
