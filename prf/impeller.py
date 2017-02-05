@@ -123,7 +123,7 @@ class Impeller:
     def new_point(self, suc, speed, **kwargs):
         """Curve.
 
-        Calculates a new curve based on the given suction state and speed.
+        Calculates a new point based on the given suction state and speed.
         """
         # calculate new head and efficiency
         # use mach to check the best non dim curve to be used
