@@ -95,6 +95,7 @@ class Impeller:
         --------
 
         """
+        # TODO check dimensions and units
         return (np.pi * speed * self.D / 60)**2
 
     def head_coeff(self, head, speed):
@@ -120,8 +121,8 @@ class Impeller:
         return self.D * speed / (2 * suc.speed_sound())
 
     def reynolds(self, suc, speed):
-        return (np.pi * self.D * self.b * speed * suc.rhomass() /
-                (60 * suc.viscosity()))
+        return (self.D * self.b * speed * suc.rhomass() /
+                (suc.viscosity()))
 
     @staticmethod
     def volume_ratio(suc, disch):
@@ -167,9 +168,10 @@ class Impeller:
         reynolds_new = self.reynolds(point_new.suc, point_new.speed)
         volume_ratio_new = self.volume_ratio(point_new.suc, point_new.disch)
 
-        mach_comp = compare_mach(mach_sp=mach_new, mach_t=mach_old)
-
-        point_new.mach_diff = mach_comp
+        point_new.mach_comparison = compare_mach(mach_sp=mach_new,
+                                                 mach_t=mach_old)
+        point_new.reynolds_comparison = compare_reynolds(reynolds_sp=reynolds_new,
+                                                         reynolds_t=reynolds_old)
 
         return point_new
 
@@ -210,7 +212,7 @@ def compare_mach(mach_sp, mach_t):
 
     Returns
     -------
-    Dictionary with diff (Mmsp - Mmt), valid(True if diff is within limits),
+    Dictionary with diff (Mmsp - Mmt), valid (True if diff is within limits),
     lower limit and upper limit.
     """
     if mach_sp < 0.214:
@@ -232,6 +234,52 @@ def compare_mach(mach_sp, mach_t):
 
     return {'diff': diff, 'valid': valid,
             'lower_limit': lower_limit, 'upper_limit': upper_limit}
+
+
+def compare_reynolds(reynolds_sp, reynolds_t):
+    """Compare reynolds numbers.
+
+    Compares the reynolds numbers and evaluates
+    them according to the PCT10 criteria.
+
+    Parameters
+    ----------
+    reynolds_sp : float
+        Reynolds number from specified condition.
+    reynolds_t : float
+        Reynolds number from test condition.
+
+    Returns
+    -------
+    Dictionary with ratio (Ret/Resp), valid (True if ration is within limits),
+    lower limit and upper limit.
+    """
+    x = (reynolds_sp/1e7)**0.3
+
+    if 9e4 < reynolds_sp < 1e7:
+        upper_limit = 100**x
+    elif 1e7 < reynolds_sp:
+        upper_limit = 100
+    else:
+        upper_limit = 100
+
+    if 9e4 < reynolds_sp < 1e6:
+        lower_limit = 0.01**x
+    elif 1e6 < reynolds_sp:
+        lower_limit = 0.1
+    else:
+        lower_limit = 0.1
+
+    ratio = reynolds_t/reynolds_sp
+
+    if lower_limit < ratio < upper_limit:
+        valid = True
+    else:
+        valid = False
+
+    return {'ratio': ratio, 'valid': valid,
+            'lower_limit': lower_limit, 'upper_limit': upper_limit}
+
 
 # TODO add compare_reynolds
 # TODO add compare_volume_ratio

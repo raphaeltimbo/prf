@@ -23,7 +23,8 @@ class Point:
         self.disch = kwargs.get('disch')
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
-        self.mach_diff = kwargs.get('mach_diff')
+        self.mach_comparison = kwargs.get('mach_comparison')
+        self.reynolds_comparison = kwargs.get('reynolds_comparison')
 
         if self.disch is None:
             self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
