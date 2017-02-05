@@ -232,3 +232,6 @@ def compare_mach(mach_sp, mach_t):
 
     return {'diff': diff, 'valid': valid,
             'lower_limit': lower_limit, 'upper_limit': upper_limit}
+
+# TODO add compare_reynolds
+# TODO add compare_volume_ratio
