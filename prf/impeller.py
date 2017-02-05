@@ -15,8 +15,8 @@ class Impeller:
 
         Parameters
         ----------
-        curves : list
-            List with curve instances.
+        points : list
+            List with points instances.
         b : float
             Impeller width (m).
         D : float
@@ -27,8 +27,8 @@ class Impeller:
 
         Returns
         -------
-        non_dim_curves : list
-            List with non dimensional curve instances.
+        non_dim_points : list
+            List with non dimensional point instances.
 
         Attributes
         ----------
@@ -119,9 +119,6 @@ class Impeller:
     def mach(self, suc, speed):
         return np.pi * self.D * speed / (60 * suc.speed_sound())
 
-    def points(self, n):
-        pass
-
     @convert_to_base_units
     def new_point(self, suc, speed, **kwargs):
         """Curve.
@@ -151,14 +148,6 @@ class Impeller:
         eff = non_dim_point.eff
 
         return Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
-
-    @classmethod
-    def from_non_dimensional_curves(cls, flow, head, efficiency):
-        """
-        Constructor to initialize an impeller from a non dimensional curve.
-        """
-        # TODO calculate non dimensional curve
-        return cls(flow, head, efficiency)
 
 
 class NonDimPoint:
