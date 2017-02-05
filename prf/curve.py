@@ -13,7 +13,6 @@ __all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
 class Point:
     @convert_to_base_units
     def __init__(self, *args, **kwargs):
-        # TODO raise exception if speed is not given
         # TODO give options to mass or volume flow
         try:
             self.speed = kwargs['speed']
@@ -24,6 +23,7 @@ class Point:
         self.disch = kwargs.get('disch')
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
+        self.mach_diff = kwargs.get('mach_diff')
 
         if self.disch is None:
             self.calc_from_suc_head_eff(self.suc, self.head, self.eff)

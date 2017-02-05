@@ -117,7 +117,15 @@ class Impeller:
         return head / self.tip_speed(speed)
 
     def mach(self, suc, speed):
-        return np.pi * self.D * speed / (60 * suc.speed_sound())
+        return self.D * speed / (2 * suc.speed_sound())
+
+    def reynolds(self, suc, speed):
+        return (np.pi * self.D * self.b * speed * suc.rhomass() /
+                (60 * suc.viscosity()))
+
+    @staticmethod
+    def volume_ratio(suc, disch):
+        return suc.rhomass() / disch.rhomass()
 
     @convert_to_base_units
     def new_point(self, suc, speed, **kwargs):
@@ -135,7 +143,13 @@ class Impeller:
             diff_mach.append(mach_new - mach_)
         idx = diff_mach.index(min(diff_mach))
 
+        point_old = self.points[idx]
         non_dim_point = self.non_dim_points[idx]
+
+        # store mach, reynolds and volume ratio from original point
+        mach_old = self.mach(point_old.suc, point_old.speed)
+        reynolds_old = self.reynolds(point_old.suc, point_old.speed)
+        volume_ratio_old = self.volume_ratio(point_old.suc, point_old.disch)
 
         rho = suc.rhomass()
         tip_speed = self.tip_speed(speed)
@@ -147,7 +161,17 @@ class Impeller:
         head = non_dim_point.head_coeff * tip_speed
         eff = non_dim_point.eff
 
-        return Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
+        point_new = Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
+        # store mach, reynolds and volume ratio from original point
+        mach_new = self.mach(point_new.suc, point_new.speed)
+        reynolds_new = self.reynolds(point_new.suc, point_new.speed)
+        volume_ratio_new = self.volume_ratio(point_new.suc, point_new.disch)
+
+        mach_comp = compare_mach(mach_sp=mach_new, mach_t=mach_old)
+
+        point_new.mach_diff = mach_comp
+
+        return point_new
 
 
 class NonDimPoint:
@@ -170,3 +194,41 @@ class NonDimPoint:
 
         return cls(flow_coeff=flow_coeff, head_coeff=head_coeff, eff=eff)
 
+
+def compare_mach(mach_sp, mach_t):
+    """Compare mach numbers.
+
+    Compares the mach numbers and evaluates
+    them according to the PTC10 criteria.
+
+    Parameters
+    ----------
+    mach_sp : float
+        Mach number from specified condition.
+    mach_t : float
+        Mach number from test condition.
+
+    Returns
+    -------
+    Dictionary with diff (Mmsp - Mmt), valid(True if diff is within limits),
+    lower limit and upper limit.
+    """
+    if mach_sp < 0.214:
+        lower_limit = -mach_sp
+        upper_limit = -0.25 * mach_sp + 0.286
+    elif 0.215 < mach_sp < 0.86:
+        lower_limit = 0.266 * mach_sp - 0.271
+        upper_limit = -0.25 * mach_sp + 0.286
+    else:
+        lower_limit = -0.042
+        upper_limit = 0.07
+
+    diff = mach_sp - mach_t
+
+    if lower_limit < diff < upper_limit:
+        valid = True
+    else:
+        valid = False
+
+    return {'diff': diff, 'valid': valid,
+            'lower_limit': lower_limit, 'upper_limit': upper_limit}
