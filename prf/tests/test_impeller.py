@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 
 
 @pytest.fixture
-def impeller1():
+def impeller():
     fluid = {'CarbonDioxide': 0.79585,
              'R134a': 0.16751,
              'Nitrogen': 0.02903,
@@ -23,17 +23,24 @@ def impeller1():
     return Impeller([point], b, D)
 
 
-def test_impeller1(impeller1):
-    flow_coeff0 = 3.26149996e-04
-    head_coeff0 = 2.45924494e+02
+def test_impeller0(impeller):
+    flow_coeff = 0.12295565184151291
+    head_coeff = 818.5697680779809
+    assert_allclose(impeller.flow_coeff(point=0), flow_coeff)
+    assert_allclose(impeller.head_coeff(point=0), head_coeff)
+
+
+def test_impeller1(impeller):
+    flow_coeff0 = 0.12295565184151291
+    head_coeff0 = 818.5697680779803
     eff0 = 7.58596759e-01
-    assert_allclose(impeller1.non_dim_points[0].flow_coeff, flow_coeff0)
-    assert_allclose(impeller1.non_dim_points[0].head_coeff, head_coeff0)
-    assert_allclose(impeller1.non_dim_points[0].eff, eff0)
+    assert_allclose(impeller.non_dim_points[0].flow_coeff, flow_coeff0)
+    assert_allclose(impeller.non_dim_points[0].head_coeff, head_coeff0)
+    assert_allclose(impeller.non_dim_points[0].eff, eff0)
 
 
-def test_mach(impeller1):
+def test_mach(impeller):
     mach = 0.6398534546248233
-    assert_allclose(impeller1.mach(impeller1.points[0].suc,
-                                   impeller1.points[0].speed),
+    assert_allclose(impeller.mach(impeller.points[0].suc,
+                                  impeller.points[0].speed),
                     mach)

@@ -45,7 +45,7 @@ class Impeller:
         for point in points:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
-    def flow_coeff(self, flow_m, suc, speed):
+    def flow_coeff(self, flow_m=None, suc=None, speed=None, point=None):
         """Flow coefficient.
 
         Calculates the flow coefficient for a point given the mass flow,
@@ -69,14 +69,23 @@ class Impeller:
         ---------
 
         """
-        v = 1 / suc.rhomass()
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
+            flow_m = point.flow_m
+            suc = point.suc
+            speed = point.speed
 
-        flow_coeff = (flow_m * v /
-                      (np.pi**2 * self.D**3 * speed * 15))
+        v = 1 / suc.rhomass()
+        u = self.tip_speed(speed)
+
+        # 3.2.5 ISO-5389
+        flow_coeff = (flow_m * v * 4 /
+                      (np.pi * self.D**2 * u))
 
         return flow_coeff
 
-    def tip_speed(self, speed):
+    def tip_speed(self, speed=None, point=None):
         """Impeller tip speed.
 
         Calculates the impeller tip speed for a given speed.
@@ -89,16 +98,23 @@ class Impeller:
         Returns
         -------
         tip_speed : float
-            Impeller tip speed. (meter**2 radian**2/second**2)
+            Impeller tip speed in m/s.
 
         Examples
         --------
 
         """
         # TODO check dimensions and units
-        return (np.pi * speed * self.D / 60)**2
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
+            speed = point.speed
 
-    def head_coeff(self, head, speed):
+        u = speed * self.D / 2
+
+        return u
+
+    def head_coeff(self, head=None, speed=None, point=None):
         """Head coefficient.
 
         Calculates the head coefficient given a head and speed.
@@ -115,14 +131,47 @@ class Impeller:
         head_coeff : float
             Head coefficient (non dimensional).
         """
-        return head / self.tip_speed(speed)
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
 
-    def mach(self, suc, speed):
-        return self.D * speed / (2 * suc.speed_sound())
+            head = point.head
+            speed = point.speed
 
-    def reynolds(self, suc, speed):
-        return (self.D * self.b * speed * suc.rhomass() /
-                (suc.viscosity()))
+        u = self.tip_speed(speed)
+
+        head_coeff = 2 * head / u  # 3.2.6 ISO-5389
+
+        return head_coeff
+
+    def mach(self, suc=None, speed=None, point=None):
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
+            suc = point.suc
+            speed = point.speed
+
+        u = self.tip_speed(speed)
+        a = suc.speed_sound()
+
+        mach = u / a  # 3.2.3 ISO-5389
+
+        return mach
+
+    def reynolds(self, suc=None, speed=None, point=None):
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
+            suc = point.suc
+            speed = point.speed
+
+        u = self.tip_speed(speed)
+        b = self.b
+        v = suc.viscosity() / suc.rhomass()  # E.115 ISO-5389
+
+        reynolds = u * b / v  # 3.2.4 ISO-5389
+
+        return reynolds
 
     @staticmethod
     def volume_ratio(suc, disch):
