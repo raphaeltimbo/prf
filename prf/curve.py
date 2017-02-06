@@ -29,6 +29,7 @@ class Point:
         self.eff = kwargs.get('eff')
         self.mach_comparison = kwargs.get('mach_comparison')
         self.reynolds_comparison = kwargs.get('reynolds_comparison')
+        self.volume_ratio_comparison = kwargs.get('volume_ratio_comparison')
 
         if self.disch is None:
             self.calc_from_suc_head_eff(self.suc, self.head, self.eff)

@@ -231,6 +231,8 @@ class Impeller:
                                                  mach_t=mach_old)
         point_new.reynolds_comparison = compare_reynolds(reynolds_sp=reynolds_new,
                                                          reynolds_t=reynolds_old)
+        point_new.volume_ratio_comparison = compare_volume_ratio(ratio_sp=volume_ratio_new,
+                                                                 ratio_t=volume_ratio_new)
 
         return point_new
 
@@ -310,7 +312,7 @@ def compare_reynolds(reynolds_sp, reynolds_t):
 
     Returns
     -------
-    Dictionary with ratio (Ret/Resp), valid (True if ration is within limits),
+    Dictionary with ratio (Ret/Resp), valid (True if ratio is within limits),
     lower limit and upper limit.
     """
     x = (reynolds_sp/1e7)**0.3
@@ -349,11 +351,24 @@ def compare_volume_ratio(ratio_sp, ratio_t):
     Parameters
     ----------
     ratio_sp : float
-    ratio_t
+        Volume ratio from specified condition.
+    ratio_t : float
+        Volume ratio from test condition.
 
     Returns
     -------
-
+    Dictionary with ratio (ratio_sp / ratio_t), valid (True if ratio is within limits),
+    lower limit and upper limit.
     """
-# TODO add compare_reynolds
-# TODO add compare_volume_ratio
+    ratio = ratio_t / ratio_sp
+
+    lower_limit = 0.95
+    upper_limit = 1.05
+
+    if lower_limit < ratio < upper_limit:
+        valid = True
+    else:
+        valid = False
+
+    return {'ratio': ratio, 'valid': valid,
+            'lower_limit': lower_limit, 'upper_limit': upper_limit}
