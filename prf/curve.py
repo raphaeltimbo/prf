@@ -13,14 +13,18 @@ __all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
 class Point:
     @convert_to_base_units
     def __init__(self, *args, **kwargs):
-        # TODO give options to mass or volume flow
-        try:
-            self.speed = kwargs['speed']
-            self.flow_m = kwargs['flow_m']
-        except KeyError as err:
-            raise Exception('Argument not provided', err.args[0]) from err
         self.suc = kwargs.get('suc')
         self.disch = kwargs.get('disch')
+        try:
+            self.speed = kwargs['speed']
+            if 'flow_m' not in kwargs:
+                self.flow_v = kwargs['flow_v']
+                self.flow_m = self.flow_v * self.suc.rhomass()
+            else:
+                self.flow_m = kwargs['flow_m']
+                self.flow_v = self.flow_m / self.suc.rhomass()
+        except KeyError as err:
+            raise Exception('Argument not provided', err.args[0]) from err
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
         self.mach_comparison = kwargs.get('mach_comparison')

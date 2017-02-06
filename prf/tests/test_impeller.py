@@ -33,7 +33,7 @@ def test_impeller1(impeller1):
 
 
 def test_mach(impeller1):
-    mach = 0.06700529708077983
+    mach = 0.6398534546248233
     assert_allclose(impeller1.mach(impeller1.points[0].suc,
                                    impeller1.points[0].speed),
                     mach)
