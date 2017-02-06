@@ -25,14 +25,14 @@ def impeller():
 
 def test_impeller0(impeller):
     flow_coeff = 0.12295565184151291
-    head_coeff = 818.5697680779809
+    head_coeff = 5.393727708502117
     assert_allclose(impeller.flow_coeff(point=0), flow_coeff)
     assert_allclose(impeller.head_coeff(point=0), head_coeff)
 
 
 def test_impeller1(impeller):
     flow_coeff0 = 0.12295565184151291
-    head_coeff0 = 818.5697680779803
+    head_coeff0 = 5.393727708502117
     eff0 = 7.58596759e-01
     assert_allclose(impeller.non_dim_points[0].flow_coeff, flow_coeff0)
     assert_allclose(impeller.non_dim_points[0].head_coeff, head_coeff0)

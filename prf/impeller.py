@@ -140,7 +140,7 @@ class Impeller:
 
         u = self.tip_speed(speed)
 
-        head_coeff = 2 * head / u  # 3.2.6 ISO-5389
+        head_coeff = 2 * head / u**2  # 3.2.6 ISO-5389
 
         return head_coeff
 
@@ -173,9 +173,16 @@ class Impeller:
 
         return reynolds
 
-    @staticmethod
-    def volume_ratio(suc, disch):
-        return suc.rhomass() / disch.rhomass()
+    def volume_ratio(self, suc=None, disch=None, point=None):
+        if point is not None:
+            if isinstance(point, int):
+                point = self.points[point]
+            suc = point.suc
+            disch = point.disch
+
+        volume_ratio = suc.rhomass() / disch.rhomass()
+
+        return volume_ratio
 
     @convert_to_base_units
     def new_point(self, suc, speed, **kwargs):
@@ -189,7 +196,7 @@ class Impeller:
 
         diff_mach = []
         for point in self.points:
-            mach_ = self.mach(point.suc, point.speed)
+            mach_ = self.mach(point=point)
             diff_mach.append(mach_new - mach_)
         idx = diff_mach.index(min(diff_mach))
 
@@ -197,25 +204,28 @@ class Impeller:
         non_dim_point = self.non_dim_points[idx]
 
         # store mach, reynolds and volume ratio from original point
-        mach_old = self.mach(point_old.suc, point_old.speed)
-        reynolds_old = self.reynolds(point_old.suc, point_old.speed)
-        volume_ratio_old = self.volume_ratio(point_old.suc, point_old.disch)
+        mach_old = self.mach(point=point_old)
+        reynolds_old = self.reynolds(point=point_old)
+        volume_ratio_old = self.volume_ratio(point=point_old)
 
         rho = suc.rhomass()
-        tip_speed = self.tip_speed(speed)
+        u = self.tip_speed(speed)
 
         # calculate the mass flow
         phi = non_dim_point.flow_coeff
-        flow_v = phi * np.pi**2 * self.D**3 * speed / 15
+        psi = non_dim_point.head_coeff
+
+        flow_v = phi * np.pi * self.D**2 * u / 4
         flow_m = flow_v * rho
-        head = non_dim_point.head_coeff * tip_speed
+
+        head = psi * u**2 / 2
         eff = non_dim_point.eff
 
         point_new = Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
         # store mach, reynolds and volume ratio from original point
-        mach_new = self.mach(point_new.suc, point_new.speed)
-        reynolds_new = self.reynolds(point_new.suc, point_new.speed)
-        volume_ratio_new = self.volume_ratio(point_new.suc, point_new.disch)
+        mach_new = self.mach(point=point_new)
+        reynolds_new = self.reynolds(point=point_new)
+        volume_ratio_new = self.volume_ratio(point=point_new)
 
         point_new.mach_comparison = compare_mach(mach_sp=mach_new,
                                                  mach_t=mach_old)
@@ -330,5 +340,20 @@ def compare_reynolds(reynolds_sp, reynolds_t):
             'lower_limit': lower_limit, 'upper_limit': upper_limit}
 
 
+def compare_volume_ratio(ratio_sp, ratio_t):
+    """Compare volume ratio.
+
+    Compares the volume ratio and evaluates
+    them according to the PCT10 criteria.
+
+    Parameters
+    ----------
+    ratio_sp : float
+    ratio_t
+
+    Returns
+    -------
+
+    """
 # TODO add compare_reynolds
 # TODO add compare_volume_ratio
