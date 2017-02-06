@@ -2,6 +2,7 @@ import os
 import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
+from functools import wraps
 
 
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units']
@@ -60,6 +61,7 @@ def convert_to_base_units(func):
         Dictionary with converted units.
     """
     # get units from kwargs. Set default if not provided.
+    @wraps(func)
     def inner(*args, **kwargs):
         p_units = kwargs.get('p_units', ureg.Pa)
         T_units = kwargs.get('T_units', ureg.degK)
