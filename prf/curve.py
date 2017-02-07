@@ -1,20 +1,20 @@
 import numpy as np
 import CoolProp as CP
-from collections import namedtuple
 from copy import copy
 from scipy.optimize import newton
 from prf.state import *
 
 
-__all__ = ['Point', 'Curve', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
+__all__ = ['Point', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
            'eff_isen', 'schultz_f', 'head_pol_schultz', 'convert_to_base_units']
 
 
 class Point:
     @convert_to_base_units
     def __init__(self, *args, **kwargs):
+        # TODO create dictionary with optional inputs
         self.suc = kwargs.get('suc')
-        self.disch = kwargs.get('disch')
+
         try:
             self.speed = kwargs['speed']
             if 'flow_m' not in kwargs:
@@ -25,24 +25,29 @@ class Point:
                 self.flow_v = self.flow_m / self.suc.rhomass()
         except KeyError as err:
             raise Exception('Argument not provided', err.args[0]) from err
+
+        self.disch = kwargs.get('disch')
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
+        self.power = kwargs.get('power')
+
+        if 'suc' and 'disch' in kwargs:
+            self.calc_from_suc_disch(self.suc, self.disch)
+        elif 'suc' and 'head' and 'eff' in kwargs:
+            self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
+        elif 'suc' and 'head' and 'power' in kwargs:
+            self.calc_from_suc_head_power(self.suc, self.head, self.power)
+        else:
+            raise KeyError('Argument not provided')
+
         self.mach_comparison = kwargs.get('mach_comparison')
         self.reynolds_comparison = kwargs.get('reynolds_comparison')
         self.volume_ratio_comparison = kwargs.get('volume_ratio_comparison')
 
-        if self.disch is None:
-            # check if head and efficiency are provided
-            if self.head or self.eff is None:
-                raise KeyError('Argument not provided')
-                self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
-
-        if self.suc and self.disch is not None:
-            self.calc_from_suc_disch(self.suc, self.disch)
-
     def calc_from_suc_disch(self, suc, disch):
         self.head = head_pol_schultz(suc, disch)
         self.eff = eff_pol(suc, disch)
+        self.power = power(self.flow_m, self.head, self.eff)
 
     def calc_from_suc_head_eff(self, suc, head, eff):
         """Point from suction, head and efficiency.
@@ -84,6 +89,11 @@ class Point:
         newton(update_pressure, disch.p())
 
         self.disch = disch
+
+    def calc_from_suc_head_power(self, suc, head, power):
+        # calculate efficiency
+        eff = self.flow_m * head / power
+        self.calc_from_suc_head_eff(suc, head, eff)
 
 
 def n_exp(suc, disch):
