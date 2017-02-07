@@ -48,6 +48,38 @@ class Impeller:
         for point in points:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
+        # impeller current state
+        self._suc = self.points[0]
+        self._speed = self.points[0]
+
+        # the current points and curve
+        self.new_points = None
+        self.new_curve = None
+        self._calc_new()
+
+    @property
+    def suc(self):
+        return self._suc
+
+    @suc.setter
+    def suc(self, new_suc):
+        self._suc = new_suc
+        # call new curve
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @speed.setter
+    def speed(self, new_speed):
+        self._speed = new_speed
+        # call new curve
+
+    def _calc_new(self):
+        self.new_points = [self.new_point(p.suc, p.speed)
+                           for p in self.points]
+        # TODO implement curve
+
     def flow_coeff(self, flow_m=None, suc=None, speed=None, point=None):
         """Flow coefficient.
 
@@ -235,7 +267,7 @@ class Impeller:
         point_new.reynolds_comparison = compare_reynolds(reynolds_sp=reynolds_new,
                                                          reynolds_t=reynolds_old)
         point_new.volume_ratio_comparison = compare_volume_ratio(ratio_sp=volume_ratio_new,
-                                                                 ratio_t=volume_ratio_new)
+                                                                 ratio_t=volume_ratio_old)
 
         return point_new
 
