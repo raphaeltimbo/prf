@@ -92,8 +92,8 @@ class Point:
 
     def calc_from_suc_head_power(self, suc, head, power):
         # calculate efficiency
-        eff = self.flow_m * head / power
-        self.calc_from_suc_head_eff(suc, head, eff)
+        self.eff = self.flow_m * head / power
+        self.calc_from_suc_head_eff(suc, head, self.eff)
 
 
 def n_exp(suc, disch):

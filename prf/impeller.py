@@ -1,5 +1,5 @@
 import numpy as np
-from collections import namedtuple
+from scipy.interpolate import CubicSpline
 from .curve import *
 
 
@@ -55,6 +55,7 @@ class Impeller:
         # the current points and curve
         self.new_points = None
         self.new_curve = None
+        self.head_curve = None
         self._calc_new()
 
     @property
@@ -76,9 +77,12 @@ class Impeller:
         # call new curve
 
     def _calc_new(self):
-        self.new_points = [self.new_point(p.suc, p.speed)
-                           for p in self.points]
-        # TODO implement curve
+        self.new_points = [self.new_point(p.suc, p.speed) for p in self.points]
+
+        flow_v = [p.flow_v for p in self.new_points]
+        head = [p.head for p in self.new_points]
+
+        self.head_curve = CubicSpline(flow_v, head)
 
     def flow_coeff(self, flow_m=None, suc=None, speed=None, point=None):
         """Flow coefficient.
@@ -225,7 +229,8 @@ class Impeller:
 
         Calculates a new point based on the given suction state and speed.
         """
-        # calculate new head and efficiency
+        # TODO check the closest flow. Add new arg point?
+
         # use mach to check the best non dim curve to be used
         mach_new = self.mach(suc, speed)
 
@@ -248,11 +253,11 @@ class Impeller:
 
         # calculate the mass flow
         phi = non_dim_point.flow_coeff
-        psi = non_dim_point.head_coeff
-
         flow_v = phi * np.pi * self.D**2 * u / 4
         flow_m = flow_v * rho
 
+        # calculate new head and efficiency
+        psi = non_dim_point.head_coeff
         head = psi * u**2 / 2
         eff = non_dim_point.eff
 
