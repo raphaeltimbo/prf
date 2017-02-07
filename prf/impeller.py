@@ -37,6 +37,9 @@ class Impeller:
         --------
         """
         # TODO define speed and suction state as properties and calculate current curve.
+        # for one single point:
+        if not isinstance(points, list):
+            points = [points]
         self.points = points
         self.b = b
         self.D = D

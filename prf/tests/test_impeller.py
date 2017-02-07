@@ -20,7 +20,7 @@ def impeller():
     point = Point(suc=suc, disch=disch, speed=7941, flow_m=34203.6, **units)
     b = 0.0285
     D = 0.365
-    return Impeller([point], b, D)
+    return Impeller(point, b, D)
 
 
 def test_impeller0(impeller):
