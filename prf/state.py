@@ -67,6 +67,7 @@ def convert_to_base_units(func):
         T_units = kwargs.get('T_units', ureg.degK)
         speed_units = kwargs.get('speed_units', ureg.rad / ureg.s)
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
+        flow_v_units = kwargs.get('flow_v_units', ureg.m**3 / ureg.s)
 
         for arg_name, value in kwargs.items():
             if arg_name == 'p':
@@ -85,6 +86,10 @@ def convert_to_base_units(func):
                 flow_m_ = Q_(value, flow_m_units)
                 flow_m_.ito_base_units()
                 kwargs[arg_name] = flow_m_.magnitude
+            elif arg_name is 'flow_v':
+                flow_v_ = Q_(value, flow_v_units)
+                flow_v_.ito_base_units()
+                kwargs[arg_name] = flow_v_.magnitude
 
         return func(*args, **kwargs)
 
