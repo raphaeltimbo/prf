@@ -32,7 +32,11 @@ class Point:
         self.volume_ratio_comparison = kwargs.get('volume_ratio_comparison')
 
         if self.disch is None:
-            self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
+            # check if head and efficiency are provided
+            if self.head or self.eff is None:
+                raise KeyError('Argument not provided')
+                self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
+
         if self.suc and self.disch is not None:
             self.calc_from_suc_disch(self.suc, self.disch)
 
@@ -473,7 +477,29 @@ def head_pol_schultz(suc, disch):
     f = schultz_f(suc, disch)
     head = head_pol(suc, disch)
 
-    return f*head
+    return f * head
+
+
+def power(flow_m, head, eff):
+    """Power.
+
+    Calculate the power consumption.
+
+    Parameters
+    ----------
+    flow_m : float
+        Mass flow.
+    head : float
+        Head.
+    eff : float
+        Polytropic efficiency.
+
+    Returns
+    -------
+    power : float
+
+    """
+    return flow_m * head / eff
 
 # TODO add head Mallen
 # TODO add head Huntington
