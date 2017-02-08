@@ -103,8 +103,8 @@ def test_point_calc_from_suc_head_eff(state_si_main_op):
     suc, head, eff = (state_si_main_op)
     units = {'flow_m_units': 'kg/h', 'speed_units': 'RPM'}
     point = Point(suc=suc, head=head, eff=eff, flow_m=175171, speed=12204, **units)
-    assert_allclose(point.disch.p(), 5272812.563810886)
-    assert_allclose(point.disch.T(), 425.3521217990619)
+    assert_allclose(point.disch.p(), 5344345.616396286)
+    assert_allclose(point.disch.T(), 417.73930487362134)
     assert_allclose(point.speed, 1277.9998914803277)
     assert_allclose(point.flow_m, 48.658611111111114)
     assert_allclose(point.head, head)

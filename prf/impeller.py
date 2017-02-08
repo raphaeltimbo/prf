@@ -77,7 +77,8 @@ class Impeller:
         # call new curve
 
     def _calc_new(self):
-        self.new_points = [self.new_point(p.suc, p.speed) for p in self.points]
+        self.new_points = [self.new_point(self.suc, self.speed, i)
+                           for i in range(len(self.points))]
 
         flow_v = [p.flow_v for p in self.new_points]
         head = [p.head for p in self.new_points]
@@ -223,20 +224,9 @@ class Impeller:
 
         return volume_ratio
 
-    def new_point_from_suc(self, point):
-        """New point from suction conditions.
-
-        Convert all available points to the current suction conditions,
-        calculate the discharge condition and speed for the point.
-
-        Returns
-        -------
-
-        """
-        pass
 
     @convert_to_base_units
-    def new_point(self, suc, speed, **kwargs):
+    def new_point(self, suc, speed, idx, **kwargs):
         """Curve.
 
         Calculates a new point based on the given suction state and speed.
@@ -244,17 +234,16 @@ class Impeller:
         # TODO check the closest flow. Add new arg point?
         # check points with flow within +- 5%
         # use mach to check the best non dim curve to be used
-        mach_new = self.mach(suc, speed)
-
-        diff_mach = []
-        for point in self.points:
-            mach_ = self.mach(point=point)
-            diff_mach.append(mach_new - mach_)
-        idx = diff_mach.index(min(diff_mach))
+        # mach_new = self.mach(suc, speed)
+        #
+        # diff_mach = []
+        # for point in self.points:
+        #     mach_ = self.mach(point=point)
+        #     diff_mach.append(mach_new - mach_)
+        # idx = diff_mach.index(min(diff_mach))
 
         point_old = self.points[idx]
         non_dim_point = self.non_dim_points[idx]
-
         # store mach, reynolds and volume ratio from original point
         mach_old = self.mach(point=point_old)
         reynolds_old = self.reynolds(point=point_old)

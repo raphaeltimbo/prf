@@ -88,7 +88,7 @@ class Point:
         disch = State.define(fluid=suc.fluid_dict(), h=h_disch, s=s_disch)
 
         def update_pressure(p):
-            disch.update(CP.PT_INPUTS, p, disch.T())
+            disch.update(CP.HmassP_INPUTS, h_disch, p)
             new_head = head_pol_schultz(suc, disch)
 
             return new_head - head
@@ -197,7 +197,7 @@ def eff_pol(suc, disch):
 
     Returns
     -------
-    ef_pol : float
+    eff_pol : float
         Polytropic head.
 
     Examples
