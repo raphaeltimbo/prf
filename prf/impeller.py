@@ -73,6 +73,7 @@ class Impeller:
     @speed.setter
     def speed(self, new_speed):
         self._speed = new_speed
+        self._calc_new()
         # call new curve
 
     def _calc_new(self):
