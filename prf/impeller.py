@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.interpolate import CubicSpline
 from .curve import *
 
 
@@ -49,14 +48,14 @@ class Impeller:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
         # impeller current state
-        self._suc = self.points[0]
-        self._speed = self.points[0]
+        self._suc = self.points[0].suc
+        self._speed = self.points[0].speed
 
         # the current points and curve
         self.new_points = None
         self.new_curve = None
         self.head_curve = None
-        # self._calc_new()
+        self._calc_new()
 
     @property
     def suc(self):
@@ -83,7 +82,8 @@ class Impeller:
         flow_v = [p.flow_v for p in self.new_points]
         head = [p.head for p in self.new_points]
 
-        self.head_curve = CubicSpline(flow_v, head)
+        if len(flow_v) > 2:
+            self.head_curve = np.poly1d(np.polyfit(flow_v, head, 3))
 
     def flow_coeff(self, flow_m=None, suc=None, speed=None, point=None):
         """Flow coefficient.
@@ -223,7 +223,6 @@ class Impeller:
         volume_ratio = suc.rhomass() / disch.rhomass()
 
         return volume_ratio
-
 
     @convert_to_base_units
     def new_point(self, suc, speed, idx, **kwargs):
