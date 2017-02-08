@@ -6,7 +6,8 @@ from prf.state import *
 
 
 __all__ = ['Point', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
-           'eff_isen', 'schultz_f', 'head_pol_schultz', 'convert_to_base_units']
+           'eff_isen', 'schultz_f', 'head_pol_schultz', 'eff_pol_schultz',
+           'convert_to_base_units']
 
 
 class Point:
@@ -30,15 +31,21 @@ class Point:
         self.head = kwargs.get('head')
         self.eff = kwargs.get('eff')
         self.power = kwargs.get('power')
+        self.volume_ratio = kwargs.get('volume_ratio')
 
-        if 'suc' and 'disch' in kwargs:
+        if self.suc and self.disch is not None:
             self.calc_from_suc_disch(self.suc, self.disch)
-        elif 'suc' and 'head' and 'eff' in kwargs:
+        elif self.suc and self.head and self.eff is not None:
             self.calc_from_suc_head_eff(self.suc, self.head, self.eff)
-        elif 'suc' and 'head' and 'power' in kwargs:
+        elif self.suc and self.head and self.power is not None:
             self.calc_from_suc_head_power(self.suc, self.head, self.power)
+        elif self.suc and self.eff and self.volume_ratio is not None:
+            self.calc_from_suc_eff_vol_ratio(self.suc, self.eff, self.volume_ratio)
         else:
             raise KeyError('Argument not provided')
+
+        if self.volume_ratio is None:
+            self.volume_ratio = self.suc.rhomass() / self.disch.rhomass()
 
         self.mach_comparison = kwargs.get('mach_comparison')
         self.reynolds_comparison = kwargs.get('reynolds_comparison')
@@ -46,7 +53,7 @@ class Point:
 
     def calc_from_suc_disch(self, suc, disch):
         self.head = head_pol_schultz(suc, disch)
-        self.eff = eff_pol(suc, disch)
+        self.eff = eff_pol_schultz(suc, disch)
         self.power = power(self.flow_m, self.head, self.eff)
 
     def calc_from_suc_head_eff(self, suc, head, eff):
@@ -76,7 +83,7 @@ class Point:
         h_suc = suc.hmass()
         h_disch = head/eff + h_suc
 
-        # first disch state will consider and isentropic compression
+        # first disch state will consider an isentropic compression
         s_disch = suc.smass()
         disch = State.define(fluid=suc.fluid_dict(), h=h_disch, s=s_disch)
 
@@ -89,11 +96,31 @@ class Point:
         newton(update_pressure, disch.p())
 
         self.disch = disch
+        self.calc_from_suc_disch(suc, disch)
 
     def calc_from_suc_head_power(self, suc, head, power):
         # calculate efficiency
         self.eff = self.flow_m * head / power
         self.calc_from_suc_head_eff(suc, head, self.eff)
+
+    def calc_from_suc_eff_vol_ratio(self, suc, eff, volume_ratio):
+        # from volume ratio calculate discharge rhomass
+        d_disch = suc.rhomass() / volume_ratio
+
+        # first disch state will consider an isentropic compression
+        s_disch = suc.smass()
+        disch = State.define(fluid=suc.fluid_dict(), d=d_disch, s=s_disch)
+
+        def update_pressure(p):
+            disch.update(CP.DmassP_INPUTS, disch.rhomass(), p)
+            new_eff = eff_pol_schultz(suc, disch)
+
+            return new_eff - eff
+
+        newton(update_pressure, disch.p())
+
+        self.disch = disch
+        self.calc_from_suc_disch(suc, disch)
 
 
 def n_exp(suc, disch):
@@ -322,6 +349,12 @@ def head_pol_schultz(suc, disch):
     head = head_pol(suc, disch)
 
     return f * head
+
+
+def eff_pol_schultz(suc, disch):
+    wp = head_pol_schultz(suc, disch)
+    dh = disch.hmass() - suc.hmass()
+    return wp/dh
 
 
 def power(flow_m, head, eff):

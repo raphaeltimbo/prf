@@ -153,6 +153,7 @@ class State(CP.AbstractState):
         T = kwargs.get('T')
         h = kwargs.get('h')
         s = kwargs.get('s')
+        d = kwargs.get('d')
 
         constituents = []
         molar_fractions = []
@@ -174,6 +175,8 @@ class State(CP.AbstractState):
             state.update(CP.PT_INPUTS, p, T)
         if h and s is not None:
             state.update(CP.HmassSmass_INPUTS, h, s)
+        if d and s is not None:
+            state.update(CP.DmassSmass_INPUTS, d, s)
 
         return state
 

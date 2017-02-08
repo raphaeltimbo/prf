@@ -56,7 +56,7 @@ class Impeller:
         self.new_points = None
         self.new_curve = None
         self.head_curve = None
-        self._calc_new()
+        # self._calc_new()
 
     @property
     def suc(self):
@@ -223,6 +223,18 @@ class Impeller:
 
         return volume_ratio
 
+    def new_point_from_suc(self, point):
+        """New point from suction conditions.
+
+        Convert all available points to the current suction conditions,
+        calculate the discharge condition and speed for the point.
+
+        Returns
+        -------
+
+        """
+        pass
+
     @convert_to_base_units
     def new_point(self, suc, speed, **kwargs):
         """Curve.
@@ -230,7 +242,7 @@ class Impeller:
         Calculates a new point based on the given suction state and speed.
         """
         # TODO check the closest flow. Add new arg point?
-
+        # check points with flow within +- 5%
         # use mach to check the best non dim curve to be used
         mach_new = self.mach(suc, speed)
 
