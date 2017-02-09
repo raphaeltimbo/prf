@@ -1,5 +1,6 @@
 import numpy as np
 from .curve import *
+from warnings import warn
 
 
 __all__ = ['Impeller', 'NonDimPoint']
@@ -53,6 +54,7 @@ class Impeller:
 
         # the current points and curve
         self.new_points = None
+        self.not_valid_points = None
         self.new_curve = None
         self.head_curve = None
         self._calc_new()
@@ -85,6 +87,23 @@ class Impeller:
 
         if len(flow_v) > 2:
             self.head_curve = np.poly1d(np.polyfit(flow_v, head, 3))
+
+        self.check_similarity()
+
+    def check_similarity(self):
+        not_valid_points = {}
+
+        for i, p in enumerate(self.new_points):
+            if not all([p.mach_comparison['valid'],
+                        p.reynolds_comparison['valid'],
+                        p.volume_ratio_comparison['valid']]):
+                not_valid_points['p' + str(i)] = p
+
+        if len(not_valid_points) > 0:
+            pts = ', '.join(not_valid_points)
+            warn('Following points out of similarity: %s' % pts)
+
+        self.not_valid_points = not_valid_points
 
     def flow_coeff(self, flow_m=None, suc=None, speed=None, point=None):
         """Flow coefficient.
