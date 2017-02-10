@@ -14,7 +14,7 @@ sns.set_style('white', rc={'axes.grid':True,
 sns.set_context('paper', rc={"lines.linewidth": 1})
 
 
-def plot_head_curve(imp, flow='flow_v', ax=None):
+def plot_head_curve(imp, flow='flow_v', point=None, ax=None):
     if ax is None:
         ax = plt.gca()
 

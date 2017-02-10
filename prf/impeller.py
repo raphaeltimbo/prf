@@ -51,6 +51,7 @@ class Impeller:
         # impeller current state
         self._suc = self.points[0].suc
         self._speed = self.points[0].speed
+        self._flow_v = self.points[0].flow_v
 
         # the current points and curve
         self.new_points = None
@@ -66,6 +67,7 @@ class Impeller:
     @suc.setter
     def suc(self, new_suc):
         self._suc = new_suc
+        self._calc_new()
         # call new curve
 
     @property
@@ -77,6 +79,15 @@ class Impeller:
         self._speed = new_speed
         self._calc_new()
         # call new curve
+
+    @property
+    def flow_v(self):
+        return self._flow_v
+
+    @flow_v.setter
+    def flow_v(self, new_flow_v):
+        self._flow_v = new_flow_v
+        self._calc_new()
 
     def _calc_new(self):
         self.new_points = [self.new_point(self.suc, self.speed, i)
