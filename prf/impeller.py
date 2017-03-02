@@ -109,14 +109,29 @@ class Impeller:
         eff = [p.eff for p in self.new_points]
         power = [p.power for p in self.new_points]
 
+        if len(flow_v) < 2:
+            flow_v = [flow_v[0],
+                      1.0001*flow_v[0]]
+            suc_p = [i for pair in zip(suc_p, suc_p) for i in pair]
+            suc_T = [i for pair in zip(suc_T, suc_T) for i in pair]
+            disch_p = [i for pair in zip(disch_p, disch_p) for i in pair]
+            disch_T = [i for pair in zip(disch_T, disch_T) for i in pair]
+            head = [i for pair in zip(head, head) for i in pair]
+            eff = [i for pair in zip(eff, eff) for i in pair]
+            power = [i for pair in zip(power, power) for i in pair]
+
+        poly_degree = 1
+
         if len(flow_v) > 2:
-            self.suc_p_curve = np.poly1d(np.polyfit(flow_v, suc_p, 3))
-            self.suc_T_curve = np.poly1d(np.polyfit(flow_v, suc_T, 3))
-            self.disch_p_curve = np.poly1d(np.polyfit(flow_v, disch_p, 3))
-            self.disch_T_curve = np.poly1d(np.polyfit(flow_v, disch_T, 3))
-            self.head_curve = np.poly1d(np.polyfit(flow_v, head, 3))
-            self.eff_curve = np.poly1d(np.polyfit(flow_v, eff, 3))
-            self.power_curve = np.poly1d(np.polyfit(flow_v, power, 3))
+            poly_degree = 3
+
+        self.suc_p_curve = np.poly1d(np.polyfit(flow_v, suc_p, poly_degree))
+        self.suc_T_curve = np.poly1d(np.polyfit(flow_v, suc_T, poly_degree))
+        self.disch_p_curve = np.poly1d(np.polyfit(flow_v, disch_p, poly_degree))
+        self.disch_T_curve = np.poly1d(np.polyfit(flow_v, disch_T, poly_degree))
+        self.head_curve = np.poly1d(np.polyfit(flow_v, head, poly_degree))
+        self.eff_curve = np.poly1d(np.polyfit(flow_v, eff, poly_degree))
+        self.power_curve = np.poly1d(np.polyfit(flow_v, power, poly_degree))
 
         current_disch_p = self.disch_p_curve(self.flow_v)
         current_disch_T = self.disch_T_curve(self.flow_v)
