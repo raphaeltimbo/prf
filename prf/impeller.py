@@ -1,6 +1,8 @@
 import numpy as np
+import CoolProp.CoolProp as CP
 from .curve import *
 from warnings import warn
+from copy import copy
 
 
 __all__ = ['Impeller', 'NonDimPoint']
@@ -56,8 +58,15 @@ class Impeller:
         # the current points and curve
         self.new_points = None
         self.not_valid_points = None
-        self.new_curve = None
+        self.suc_p_curve = None
+        self.suc_T_curve = None
+        self.disch_p_curve = None
+        self.disch_T_curve = None
         self.head_curve = None
+        self.eff_curve = None
+        self.power_curve = None
+        self.current_point = None
+        self.disch = None
         self._calc_new()
 
     @property
@@ -68,7 +77,6 @@ class Impeller:
     def suc(self, new_suc):
         self._suc = new_suc
         self._calc_new()
-        # call new curve
 
     @property
     def speed(self):
@@ -78,7 +86,6 @@ class Impeller:
     def speed(self, new_speed):
         self._speed = new_speed
         self._calc_new()
-        # call new curve
 
     @property
     def flow_v(self):
@@ -94,11 +101,33 @@ class Impeller:
                            for i in range(len(self.points))]
 
         flow_v = [p.flow_v for p in self.new_points]
+        suc_p = [p.suc.p() for p in self.new_points]
+        suc_T = [p.suc.T() for p in self.new_points]
+        disch_p = [p.disch.p() for p in self.new_points]
+        disch_T = [p.disch.T() for p in self.new_points]
         head = [p.head for p in self.new_points]
+        eff = [p.eff for p in self.new_points]
+        power = [p.power for p in self.new_points]
 
         if len(flow_v) > 2:
+            self.suc_p_curve = np.poly1d(np.polyfit(flow_v, suc_p, 3))
+            self.suc_T_curve = np.poly1d(np.polyfit(flow_v, suc_T, 3))
+            self.disch_p_curve = np.poly1d(np.polyfit(flow_v, disch_p, 3))
+            self.disch_T_curve = np.poly1d(np.polyfit(flow_v, disch_T, 3))
             self.head_curve = np.poly1d(np.polyfit(flow_v, head, 3))
+            self.eff_curve = np.poly1d(np.polyfit(flow_v, eff, 3))
+            self.power_curve = np.poly1d(np.polyfit(flow_v, power, 3))
 
+        current_disch_p = self.disch_p_curve(self.flow_v)
+        current_disch_T = self.disch_T_curve(self.flow_v)
+        current_disch = copy(self.suc)
+        current_disch.update(CP.PT_INPUTS, current_disch_p, current_disch_T)
+
+        self.disch = current_disch
+        self.current_point = Point(suc=self.suc,
+                                   disch=current_disch,
+                                   flow_v=self.flow_v,
+                                   speed=self.speed)
         self.check_similarity()
 
     def check_similarity(self):

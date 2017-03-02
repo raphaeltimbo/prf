@@ -14,7 +14,7 @@ sns.set_style('white', rc={'axes.grid':True,
 sns.set_context('paper', rc={"lines.linewidth": 1})
 
 
-def plot_head_curve(imp, flow='flow_v', point=None, ax=None):
+def plot_head_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
     if ax is None:
         ax = plt.gca()
 
@@ -23,6 +23,8 @@ def plot_head_curve(imp, flow='flow_v', point=None, ax=None):
     flow = np.linspace(min(flow_), max(flow_), 100)
 
     ax.plot(flow, imp.head_curve(flow))
+    if plot_current_point is True:
+        ax.plot(imp.current_point.flow_v, imp.current_point.head, 'o')
 
     if flow is 'flow_m':
         ax.set_xlabel('Mass flow $(kg / s)$')
