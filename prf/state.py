@@ -13,13 +13,6 @@ ureg = pint.UnitRegistry()
 ureg.load_definitions(new_units)
 Q_ = ureg.Quantity
 
-# apply estimation of binary interaction parameters
-mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
-for mix1, mix2 in combinations(mixture, 2):
-    cas1 = CP.get_fluid_param_string(mix1, 'CAS')
-    cas2 = CP.get_fluid_param_string(mix2, 'CAS')
-    CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
-
 CP.set_config_bool(CP.REFPROP_USE_GERG, True)
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
