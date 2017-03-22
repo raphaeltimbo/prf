@@ -112,17 +112,30 @@ class State(CP.AbstractState):
 
     @classmethod
     @convert_to_base_units
-    def define(cls, p=None, T=None, h=None, s=None, d=None, **kwargs):
+    def define(
+            cls,
+            p=None, T=None, h=None, s=None, d=None,
+            fluid=None,
+            EOS='REFPROP',
+            **kwargs):
         """Constructor for state.
 
-        Creates a state and set molar fractions, p and T.
+        Creates a state from fluid composition and two properties.
+        Properties should be in SI units, **kwargs can be passed
+        to change units.
 
         Parameters
         ----------
         p : float
-            The state's pressure
+            State's pressure
         T : float
-            The state's temperature
+            State's temperature
+        h : float
+            State's enthalpy
+        s : float
+            State's entropy
+        d : float
+
         fluid : dict
             Dictionary with constituent and composition
             (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
@@ -141,8 +154,9 @@ class State(CP.AbstractState):
         1.2893965217814896
         """
         # define constituents and molar fractions to create and update state
-        fluid = kwargs.get('fluid')
-        EOS = kwargs.get('EOS', 'REFPROP')
+
+        # fluid = kwargs.get('fluid')
+        # EOS = kwargs.get('EOS', 'REFPROP')
 
         constituents = []
         molar_fractions = []
@@ -159,9 +173,11 @@ class State(CP.AbstractState):
         state = cls(EOS, _fluid)
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
-        # TODO add check to update according to kwargs (p, T, h, s etc.)
-        if p and T is not None:
-            state.update(CP.PT_INPUTS, p, T)
+        if p is not None:
+            if T is not None:
+                state.update(CP.PT_INPUTS, p, T)
+            if s is not None:
+                state.update(CP.PSmass_INPUTS, p, s)
         if h and s is not None:
             state.update(CP.HmassSmass_INPUTS, h, s)
         if d and s is not None:

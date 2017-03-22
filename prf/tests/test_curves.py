@@ -95,7 +95,7 @@ def state_si_main_op():
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
     return (State.define(p=16.99, T=38.4, fluid=fluid, **units),  # suc
-            140349.53763396584,                                   # head
+            140349.53763396584,  # head
             0.71121369651557265)                                  # eff
 
 
