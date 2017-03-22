@@ -3,6 +3,7 @@ import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
 from functools import wraps
+from collections import OrderedDict
 
 
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units']
@@ -109,6 +110,12 @@ class State(CP.AbstractState):
         for k, v in zip(self.fluid_names(), self.get_mole_fractions()):
             fluid_dict[k] = v
         return fluid_dict
+
+    def __repr__(self):
+        return ('State: \n{}'.format(self.fluid_dict())
+                + '\n Temperature: {:10.5} K'.format(self.T())
+                + '\n Pressure:    {:10.8} Pa'.format(self.p()))
+    # TODO add more properties
 
     @classmethod
     @convert_to_base_units
