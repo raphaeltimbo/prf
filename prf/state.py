@@ -47,19 +47,7 @@ def normalize_mix(molar_fractions):
 def convert_to_base_units(func):
     """Convert units.
 
-    This function will convert parameters to base units.
-
-    Parameters
-    ----------
-    parameters : dict
-        Dictionary with parameters and its value.
-    units : dict
-        Dictionary with the parameter units
-
-    Returns
-    -------
-    parameters : dict
-        Dictionary with converted units.
+    Decorator used to convert units based on **kwargs.
     """
     # get units from kwargs. Set default if not provided.
     @wraps(func)
@@ -103,6 +91,11 @@ def convert_to_base_units(func):
 
 
 class State(CP.AbstractState):
+    """State class.
+
+    This class is inherited from CP.AbstractState.
+    Some extra functionality has been added.
+    """
     # new class to add methods to AbstractState
     # no call to super(). see :
     # http://stackoverflow.com/questions/18260095/
@@ -119,7 +112,7 @@ class State(CP.AbstractState):
 
     @classmethod
     @convert_to_base_units
-    def define(cls, **kwargs):
+    def define(cls, p=None, T=None, h=None, s=None, d=None, **kwargs):
         """Constructor for state.
 
         Creates a state and set molar fractions, p and T.
@@ -150,11 +143,6 @@ class State(CP.AbstractState):
         # define constituents and molar fractions to create and update state
         fluid = kwargs.get('fluid')
         EOS = kwargs.get('EOS', 'REFPROP')
-        p = kwargs.get('p')
-        T = kwargs.get('T')
-        h = kwargs.get('h')
-        s = kwargs.get('s')
-        d = kwargs.get('d')
 
         constituents = []
         molar_fractions = []
