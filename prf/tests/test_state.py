@@ -154,7 +154,7 @@ def state_si_main_op_REFPROP():
 def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):
     p = 1699000
     T = 311.5499999
-    rhomass = 16.176402098821118
+    rhomass = 16.176330381770875
     assert_allclose(state_si_main_op_REFPROP.p(), p)
     assert_allclose(state_si_main_op_REFPROP.T(), T)
     assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass)

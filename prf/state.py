@@ -13,14 +13,15 @@ ureg = pint.UnitRegistry()
 ureg.load_definitions(new_units)
 Q_ = ureg.Quantity
 
-CP.set_config_bool(CP.REFPROP_USE_GERG, True)
-CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, '//home//raphael//REFPROP-cmake//build/')
-# apply estimation of binary interaction parameters
+CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, '/home/raphael/REFPROP-cmake/build/')
+
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
 for mix1, mix2 in combinations(mixture, 2):
     cas1 = CP.get_fluid_param_string(mix1, 'CAS')
     cas2 = CP.get_fluid_param_string(mix2, 'CAS')
     CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
+
+# list of available fluids
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
 
