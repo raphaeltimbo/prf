@@ -112,10 +112,14 @@ class State(CP.AbstractState):
         return fluid_dict
 
     def __repr__(self):
-        return ('State: \n{}'.format(self.fluid_dict())
-                + '\n Temperature: {:10.5} K'.format(self.T())
-                + '\n Pressure:    {:10.8} Pa'.format(self.p()))
-    # TODO add more properties
+        return (
+            'State: \n{}'.format(self.fluid_dict())
+            + '\n Temperature: {:10.5} K'.format(self.T())
+            + '\n Pressure:    {:10.8} Pa'.format(self.p())
+            + '\n Enthalpy:    {:10.5} J/kg'.format(self.hmass())
+        )
+
+        # TODO add more properties
 
     @classmethod
     @convert_to_base_units
