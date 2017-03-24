@@ -1,6 +1,6 @@
 import pytest
 from prf.state import *
-from prf.curve import *
+from prf.point import *
 from numpy.testing import assert_allclose
 
 

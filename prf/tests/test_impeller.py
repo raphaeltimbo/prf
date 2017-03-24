@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from prf.state import *
-from prf.curve import *
+from prf.point import *
 from prf.impeller import *
 from numpy.testing import assert_allclose
 

@@ -1,6 +1,6 @@
 import numpy as np
 import CoolProp.CoolProp as CP
-from .curve import *
+from .point import *
 from warnings import warn
 from copy import copy
 
