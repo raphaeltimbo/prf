@@ -111,6 +111,9 @@ class State(CP.AbstractState):
         return fluid_dict
 
     def __repr__(self):
+        return 'State: {:.5} Pa @ {:.5} K'.format(self.p(), self.T())
+
+    def __str__(self):
         composition = ''
         for k, v in self.fluid_dict().items():
             composition += '\n {:15}: {:.2f}%'.format(k, v * 100)
@@ -124,6 +127,7 @@ class State(CP.AbstractState):
             + '\n Enthalpy   : {:10.5} J/kg'.format(self.hmass())
             + '\n Entropy    : {:10.5} J/kg.K'.format(self.smass())
         )
+
 
     @classmethod
     @convert_to_base_units
