@@ -112,11 +112,18 @@ class State(CP.AbstractState):
         return fluid_dict
 
     def __repr__(self):
+        composition = ''
+        for k, v in self.fluid_dict().items():
+            composition += '\n {:15}: {:.2f}%'.format(k, v * 100)
         return (
-            'State: \n{}'.format(self.fluid_dict())
+            'State: '
+            + composition
+            + '\n' + 35*'-'
             + '\n Temperature: {:10.5} K'.format(self.T())
-            + '\n Pressure:    {:10.8} Pa'.format(self.p())
-            + '\n Enthalpy:    {:10.5} J/kg'.format(self.hmass())
+            + '\n Pressure   : {:10.5} Pa'.format(self.p())
+            + '\n Density    : {:10.5} kg/m^3'.format(self.rhomass())
+            + '\n Enthalpy   : {:10.5} J/kg'.format(self.hmass())
+            + '\n Entropy    : {:10.5} kg.J/K'.format(self.smass())
         )
 
         # TODO add more properties
