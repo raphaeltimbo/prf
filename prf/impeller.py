@@ -69,6 +69,25 @@ class Impeller:
         self.disch = None
         self._calc_new()
 
+    def __repr__(self):
+        return (
+            'Impeller:'
+            + ' Diameter {} m,'.format(self.D)
+            + ' Width {} m'.format(self.b)
+        )
+
+    def __str__(self):
+        points = ''
+        for p in self.points:
+            points += '\n {!r}'.format(p)
+        return (
+            'Impeller:'
+            + ' Diameter {} m,'.format(self.D)
+            + ' Width {} m'.format(self.b)
+            + points
+        )
+
+
     @property
     def suc(self):
         return self._suc
