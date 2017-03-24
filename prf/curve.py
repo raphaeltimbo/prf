@@ -54,9 +54,9 @@ class Point:
     def __repr__(self):
         return (
             'Point: '
-            + '\nVolume flow: {:10.5} m^3 / kg'.format(self.flow_v)
-            + '\nHead       : {:10.5} J / kg.K'.format(self.head)
-            + '\nEfficiency : {:10.5} %'.format(100 * self.eff)
+            + '\n Volume flow: {:10.5} m^3 / kg'.format(self.flow_v)
+            + '\n Head       : {:10.5} J / kg.K'.format(self.head)
+            + '\n Efficiency : {:10.5} %'.format(100 * self.eff)
         )
 
     def calc_from_suc_disch(self, suc, disch):
