@@ -3,7 +3,6 @@ import CoolProp.CoolProp as CP
 import pint
 from itertools import combinations
 from functools import wraps
-from collections import OrderedDict
 
 
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units']
@@ -126,8 +125,6 @@ class State(CP.AbstractState):
             + '\n Entropy    : {:10.5} J/kg.K'.format(self.smass())
         )
 
-        # TODO add more properties
-
     @classmethod
     @convert_to_base_units
     def define(
@@ -173,9 +170,6 @@ class State(CP.AbstractState):
         """
         # define constituents and molar fractions to create and update state
 
-        # fluid = kwargs.get('fluid')
-        # EOS = kwargs.get('EOS', 'REFPROP')
-
         constituents = []
         molar_fractions = []
 
@@ -191,6 +185,7 @@ class State(CP.AbstractState):
         state = cls(EOS, _fluid)
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
+
         if p is not None:
             if T is not None:
                 state.update(CP.PT_INPUTS, p, T)
@@ -204,4 +199,9 @@ class State(CP.AbstractState):
         return state
 
     def __copy__(self):
-        return self.define(p=self.p(), T=self.T(), fluid=self.fluid_dict(), EOS=self.EOS)
+        return self.define(
+            p=self.p(),
+            T=self.T(),
+            fluid=self.fluid_dict(),
+            EOS=self.EOS
+        )
