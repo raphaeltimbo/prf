@@ -51,6 +51,14 @@ class Point:
         self.reynolds_comparison = kwargs.get('reynolds_comparison')
         self.volume_ratio_comparison = kwargs.get('volume_ratio_comparison')
 
+    def __repr__(self):
+        return (
+            'Point: '
+            + '\nVolume flow: {:10.5} m^3 / kg'.format(self.flow_v)
+            + '\nHead       : {:10.5} J / kg.K'.format(self.head)
+            + '\nEfficiency : {:10.5} %'.format(100 * self.eff)
+        )
+
     def calc_from_suc_disch(self, suc, disch):
         self.head = head_pol_schultz(suc, disch)
         self.eff = eff_pol_schultz(suc, disch)
