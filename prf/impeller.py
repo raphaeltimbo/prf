@@ -87,7 +87,6 @@ class Impeller:
             + points
         )
 
-
     @property
     def suc(self):
         return self._suc
