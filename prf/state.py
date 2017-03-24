@@ -123,7 +123,7 @@ class State(CP.AbstractState):
             + '\n Pressure   : {:10.5} Pa'.format(self.p())
             + '\n Density    : {:10.5} kg/m^3'.format(self.rhomass())
             + '\n Enthalpy   : {:10.5} J/kg'.format(self.hmass())
-            + '\n Entropy    : {:10.5} kg.J/K'.format(self.smass())
+            + '\n Entropy    : {:10.5} J/kg.K'.format(self.smass())
         )
 
         # TODO add more properties
