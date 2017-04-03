@@ -184,8 +184,8 @@ class Impeller:
         Calculates the flow coefficient for a point given the mass flow,
         suction state and speed.
 
-        Parameters:
-        -----------
+        Parameters 
+        ---------- 
         flow_m : float
             Mass flow (kg/s)
         suc : state
@@ -193,13 +193,13 @@ class Impeller:
         speed : float
             Speed in rad/s.
 
-        Returns:
-        --------
+        Returns 
+        ------- 
         flow_coeff : float
             Flow coefficient (non dimensional).
 
-        Examples:
-        ---------
+        Examples 
+        -------- 
 
         """
         if point is not None:
@@ -324,18 +324,10 @@ class Impeller:
         Calculates a new point based on the given suction state and speed.
         """
         # TODO check the closest flow. Add new arg point?
-        # check points with flow within +- 5%
-        # use mach to check the best non dim curve to be used
-        # mach_new = self.mach(suc, speed)
-        #
-        # diff_mach = []
-        # for point in self.points:
-        #     mach_ = self.mach(point=point)
-        #     diff_mach.append(mach_new - mach_)
-        # idx = diff_mach.index(min(diff_mach))
 
         point_old = self.points[idx]
         non_dim_point = self.non_dim_points[idx]
+
         # store mach, reynolds and volume ratio from original point
         mach_old = self.mach(point=point_old)
         reynolds_old = self.reynolds(point=point_old)
@@ -355,6 +347,7 @@ class Impeller:
         eff = non_dim_point.eff
 
         point_new = Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
+
         # store mach, reynolds and volume ratio from original point
         mach_new = self.mach(point=point_new)
         reynolds_new = self.reynolds(point=point_new)
