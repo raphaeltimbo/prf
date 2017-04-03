@@ -128,6 +128,21 @@ class State(CP.AbstractState):
             + '\n Entropy    : {:10.5} J/kg.K'.format(self.smass())
         )
 
+    def __reduce__(self):
+        # implemented to enable pickling
+        p_ = self.p()
+        T_ = self.T()
+        fluid_ = self.fluid_dict()
+        kwargs = {'p': p_, 'T': T_, 'fluid': fluid_}
+        return self._rebuild, (self.__class__, kwargs)
+
+    @staticmethod
+    def _rebuild(cls, kwargs):
+        p = kwargs.get('p')
+        T = kwargs.get('T')
+        fluid = kwargs.get('fluid')
+
+        return cls.define(p=p, T=T, fluid=fluid)
 
     @classmethod
     @convert_to_base_units
