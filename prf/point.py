@@ -59,6 +59,8 @@ class Point:
             + '\n Efficiency : {:10.5} %'.format(100 * self.eff)
         )
 
+    # TODO Put pol. head/eff and isen. head/eff functions inside point class
+
     def calc_from_suc_disch(self, suc, disch):
         self.head = head_pol_schultz(suc, disch)
         self.eff = eff_pol_schultz(suc, disch)
