@@ -32,5 +32,22 @@ units = {
 normal_state = prf.State.define(p=101, T=20, fluid=fluid, **units)
 suc = prf.State.define(p=2240.8, T=45, fluid=fluid, **units)
 disch = prf.State.define(p=3030.1, T=72.1, fluid=fluid, **units)
+flow_m = suc.molar_mass() * 2169
+point = prf.Point(suc=suc, disch=disch, flow_m=flow_m, speed=41000, **units)
 
-cProfile.run('prf.head_isen(suc, disch)', 'profile-head_isen-'+label)
+imp = prf.Impeller(point, b=0.0285, D=0.365)
+
+cProfile.run(
+    'prf.head_isen(suc, disch)',
+    'profile-head_isen-'+label
+)
+
+cProfile.run(
+    'prf.Point(suc=suc, disch=disch, flow_m=flow_m, speed=41000, **units)',
+    'profile-Point-'+label
+)
+
+cProfile.run(
+    'prf.Impeller(point, b=0.285, D=0.365)',
+    'profile-Impeller-'+label
+)
