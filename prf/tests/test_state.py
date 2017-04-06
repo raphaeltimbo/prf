@@ -157,6 +157,6 @@ def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):
     rhomass = 16.176330381770875
     assert_allclose(state_si_main_op_REFPROP.p(), p)
     assert_allclose(state_si_main_op_REFPROP.T(), T)
-    assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass)
+    assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass, rtol=1e-4)
 
 # TODO add test to copy method

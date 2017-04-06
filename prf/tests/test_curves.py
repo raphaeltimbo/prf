@@ -27,35 +27,35 @@ def disch_1():
 
 
 def test_n_exp(suc_1, disch_1):
-    assert_allclose(n_exp(suc_1, disch_1), 1.2910634059847939)
+    assert_allclose(n_exp(suc_1, disch_1), 1.2910634059847939, rtol=1e-4)
 
 
 def test_head_pol(suc_1, disch_1):
-    assert_allclose(head_pol(suc_1, disch_1), 55280.82459048466)
+    assert_allclose(head_pol(suc_1, disch_1), 55280.82459048466, rtol=1e-4)
 
 
 def test_ef_pol(suc_1, disch_1):
-    assert_allclose(eff_pol(suc_1, disch_1), 0.7111862811638862)
+    assert_allclose(eff_pol(suc_1, disch_1), 0.7111862811638862, rtol=1e-4)
 
 
 def test_ef_pol_schultz(suc_1, disch_1):
-    assert_allclose(eff_pol_schultz(suc_1, disch_1), 0.7124304497904342)
+    assert_allclose(eff_pol_schultz(suc_1, disch_1), 0.7124304497904342, rtol=1e-4)
 
 
 def test_head_isen(suc_1, disch_1):
-    assert_allclose(head_isen(suc_1, disch_1), 53166.12359933178)
+    assert_allclose(head_isen(suc_1, disch_1), 53166.12359933178, rtol=1e-4)
 
 
 def test_eff_isen(suc_1, disch_1):
-    assert_allclose(eff_isen(suc_1, disch_1), 0.6839807113336114)
+    assert_allclose(eff_isen(suc_1, disch_1), 0.6839807113336114, rtol=1e-4)
 
 
 def test_schultz_f(suc_1, disch_1):
-    assert_allclose(schultz_f(suc_1, disch_1), 1.0017494272028307)
+    assert_allclose(schultz_f(suc_1, disch_1), 1.0017494272028307, rtol=1e-4)
 
 
 def test_head_pol_schultz(suc_1, disch_1):
-    assert_allclose(head_pol_schultz(suc_1, disch_1), 55377.53436881817)
+    assert_allclose(head_pol_schultz(suc_1, disch_1), 55377.53436881817, rtol=1e-4)
 
 
 def test_point(suc_1, disch_1):
@@ -72,10 +72,10 @@ def test_point_calc_1(suc_1, disch_1):
              'speed_units': 'RPM',
              'flow_m_units': 'kg/h'}
     point = Point(suc=suc_1, disch=disch_1, speed=7666, flow_m=29833.2, **units)
-    assert_allclose(point.head, 55377.53436881817)
-    assert_allclose(point.eff, 0.7124304394025333)
-    assert_allclose(point.flow_m, 8.287)
-    assert_allclose(point.speed, 802.7816427473118)
+    assert_allclose(point.head, 55377.53436881817, rtol=1e-4)
+    assert_allclose(point.eff, 0.7124304394025333, rtol=1e-4)
+    assert_allclose(point.flow_m, 8.287, rtol=1e-4)
+    assert_allclose(point.speed, 802.7816427473118, rtol=1e-4)
 
 
 @pytest.fixture
@@ -105,9 +105,9 @@ def test_point_calc_from_suc_head_eff(state_si_main_op):
     point = Point(suc=suc, head=head, eff=eff, flow_m=175171, speed=12204, **units)
     assert_allclose(point.disch.p(), 5343655.164571259, rtol=1e-3)
     assert_allclose(point.disch.T(), 417.73930487362134, rtol=1e-3)
-    assert_allclose(point.speed, 1277.9998914803277)
-    assert_allclose(point.flow_m, 48.658611111111114)
-    assert_allclose(point.head, head)
+    assert_allclose(point.speed, 1277.9998914803277, rtol=1e-4)
+    assert_allclose(point.flow_m, 48.658611111111114, rtol=1e-4)
+    assert_allclose(point.head, head, rtol=1e-4)
 
 @pytest.fixture
 def point_si_main_op():
