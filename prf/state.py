@@ -217,10 +217,3 @@ class State(CP.AbstractState):
 
         return state
 
-    def __copy__(self):
-        return self.define(
-            p=self.p(),
-            T=self.T(),
-            fluid=self.fluid_dict(),
-            EOS=self.EOS
-        )
