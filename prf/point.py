@@ -19,6 +19,12 @@ class Point:
 
         Parameters
         ----------
+        speed : float
+            Speed in 1/s.
+
+        flow_v or flow_m : float
+            Volumetric or mass flow.
+
         suc, disch : prf.State, prf.State
             Suction and discharge states for the point.
 
@@ -82,6 +88,7 @@ class Point:
             + '\n Volume flow: {:10.5} m^3 / s'.format(self.flow_v)
             + '\n Head       : {:10.5} J / kg.K'.format(self.head)
             + '\n Efficiency : {:10.5} %'.format(100 * self.eff)
+            + '\n Power      : {:10.5} W'.format(self.power)
         )
 
     # TODO Put pol. head/eff and isen. head/eff functions inside point class
