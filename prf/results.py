@@ -36,9 +36,11 @@ def plot_head_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
 
     flow = np.linspace(min(flow_), max(flow_), 100)
 
-    ax.plot(flow, imp.head_curve(flow))
+    curve, = ax.plot(flow, imp.head_curve(flow))
+
     if plot_current_point is True:
-        ax.plot(imp.current_point.flow_v, imp.current_point.head, 'o')
+        ax.plot(imp.current_point.flow_v, imp.current_point.head, 'o',
+                color=curve.get_color())
 
     if flow is 'flow_m':
         ax.set_xlabel('Mass flow $(kg / s)$')
@@ -58,9 +60,11 @@ def plot_disch_p_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
 
     flow = np.linspace(min(flow_), max(flow_), 100)
 
-    ax.plot(flow, imp.disch_p_curve(flow))
+    curve = ax.plot(flow, imp.disch_p_curve(flow))
+
     if plot_current_point is True:
-        ax.plot(imp.current_point.flow_v, imp.current_point.disch.p(), 'o')
+        ax.plot(imp.current_point.flow_v, imp.current_point.disch.p(), 'o',
+                color=curve.get_color())
 
     if flow is 'flow_m':
         ax.set_xlabel('Mass flow $(kg / s)$')
@@ -80,9 +84,11 @@ def plot_eff_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
 
     flow = np.linspace(min(flow_), max(flow_), 100)
 
-    ax.plot(flow, imp.eff_curve(flow))
+    curve = ax.plot(flow, imp.eff_curve(flow))
+
     if plot_current_point is True:
-        ax.plot(imp.current_point.flow_v, imp.current_point.eff, 'o')
+        ax.plot(imp.current_point.flow_v, imp.current_point.eff, 'o',
+                color=curve.get_color())
 
     if flow is 'flow_m':
         ax.set_xlabel('Mass flow $(kg / s)$')
