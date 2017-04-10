@@ -217,3 +217,6 @@ class State(CP.AbstractState):
 
         return state
 
+    def k(self):
+        return self.cpmass() / self.cvmass()
+
