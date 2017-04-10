@@ -54,7 +54,7 @@ class Point:
     def __repr__(self):
         return (
             '\nPoint: '
-            + '\n Volume flow: {:10.5} m^3 / kg'.format(self.flow_v)
+            + '\n Volume flow: {:10.5} m^3 / s'.format(self.flow_v)
             + '\n Head       : {:10.5} J / kg.K'.format(self.head)
             + '\n Efficiency : {:10.5} %'.format(100 * self.eff)
         )
