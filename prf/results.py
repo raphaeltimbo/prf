@@ -1,18 +1,31 @@
 from .impeller import *
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+import matplotlib as mpl
 
 __all__ = ['plot_head_curve', 'plot_disch_p_curve', 'plot_eff_curve',
            'plot_envelope']
 
-sns.set_style('white', rc={'axes.grid':True,
-                           'axes.linewidth': 0.1,
-                           'grid.color':'.9',
-                           'grid.linestyle': '--',
-                           'legend.frameon': True,
-                           'legend.framealpha': 0.2})
-sns.set_context('paper', rc={"lines.linewidth": 1})
+plt.style.use('seaborn-white')
+
+color_palette = ["#4C72B0", "#55A868", "#C44E52",
+                 "#8172B2", "#CCB974", "#64B5CD"]
+
+plt.style.use({
+    'lines.linewidth': 2.5,
+    'axes.grid': True,
+    'axes.linewidth': 0.1,
+    'grid.color': '.9',
+    'grid.linestyle': '--',
+    'legend.frameon': True,
+    'legend.framealpha': 0.2
+    })
+
+colors = color_palette + [(.1, .1, .1)]
+for code, color in zip('bgrmyck', colors):
+    rgb = mpl.colors.colorConverter.to_rgb(color)
+    mpl.colors.colorConverter.colors[code] = rgb
+    mpl.colors.colorConverter.cache[code] = rgb
 
 
 def plot_head_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
