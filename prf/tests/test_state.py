@@ -123,12 +123,12 @@ def test_copy(state_si_main_test):
     s2.update(CP.PT_INPUTS, 200000, 300)
     assert_allclose(s2.p(), 200000)
     assert_allclose(s2.T(), 300)
-    assert_allclose(s2.rhomass(), 4.687447306413212)
+    assert_allclose(s2.rhomass(), 4.687447306413212, rtol=1e-4)
     assert state_si_main_test != s2
 
     assert_allclose(s1.p(), p)
     assert_allclose(s1.T(), T)
-    assert_allclose(s1.rhomass(), rhomass)
+    assert_allclose(s1.rhomass(), rhomass, rtol=1e-4)
     assert state_si_main_test != s1
 
 

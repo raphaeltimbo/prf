@@ -5,6 +5,7 @@ from prf.point import *
 from prf.impeller import *
 from numpy.testing import assert_allclose
 
+skip = False
 
 @pytest.fixture
 def impeller():
@@ -23,6 +24,7 @@ def impeller():
     return Impeller(point, b, D)
 
 
+@pytest.mark.skipif(skip is True, reason='Slow test')
 def test_impeller0(impeller):
     flow_coeff = 0.12295975501894624
     head_coeff = 5.393806522392842
