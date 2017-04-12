@@ -28,15 +28,42 @@ for code, color in zip('bgrmyck', colors):
     mpl.colors.colorConverter.cache[code] = rgb
 
 
-def plot_head_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
+def plot_head_curve(imp, flow='flow_v', plot_current_point=True,
+                    plot_kws=None, ax=None):
+    """Plot head curve.
+    
+    Parameters
+    ----------
+    imp : prf.Impeller
+        Impeller object.
+    flow : str, optional
+        Flow to be used on x axis. Defaults to 'flow_v' (volumetric).
+    plot_current_point : bool, optional
+        Plot the impeller current point. Defaults to True.
+    plot_kws : dict, optional
+        Keyword arguments for underlying plotting functions.
+  
+    ax : matplotlib.axes, optional
+        Matplotlib axes, if None creates a new.
+        
+    Returns
+    -------
+    ax : matplotlib.axes
+        Matplotlib axes with plot.
+        
+    """
     if ax is None:
         ax = plt.gca()
+
+    # handle dictionary defaults
+    if plot_kws is None:
+        plot_kws = dict()
 
     flow_ = [getattr(p, flow) for p in imp.new_points]
 
     flow = np.linspace(min(flow_), max(flow_), 100)
 
-    curve, = ax.plot(flow, imp.head_curve(flow))
+    curve, = ax.plot(flow, imp.head_curve(flow), **plot_kws)
 
     if plot_current_point is True:
         ax.plot(imp.current_point.flow_v, imp.current_point.head, 'o',
