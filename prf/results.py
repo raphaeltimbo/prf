@@ -75,6 +75,8 @@ def plot_disch_p_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
 
     ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
+    return ax
+
 
 def plot_eff_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
     if ax is None:
@@ -97,6 +99,8 @@ def plot_eff_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
 
     ax.set_ylabel('Efficiency')
 
+    return ax
+
 
 def plot_power_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
     if ax is None:
@@ -118,6 +122,8 @@ def plot_power_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
         ax.set_xlabel('Volumetric flow $(m^3 / s)$')
 
     ax.set_ylabel('Power $(W)$')
+
+    return ax
 
 
 def plot_envelope(state, ax=None):
