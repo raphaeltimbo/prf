@@ -422,7 +422,6 @@ def power(flow_m, head, eff):
 # TODO add power
 
 
-@convert_to_base_units
 def load_curves(file, suc, speed, **kwargs):
     """Load curve from excel file.
     
