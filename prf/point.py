@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import CoolProp as CP
 from copy import copy
 from scipy.optimize import newton
@@ -424,3 +425,52 @@ def power(flow_m, head, eff):
 # TODO add head Huntington
 # TODO add head reference
 # TODO add power
+
+
+def load_curves(file, suc, speed, npoints=8):
+    """Load curve from excel file.
+    
+    Parameters
+    ----------
+    file : excel file
+        Excel file with the following columns:
+        flowh, headpol, flowp, power
+    suc : prf.State
+        Suction state for the curve.
+    speed : float
+        Speed in 1/s
+    npoints : int, optional
+        Number of points to be created from the curves.
+        
+    Returns
+    -------
+    points : list
+        List with points obtained from the file.
+    """
+    df = pd.read_excel(file)
+
+    polydegree = 3
+
+    head_curve = np.poly1d(np.polyfit(
+        df.flowh.values, df.headpol.values, polydegree
+    ))
+
+    power_curve = np.poly1d(np.polyfit(
+        df.flowp.values, df.power.values, polydegree
+    ))
+
+    min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
+
+    flow_range = np.linspace(min_flow, max_flow, npoints)
+    head_range = head_curve(flow_range)
+    power_range = power_curve(flow_range)
+
+    points = []
+
+    for f, h, p in zip(flow_range, head_range, power_range):
+        points.append(Point(
+            suc=suc, head=h, power=p, flow_v=f, speed=speed
+        ))
+
+    return points
+
