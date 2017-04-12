@@ -8,7 +8,7 @@ from prf.state import *
 
 __all__ = ['Point', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
            'eff_isen', 'schultz_f', 'head_pol_schultz', 'eff_pol_schultz',
-           'convert_to_base_units']
+           'convert_to_base_units', 'load_curves']
 
 
 class Point:
@@ -22,16 +22,12 @@ class Point:
         ----------
         speed : float
             Speed in 1/s.
-
         flow_v or flow_m : float
             Volumetric or mass flow.
-
         suc, disch : prf.State, prf.State
             Suction and discharge states for the point.
-
         suc, head, eff : prf.State, float, float
             Suction state, polytropic head and polytropic efficiency.
-
         suc, head, power : prf.State, float, float
             Suction state, polytropic head and gas power.
 
@@ -42,7 +38,6 @@ class Point:
         -------
         Point : prf.Point
             A point in the compressor map.
-
 
         """
         # TODO create dictionary with optional inputs
