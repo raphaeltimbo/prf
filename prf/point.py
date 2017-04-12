@@ -445,6 +445,7 @@ def load_curves(file, suc, speed, **kwargs):
     """
     n_points = kwargs.pop('n_points', 8)
     df = pd.read_excel(file)
+    df = df.fillna(method='pad')  # fill if number of points is different
 
     polydegree = 3
 
