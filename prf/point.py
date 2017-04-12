@@ -30,7 +30,6 @@ class Point:
             Suction state, polytropic head and polytropic efficiency.
         suc, head, power : prf.State, float, float
             Suction state, polytropic head and gas power.
-
         suc, eff, vol_ratio : prf.State, float, float
             Suction state, polytropic efficiecy and volume ratio.
 
