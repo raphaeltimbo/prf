@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 __all__ = ['plot_head_curve', 'plot_disch_p_curve', 'plot_eff_curve',
-           'plot_envelope']
+           'plot_envelope', 'plot_power_curve']
 
 plt.style.use('seaborn-white')
 
@@ -96,6 +96,28 @@ def plot_eff_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
         ax.set_xlabel('Volumetric flow $(m^3 / s)$')
 
     ax.set_ylabel('Efficiency')
+
+
+def plot_power_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
+    if ax is None:
+        ax = plt.gca()
+
+    flow_ = [getattr(p, flow) for p in imp.new_points]
+
+    flow = np.linspace(min(flow_), max(flow_), 100)
+
+    curve, = ax.plot(flow, imp.power_curve(flow))
+
+    if plot_current_point is True:
+        ax.plot(imp.current_point.flow_v, imp.current_point.power, 'o',
+                color=curve.get_color())
+
+    if flow is 'flow_m':
+        ax.set_xlabel('Mass flow $(kg / s)$')
+    else:
+        ax.set_xlabel('Volumetric flow $(m^3 / s)$')
+
+    ax.set_ylabel('Power $(W)$')
 
 
 def plot_envelope(state, ax=None):
