@@ -275,6 +275,7 @@ def head_isen(suc, disch):
     53166.296...
     """
     # define state to isentropic discharge
+    # TODO evaluate use of singleton to avoid copying states
     disch_s = copy(disch)
     disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
 
