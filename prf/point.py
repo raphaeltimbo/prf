@@ -422,7 +422,8 @@ def power(flow_m, head, eff):
 # TODO add power
 
 
-def load_curves(file, suc, speed, npoints=8):
+@convert_to_base_units
+def load_curves(file, suc, speed, **kwargs):
     """Load curve from excel file.
     
     Parameters
@@ -442,6 +443,7 @@ def load_curves(file, suc, speed, npoints=8):
     points : list
         List with points obtained from the file.
     """
+    n_points = kwargs.pop('n_points', 8)
     df = pd.read_excel(file)
 
     polydegree = 3
@@ -456,7 +458,7 @@ def load_curves(file, suc, speed, npoints=8):
 
     min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
 
-    flow_range = np.linspace(min_flow, max_flow, npoints)
+    flow_range = np.linspace(min_flow, max_flow, n_points)
     head_range = head_curve(flow_range)
     power_range = power_curve(flow_range)
 
@@ -464,7 +466,7 @@ def load_curves(file, suc, speed, npoints=8):
 
     for f, h, p in zip(flow_range, head_range, power_range):
         points.append(Point(
-            suc=suc, head=h, power=p, flow_v=f, speed=speed
+            suc=suc, head=h, power=p, flow_v=f, speed=speed, **kwargs
         ))
 
     return points
