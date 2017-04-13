@@ -109,6 +109,7 @@ def test_point_calc_from_suc_head_eff(state_si_main_op):
     assert_allclose(point.flow_m, 48.658611111111114, rtol=1e-4)
     assert_allclose(point.head, head, rtol=1e-4)
 
+
 @pytest.fixture
 def point_si_main_op():
     fluid = {'Methane': 0.69945,

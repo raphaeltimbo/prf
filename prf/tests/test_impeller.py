@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 
 skip = False
 
+
 @pytest.fixture
 def impeller():
     fluid = {'CarbonDioxide': 0.79585,
