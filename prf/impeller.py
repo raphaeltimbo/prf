@@ -370,6 +370,14 @@ class NonDimPoint:
         self.head_coeff = kwargs.get('head_coeff')
         self.eff = kwargs.get('eff')
 
+    def __repr__(self):
+        return (
+            '\nNon Dimensional Point: '
+            + '\n Flow Coefficient : {:10.5}'.format(self.flow_coeff)
+            + '\n Head Coefficient : {:10.5}'.format(self.head_coeff)
+            + '\n Efficiency       : {:10.5}'.format(self.eff)
+        )
+
     @classmethod
     def from_impeller(cls, impeller, point):
         # flow coefficient
