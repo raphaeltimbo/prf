@@ -309,6 +309,24 @@ class Impeller:
         return mach
 
     def reynolds(self, suc=None, speed=None, point=None):
+        """Reynolds number.
+         
+        Parameters
+        ----------
+        suc : prf.State
+            Suction state.
+        speed : float
+            Speed in rad/s.
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and speed.
+        
+        Returns
+        -------
+        Reynolds : float
+            Reynolds number.
+        """
+
         if point is not None:
             if isinstance(point, int):
                 point = self.points[point]
