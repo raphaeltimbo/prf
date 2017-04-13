@@ -278,6 +278,23 @@ class Impeller:
         return head_coeff
 
     def mach(self, suc=None, speed=None, point=None):
+        """Mach number.
+         
+        Parameters
+        ----------
+        suc : prf.State
+            Suction state.
+        speed : float
+            Speed in rad/s.
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and speed.
+        
+        Returns
+        -------
+        mach : float
+            Mach number.
+        """
         if point is not None:
             if isinstance(point, int):
                 point = self.points[point]
