@@ -15,6 +15,9 @@ class Impeller:
         The created instance will hold instances of the dimensional curves
         and of the non dimensional curves generated.
 
+        Non dimensional points are calculated when
+        the impeller is instantiated.
+        
         Parameters
         ----------
         points : list
