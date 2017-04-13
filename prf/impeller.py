@@ -189,13 +189,17 @@ class Impeller:
 
         Parameters 
         ---------- 
+        point
         flow_m : float
             Mass flow (kg/s)
-        suc : state
+        suc : prf.State
             Suction state.
         speed : float
             Speed in rad/s.
-
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and speed.
+            
         Returns 
         ------- 
         flow_coeff : float
@@ -230,7 +234,10 @@ class Impeller:
         ----------
         speed : float
             Speed in rad/s.
-
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and speed.
+ 
         Returns
         -------
         tip_speed : float
@@ -257,11 +264,15 @@ class Impeller:
 
         Parameters
         ----------
+        point
         head : float
             Head in J/kg.
         speed : float
             Speed in rad/s.
-
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and speed.
+ 
         Returns
         -------
         head_coeff : float
