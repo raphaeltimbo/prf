@@ -326,7 +326,6 @@ class Impeller:
         Reynolds : float
             Reynolds number.
         """
-
         if point is not None:
             if isinstance(point, int):
                 point = self.points[point]
@@ -342,6 +341,23 @@ class Impeller:
         return reynolds
 
     def volume_ratio(self, suc=None, disch=None, point=None):
+        """Volume ratio.
+         
+        Parameters
+        ----------
+        suc : prf.State
+            Suction state.
+        disch : prf.State
+            Discharge state.
+        point : int 
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and disch.
+        
+        Returns
+        -------
+        Volume ratio : float
+            Volume ratio.
+        """
         if point is not None:
             if isinstance(point, int):
                 point = self.points[point]
