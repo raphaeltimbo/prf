@@ -2,13 +2,11 @@ import numpy as np
 import pandas as pd
 import CoolProp as CP
 from copy import copy
-from scipy.optimize import newton, brentq
+from scipy.optimize import newton
 from prf.state import *
 
 
-__all__ = ['Point', 'n_exp', 'head_pol', 'eff_pol', 'head_isen',
-           'eff_isen', 'schultz_f', 'head_pol_schultz', 'eff_pol_schultz',
-           'convert_to_base_units', 'load_curves']
+__all__ = ['Point', 'convert_to_base_units', 'load_curves']
 
 
 class Point:
@@ -41,6 +39,8 @@ class Point:
         """
         # TODO create dictionary with optional inputs
         self.suc = kwargs.get('suc')
+
+        self._dummy_state = copy(self.suc)
 
         try:
             self.speed = kwargs['speed']
@@ -89,9 +89,9 @@ class Point:
     # TODO Put pol. head/eff and isen. head/eff functions inside point class
 
     def calc_from_suc_disch(self, suc, disch):
-        self.head = head_pol_schultz(suc, disch)
-        self.eff = eff_pol_schultz(suc, disch)
-        self.power = power(self.flow_m, self.head, self.eff)
+        self.head = self.head_pol_schultz()
+        self.eff = self.eff_pol_schultz()
+        self.power = self.power_calc()
 
     def calc_from_suc_head_eff(self, suc, head, eff):
         """Point from suction, head and efficiency.
@@ -126,7 +126,7 @@ class Point:
 
         def update_pressure(p):
             disch.update(CP.HmassP_INPUTS, h_disch, p)
-            new_head = head_pol_schultz(suc, disch)
+            new_head = self.head_pol_schultz(suc, disch)
 
             return new_head - head
 
@@ -150,7 +150,7 @@ class Point:
 
         def update_pressure(p):
             disch.update(CP.DmassP_INPUTS, disch.rhomass(), p)
-            new_eff = eff_pol_schultz(suc, disch)
+            new_eff = self.eff_pol_schultz(suc=suc, disch=disch)
 
             return new_eff - eff
 
@@ -159,262 +159,302 @@ class Point:
         self.disch = disch
         self.calc_from_suc_disch(suc, disch)
 
+    def head_pol_schultz(self, suc=None, disch=None):
+        """Polytropic head corrected by the Schultz factor.
 
-def n_exp(suc, disch):
-    """Polytropic exponent.
+        Calculates the polytropic head corrected by the Schultz factor
+        given a suction and a discharge state.
 
-    Calculates the polytropic exponent given a suction and a discharge state.
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        Returns
+        -------
+        head_pol_schultz : float
+            Polytropic head corrected by the Schultz factor.
 
-    Returns
-    -------
-    n_exp : float
-        Polytropic exponent.
+        Examples
+        --------
+        >>> fluid ={'CarbonDioxide': 0.76064,
+        ...         'R134a': 0.23581,
+        ...         'Nitrogen': 0.00284,
+        ...         'Oxygen': 0.00071}
+        >>> suc = State.define(fluid, 183900, 291.5)
+        >>> disch = State.define(fluid, 590200, 380.7)
+        >>> head_pol_schultz(suc, disch) # doctest: +ELLIPSIS
+        55377.434...
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
-    Examples
-    --------
+        f = self.schultz_f(suc, disch)
+        head = self.head_pol(suc, disch)
 
-    """
-    ps = suc.p()
-    vs = 1 / suc.rhomass()
-    pd = disch.p()
-    vd = 1 / disch.rhomass()
+        return f * head
 
-    return np.log(pd/ps)/np.log(vs/vd)
+    def eff_pol_schultz(self, suc=None, disch=None):
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
+        wp = self.head_pol_schultz(suc, disch)
+        dh = disch.hmass() - suc.hmass()
 
-def head_pol(suc, disch):
-    """Polytropic head.
+        return wp/dh
 
-    Calculates the polytropic head given a suction and a discharge state.
+    def n_exp(self, suc=None, disch=None):
+        """Polytropic exponent.
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        Calculates the polytropic exponent given a suction and a discharge state.
 
-    Returns
-    -------
-    head_pol : float
-        Polytropic head.
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-    Examples
-    --------
+        Returns
+        -------
+        n_exp : float
+            Polytropic exponent.
 
-    """
-    n = n_exp(suc, disch)
+        Examples
+        --------
 
-    p2 = disch.p()
-    v2 = 1 / disch.rhomass()
-    p1 = suc.p()
-    v1 = 1 / suc.rhomass()
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
-    return (n/(n-1))*(p2*v2 - p1*v1)
+        ps = suc.p()
+        vs = 1 / suc.rhomass()
+        pd = disch.p()
+        vd = 1 / disch.rhomass()
 
+        return np.log(pd/ps)/np.log(vs/vd)
 
-def eff_pol(suc, disch):
-    """Polytropic efficiency.
+    def head_pol(self, suc=None, disch=None):
+        """Polytropic head.
 
-    Calculates the polytropic efficiency given suction and discharge state.
+        Calculates the polytropic head given a suction and a discharge state.
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-    Returns
-    -------
-    eff_pol : float
-        Polytropic head.
+        Returns
+        -------
+        head_pol : float
+            Polytropic head.
 
-    Examples
-    --------
+        Examples
+        --------
 
-    """
-    wp = head_pol(suc, disch)
-    dh = disch.hmass() - suc.hmass()
-    return wp/dh
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
+        n = self.n_exp(suc, disch)
 
-def head_isen(suc, disch):
-    """Isentropic head.
+        p2 = disch.p()
+        v2 = 1 / disch.rhomass()
+        p1 = suc.p()
+        v1 = 1 / suc.rhomass()
 
-    Calculates the Isentropic head given a suction and a discharge state.
+        return (n/(n-1))*(p2*v2 - p1*v1)
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+    def eff_pol(self, suc=None, disch=None):
+        """Polytropic efficiency.
 
-    Returns
-    -------
-    head_isen : float
-        Isentropic head.
+        Calculates the polytropic efficiency given suction and discharge state.
 
-    Examples
-    --------
-    >>> fluid ={'CarbonDioxide': 0.76064,
-    ...         'R134a': 0.23581,
-    ...         'Nitrogen': 0.00284,
-    ...         'Oxygen': 0.00071}
-    >>> suc = State.define(fluid, 183900, 291.5)
-    >>> disch = State.define(fluid, 590200, 380.7)
-    >>> head_isen(suc, disch) # doctest: +ELLIPSIS
-    53166.296...
-    """
-    # define state to isentropic discharge
-    # TODO evaluate use of singleton to avoid copying states
-    disch_s = copy(disch)
-    disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-    return head_pol(suc, disch_s)
+        Returns
+        -------
+        eff_pol : float
+            Polytropic head.
 
+        Examples
+        --------
 
-def eff_isen(suc, disch):
-    """Isentropic efficiency.
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
-    Calculates the Isentropic efficiency given a suction and a discharge state.
+        wp = self.head_pol(suc, disch)
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        dh = disch.hmass() - suc.hmass()
 
-    Returns
-    -------
-    ef_isen : float
-        Isentropic efficiency.
+        return wp/dh
 
-    Examples
-    --------
-    >>> fluid ={'CarbonDioxide': 0.76064,
-    ...         'R134a': 0.23581,
-    ...         'Nitrogen': 0.00284,
-    ...         'Oxygen': 0.00071}
-    >>> suc = State.define(fluid, 183900, 291.5)
-    >>> disch = State.define(fluid, 590200, 380.7)
-    >>> ef_isen(suc, disch) # doctest: +ELLIPSIS
-    0.684...
-    """
-    ws = head_isen(suc, disch)
-    dh = disch.hmass() - suc.hmass()
-    return ws/dh
+    def head_isen(self, suc=None, disch=None):
+        """Isentropic head.
 
+        Calculates the Isentropic head given a suction and a discharge state.
 
-def schultz_f(suc, disch):
-    """Schultz factor.
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-    Calculates the Schultz factor given a suction and discharge state.
-    This factor is used to correct the polytropic head as per PTC 10.
+        Returns
+        -------
+        head_isen : float
+            Isentropic head.
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        Examples
+        --------
+        >>> fluid ={'CarbonDioxide': 0.76064,
+        ...         'R134a': 0.23581,
+        ...         'Nitrogen': 0.00284,
+        ...         'Oxygen': 0.00071}
+        >>> suc = State.define(fluid, 183900, 291.5)
+        >>> disch = State.define(fluid, 590200, 380.7)
+        >>> head_isen(suc, disch) # doctest: +ELLIPSIS
+        53166.296...
+        """
+        # define state to isentropic discharge
+        # TODO evaluate use of singleton to avoid copying states
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
-    Returns
-    -------
-    ef_isen : float
-        Isentropic efficiency.
+        disch_s = copy(disch)
+        disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
 
-    Examples
-    --------
-    >>> fluid ={'CarbonDioxide': 0.76064,
-    ...         'R134a': 0.23581,
-    ...         'Nitrogen': 0.00284,
-    ...         'Oxygen': 0.00071}
-    >>> suc = State.define(fluid, 183900, 291.5)
-    >>> disch = State.define(fluid, 590200, 380.7)
-    >>> schultz_f(suc, disch) # doctest: +ELLIPSIS
-    1.001...
-    """
-    # define state to isentropic discharge
-    disch_s = copy(disch)
-    disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
+        return self.head_pol(suc, disch_s)
 
-    h2s_h1 = disch_s.hmass() - suc.hmass()
-    h_isen = head_isen(suc, disch)
+    def eff_isen(self, suc=None, disch=None):
+        """Isentropic efficiency.
 
-    return h2s_h1/h_isen
+        Calculates the Isentropic efficiency given a suction and a discharge state.
 
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
-def head_pol_schultz(suc, disch):
-    """Polytropic head corrected by the Schultz factor.
+        Returns
+        -------
+        ef_isen : float
+            Isentropic efficiency.
 
-    Calculates the polytropic head corrected by the Schultz factor
-    given a suction and a discharge state.
+        Examples
+        --------
+        >>> fluid ={'CarbonDioxide': 0.76064,
+        ...         'R134a': 0.23581,
+        ...         'Nitrogen': 0.00284,
+        ...         'Oxygen': 0.00071}
+        >>> suc = State.define(fluid, 183900, 291.5)
+        >>> disch = State.define(fluid, 590200, 380.7)
+        >>> ef_isen(suc, disch) # doctest: +ELLIPSIS
+        0.684...
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
 
-    Parameters
-    ----------
-    suc : State
-        Suction state.
-    disch : State
-        Discharge state.
+        ws = self.head_isen(suc, disch)
+        dh = disch.hmass() - suc.hmass()
+        return ws/dh
 
-    Returns
-    -------
-    head_pol_schultz : float
-        Polytropic head corrected by the Schultz factor.
+    def schultz_f(self, suc=None, disch=None):
+        """Schultz factor.
 
-    Examples
-    --------
-    >>> fluid ={'CarbonDioxide': 0.76064,
-    ...         'R134a': 0.23581,
-    ...         'Nitrogen': 0.00284,
-    ...         'Oxygen': 0.00071}
-    >>> suc = State.define(fluid, 183900, 291.5)
-    >>> disch = State.define(fluid, 590200, 380.7)
-    >>> head_pol_schultz(suc, disch) # doctest: +ELLIPSIS
-    55377.434...
-    """
-    f = schultz_f(suc, disch)
-    head = head_pol(suc, disch)
+        Calculates the Schultz factor given a suction and discharge state.
+        This factor is used to correct the polytropic head as per PTC 10.
 
-    return f * head
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
 
+        Returns
+        -------
+        ef_isen : float
+            Isentropic efficiency.
 
-def eff_pol_schultz(suc, disch):
-    wp = head_pol_schultz(suc, disch)
-    dh = disch.hmass() - suc.hmass()
-    return wp/dh
+        Examples
+        --------
+        >>> fluid ={'CarbonDioxide': 0.76064,
+        ...         'R134a': 0.23581,
+        ...         'Nitrogen': 0.00284,
+        ...         'Oxygen': 0.00071}
+        >>> suc = State.define(fluid, 183900, 291.5)
+        >>> disch = State.define(fluid, 590200, 380.7)
+        >>> schultz_f(suc, disch) # doctest: +ELLIPSIS
+        1.001...
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
+        # define state to isentropic discharge
+        disch_s = copy(disch)
+        disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
 
+        h2s_h1 = disch_s.hmass() - suc.hmass()
+        h_isen = self.head_isen(suc, disch)
 
-def power(flow_m, head, eff):
-    """Power.
+        return h2s_h1/h_isen
 
-    Calculate the power consumption.
+    def power_calc(self, flow_m=None, head=None, eff=None):
+        """Power.
 
-    Parameters
-    ----------
-    flow_m : float
-        Mass flow.
-    head : float
-        Head.
-    eff : float
-        Polytropic efficiency.
+        Calculate the power consumption.
 
-    Returns
-    -------
-    power : float
+        Parameters
+        ----------
+        flow_m : float
+            Mass flow.
+        head : float
+            Head.
+        eff : float
+            Polytropic efficiency.
 
-    """
-    return flow_m * head / eff
+        Returns
+        -------
+        power : float
+
+        """
+        if flow_m is None:
+            flow_m = self.flow_m
+        if head is None:
+            head = self.head
+        if eff is None:
+            eff = self.eff
+
+        return flow_m * head / eff
 
 # TODO add head Mallen
 # TODO add head Huntington

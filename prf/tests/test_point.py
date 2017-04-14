@@ -26,36 +26,58 @@ def disch_1():
     return State.define(fluid=fluid, p=5.902, T=380.7, **units)
 
 
-def test_n_exp(suc_1, disch_1):
-    assert_allclose(n_exp(suc_1, disch_1), 1.2910634059847939, rtol=1e-4)
+@pytest.fixture
+def point_1():
+    fluid = {'CarbonDioxide': 0.76064,
+             'R134a': 0.23581,
+             'Nitrogen': 0.00284,
+             'Oxygen': 0.00071}
+    units = {'p_units': 'bar', 'T_units': 'degK'}
+
+    suc_ = State.define(fluid=fluid, p=1.839, T=291.5, **units)
+    disch_ = State.define(fluid=fluid, p=5.902, T=380.7, **units)
+
+    return Point(suc=suc_, disch=disch_, speed=7666, flow_m=29833.2)
 
 
-def test_head_pol(suc_1, disch_1):
-    assert_allclose(head_pol(suc_1, disch_1), 55280.82459048466, rtol=1e-4)
+def test_n_exp(point_1, suc_1, disch_1):
+    assert_allclose(point_1.n_exp(suc=suc_1, disch=disch_1), 1.2910634059847939, rtol=1e-4)
+    assert_allclose(point_1.n_exp(), 1.2910634059847939, rtol=1e-4)
 
 
-def test_ef_pol(suc_1, disch_1):
-    assert_allclose(eff_pol(suc_1, disch_1), 0.7111862811638862, rtol=1e-4)
+def test_head_pol(point_1, suc_1, disch_1):
+    assert_allclose(point_1.head_pol(suc=suc_1, disch=disch_1), 55280.82459048466, rtol=1e-4)
+    assert_allclose(point_1.head_pol(), 55280.82459048466, rtol=1e-4)
 
 
-def test_ef_pol_schultz(suc_1, disch_1):
-    assert_allclose(eff_pol_schultz(suc_1, disch_1), 0.7124304497904342, rtol=1e-4)
+def test_ef_pol(point_1, suc_1, disch_1):
+    assert_allclose(point_1.eff_pol(suc=suc_1, disch=disch_1), 0.7111862811638862, rtol=1e-4)
+    assert_allclose(point_1.eff_pol(), 0.7111862811638862, rtol=1e-4)
 
 
-def test_head_isen(suc_1, disch_1):
-    assert_allclose(head_isen(suc_1, disch_1), 53166.12359933178, rtol=1e-4)
+def test_ef_pol_schultz(point_1, suc_1, disch_1):
+    assert_allclose(point_1.eff_pol_schultz(suc=suc_1, disch=disch_1), 0.7124304497904342, rtol=1e-4)
+    assert_allclose(point_1.eff_pol_schultz(), 0.7124304497904342, rtol=1e-4)
 
 
-def test_eff_isen(suc_1, disch_1):
-    assert_allclose(eff_isen(suc_1, disch_1), 0.6839807113336114, rtol=1e-4)
+def test_head_isen(point_1, suc_1, disch_1):
+    assert_allclose(point_1.head_isen(suc=suc_1, disch=disch_1), 53166.12359933178, rtol=1e-4)
+    assert_allclose(point_1.head_isen(), 53166.12359933178, rtol=1e-4)
 
 
-def test_schultz_f(suc_1, disch_1):
-    assert_allclose(schultz_f(suc_1, disch_1), 1.0017494272028307, rtol=1e-4)
+def test_eff_isen(point_1, suc_1, disch_1):
+    assert_allclose(point_1.eff_isen(suc=suc_1, disch=disch_1), 0.6839807113336114, rtol=1e-4)
+    assert_allclose(point_1.eff_isen(), 0.6839807113336114, rtol=1e-4)
 
 
-def test_head_pol_schultz(suc_1, disch_1):
-    assert_allclose(head_pol_schultz(suc_1, disch_1), 55377.53436881817, rtol=1e-4)
+def test_schultz_f(point_1, suc_1, disch_1):
+    assert_allclose(point_1.schultz_f(suc=suc_1, disch=disch_1), 1.0017494272028307, rtol=1e-4)
+    assert_allclose(point_1.schultz_f(), 1.0017494272028307, rtol=1e-4)
+
+
+def test_head_pol_schultz(point_1, suc_1, disch_1):
+    assert_allclose(point_1.head_pol_schultz(suc=suc_1, disch=disch_1), 55377.53436881817, rtol=1e-4)
+    assert_allclose(point_1.head_pol_schultz(), 55377.53436881817, rtol=1e-4)
 
 
 def test_point(suc_1, disch_1):
