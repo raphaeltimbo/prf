@@ -7,7 +7,8 @@ from datetime import datetime
 label = subprocess.check_output(['git', 'describe', '--always'])
 label = str(label)
 date = datetime.now()
-date_label = '-'.join([str(getattr(date, attr)) for attr in ['day', 'month', 'year']])
+date_label = (
+    str(date.hour) + 'h' + '-'.join([str(getattr(date, attr)) for attr in ['day', 'month', 'year']]))
 if len(label) == 12:
     label = label[2:-3] + '-' + date_label + '.profile'
 
@@ -41,7 +42,7 @@ point = prf.Point(suc=suc, disch=disch, flow_m=flow_m, speed=41000, **units)
 imp = prf.Impeller(point, b=0.0285, D=0.365)
 
 cProfile.run(
-    'prf.head_isen(suc, disch)',
+    'point.head_isen(suc=suc, disch=disch)',
     'profile-head_isen-'+label
 )
 
