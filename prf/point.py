@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import CoolProp as CP
 from copy import copy
-from scipy.optimize import newton
+from scipy.optimize import newton, brentq
 from prf.state import *
 
 
@@ -130,7 +130,7 @@ class Point:
 
             return new_head - head
 
-        newton(update_pressure, disch.p())
+        newton(update_pressure, disch.p(), tol=1e-4)
 
         self.disch = disch
         self.calc_from_suc_disch(suc, disch)
@@ -154,7 +154,7 @@ class Point:
 
             return new_eff - eff
 
-        newton(update_pressure, disch.p())
+        newton(update_pressure, disch.p(), tol=1e-4)
 
         self.disch = disch
         self.calc_from_suc_disch(suc, disch)

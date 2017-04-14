@@ -1,12 +1,15 @@
 import cProfile
 import subprocess
 import prf as prf
+from datetime import datetime
 
 # current git version / commit
 label = subprocess.check_output(['git', 'describe', '--always'])
 label = str(label)
+date = datetime.now()
+date_label = '-'.join([str(getattr(date, attr)) for attr in ['day', 'month', 'year']])
 if len(label) == 12:
-    label = label[2:-3] + '.profile'
+    label = label[2:-3] + '-' + date_label + '.profile'
 
 flow_kgmole_hr = {'Methane': 1964,
                   'Ethane': 135.60,

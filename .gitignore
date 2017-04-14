@@ -91,3 +91,4 @@ ENV/
 .idea/
 /prf/debug.py
 *.profile
+/prf/tests/coverage/
