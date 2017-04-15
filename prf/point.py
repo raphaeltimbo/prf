@@ -39,7 +39,7 @@ class Point:
         """
         # TODO create dictionary with optional inputs
         self.suc = kwargs.get('suc')
-
+        # dummy state used to avoid copying states
         self._dummy_state = copy(self.suc)
 
         try:
@@ -158,56 +158,6 @@ class Point:
 
         self.disch = disch
         self.calc_from_suc_disch(suc, disch)
-
-    def head_pol_schultz(self, suc=None, disch=None):
-        """Polytropic head corrected by the Schultz factor.
-
-        Calculates the polytropic head corrected by the Schultz factor
-        given a suction and a discharge state.
-
-        Parameters
-        ----------
-        suc : State
-            Suction state.
-        disch : State
-            Discharge state.
-
-        Returns
-        -------
-        head_pol_schultz : float
-            Polytropic head corrected by the Schultz factor.
-
-        Examples
-        --------
-        >>> fluid ={'CarbonDioxide': 0.76064,
-        ...         'R134a': 0.23581,
-        ...         'Nitrogen': 0.00284,
-        ...         'Oxygen': 0.00071}
-        >>> suc = State.define(fluid, 183900, 291.5)
-        >>> disch = State.define(fluid, 590200, 380.7)
-        >>> head_pol_schultz(suc, disch) # doctest: +ELLIPSIS
-        55377.434...
-        """
-        if suc is None:
-            suc = self.suc
-        if disch is None:
-            disch = self.disch
-
-        f = self.schultz_f(suc, disch)
-        head = self.head_pol(suc, disch)
-
-        return f * head
-
-    def eff_pol_schultz(self, suc=None, disch=None):
-        if suc is None:
-            suc = self.suc
-        if disch is None:
-            disch = self.disch
-
-        wp = self.head_pol_schultz(suc, disch)
-        dh = disch.hmass() - suc.hmass()
-
-        return wp/dh
 
     def n_exp(self, suc=None, disch=None):
         """Polytropic exponent.
@@ -337,14 +287,13 @@ class Point:
         >>> head_isen(suc, disch) # doctest: +ELLIPSIS
         53166.296...
         """
-        # define state to isentropic discharge
-        # TODO evaluate use of singleton to avoid copying states
         if suc is None:
             suc = self.suc
         if disch is None:
             disch = self.disch
 
-        disch_s = copy(disch)
+        # define state to isentropic discharge using dummy state
+        disch_s = self._dummy_state
         disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
 
         return self.head_pol(suc, disch_s)
@@ -419,14 +368,65 @@ class Point:
             suc = self.suc
         if disch is None:
             disch = self.disch
-        # define state to isentropic discharge
-        disch_s = copy(disch)
+
+        # define state to isentropic discharge using dummy state
+        disch_s = self._dummy_state
         disch_s.update(CP.PSmass_INPUTS, disch.p(), suc.smass())
 
         h2s_h1 = disch_s.hmass() - suc.hmass()
         h_isen = self.head_isen(suc, disch)
 
         return h2s_h1/h_isen
+
+    def head_pol_schultz(self, suc=None, disch=None):
+        """Polytropic head corrected by the Schultz factor.
+
+        Calculates the polytropic head corrected by the Schultz factor
+        given a suction and a discharge state.
+
+        Parameters
+        ----------
+        suc : State
+            Suction state.
+        disch : State
+            Discharge state.
+
+        Returns
+        -------
+        head_pol_schultz : float
+            Polytropic head corrected by the Schultz factor.
+
+        Examples
+        --------
+        >>> fluid ={'CarbonDioxide': 0.76064,
+        ...         'R134a': 0.23581,
+        ...         'Nitrogen': 0.00284,
+        ...         'Oxygen': 0.00071}
+        >>> suc = State.define(fluid, 183900, 291.5)
+        >>> disch = State.define(fluid, 590200, 380.7)
+        >>> head_pol_schultz(suc, disch) # doctest: +ELLIPSIS
+        55377.434...
+        """
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
+
+        f = self.schultz_f(suc, disch)
+        head = self.head_pol(suc, disch)
+
+        return f * head
+
+    def eff_pol_schultz(self, suc=None, disch=None):
+        if suc is None:
+            suc = self.suc
+        if disch is None:
+            disch = self.disch
+
+        wp = self.head_pol_schultz(suc, disch)
+        dh = disch.hmass() - suc.hmass()
+
+        return wp/dh
 
     def power_calc(self, flow_m=None, head=None, eff=None):
         """Power.
