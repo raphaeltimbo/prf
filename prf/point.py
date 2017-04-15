@@ -86,8 +86,6 @@ class Point:
             + '\n Power      : {:10.5} W'.format(self.power)
         )
 
-    # TODO Put pol. head/eff and isen. head/eff functions inside point class
-
     def calc_from_suc_disch(self, suc, disch):
         self.head = self.head_pol_schultz()
         self.eff = self.eff_pol_schultz()
