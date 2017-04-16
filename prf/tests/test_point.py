@@ -3,6 +3,8 @@ from prf.state import *
 from prf.point import *
 from numpy.testing import assert_allclose
 
+skip = False
+
 
 @pytest.fixture
 def suc_1():
@@ -156,8 +158,28 @@ def point_si_main_op():
     return point
 
 
+@pytest.mark.skipif(skip is True, reason='Slow test')
 def test_point_calc_from_suc_eff_vol_ratio(point_si_main_op):
     p0 = point_si_main_op
+    p1 = Point(suc=p0.suc, eff=p0.eff, volume_ratio=p0.volume_ratio,
+               speed=p0.speed, flow_m=p0.flow_m)
+
+    assert p0 != p1
+    assert_allclose(p0.suc.T(), p1.suc.T())
+    assert_allclose(p0.suc.p(), p1.suc.p())
+    assert_allclose(p0.disch.T(), p1.disch.T())
+    assert_allclose(p0.disch.p(), p1.disch.p())
+    assert_allclose(p0.speed, p1.speed)
+    assert_allclose(p0.flow_m, p1.flow_m)
+    assert_allclose(p0.flow_v, p1.flow_v)
+    assert_allclose(p0.eff, p1.eff)
+    assert_allclose(p0.head, p1.head)
+    assert_allclose(p0.power, p1.power)
+    assert_allclose(p0.volume_ratio, p1.volume_ratio)
+
+
+def test_point_calc_from_suc_eff_vol_ratio(point_1):
+    p0 = point_1
     p1 = Point(suc=p0.suc, eff=p0.eff, volume_ratio=p0.volume_ratio,
                speed=p0.speed, flow_m=p0.flow_m)
 
