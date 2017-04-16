@@ -41,7 +41,6 @@ class Impeller:
         Examples
         --------
         """
-        # TODO define speed and suction state as properties and calculate current curve.
         # for one single point:
         if not isinstance(points, list):
             points = [points]
@@ -118,6 +117,12 @@ class Impeller:
         self._calc_new()
 
     def _calc_new(self):
+        """Calculate new points.
+        
+        This function is called when the object is instantiated.
+        It will also be called when properties such as suction state,
+        flow or speed are changed.
+        """
         self.new_points = [self.new_point(self.suc, self.speed, i)
                            for i in range(len(self.points))]
 
@@ -167,6 +172,12 @@ class Impeller:
         self.check_similarity()
 
     def check_similarity(self):
+        """Verify similarity.
+        
+        This function will verify the similarity between points stored and 
+        new points that are generated based on the non dimensional points.
+        
+        """
         not_valid_points = {}
 
         for i, p in enumerate(self.new_points):
