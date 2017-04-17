@@ -320,6 +320,11 @@ class Impeller:
         mach : float
             Mach number.
         """
+        if point is None:
+            point = self.current_point
+            suc = point.suc
+            speed = point.speed
+
         if point is not None:
             if isinstance(point, int):
                 point = self.points[point]

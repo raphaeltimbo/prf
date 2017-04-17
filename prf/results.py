@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 __all__ = ['plot_head_curve', 'plot_disch_p_curve', 'plot_eff_curve',
-           'plot_envelope', 'plot_power_curve']
+           'plot_envelope', 'plot_power_curve', 'plot_mach']
 
 plt.style.use('seaborn-white')
 
@@ -179,6 +179,43 @@ def plot_envelope(state, ax=None):
     ax.set_xlabel('Temperature $(K)$')
     ax.set_ylabel('Pressure $(Pa)$')
     ax.set_yscale('log')
+
+    return ax
+
+
+def plot_mach(imp, ax=None):
+    if ax is None:
+        ax = plt.gca()
+
+    rng = np.linspace(0, 1.6, 100)
+
+    def limits(mach_sp):
+        if mach_sp < 0.214:
+            lower_limit = -mach_sp
+            upper_limit = -0.25 * mach_sp + 0.286
+        elif 0.215 < mach_sp < 0.86:
+            lower_limit = 0.266 * mach_sp - 0.271
+            upper_limit = -0.25 * mach_sp + 0.286
+        else:
+            lower_limit = -0.042
+            upper_limit = 0.07
+
+        return lower_limit, upper_limit
+
+    lower_limit, upper_limit = [], []
+    for i in rng:
+        l, u = limits(i)
+        lower_limit.append(l)
+        upper_limit.append(u)
+
+    curve, = ax.plot(rng, lower_limit)
+    ax.plot(rng, upper_limit, color=curve.get_color())
+    ax.plot(imp.mach(), imp.new_points[0].mach_comparison['diff'], 'Dr')
+
+    ax.set_xlabel('Mach No. Specified $(Mm_{sp})$')
+    ax.set_ylabel('$Mm_t - Mm_{sp}')
+
+    ax.set_xlim(0, 1.6)
 
     return ax
 
