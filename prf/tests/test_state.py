@@ -150,33 +150,6 @@ def test_copy(state_si_main_test):
     assert state_si_main_test != s1
 
 
-@pytest.fixture
-def state_si_main_op_REFPROP():
-    fluid = {'Methane': 0.69945,
-             'Ethane': 0.09729,
-             'Propane': 0.05570,
-             'n-Butane': 0.01780,
-             'Isobutane': 0.01020,
-             'n-Pentane': 0.00390,
-             'Isopentane': 0.00360,
-             'n-Hexane': 0.00180,
-             'Nitrogen': 0.01490,
-             'HydrogenSulfide': 0.00017,
-             'CarbonDioxide': 0.09259,
-             'Water': 0.00200}
-    units = {'p_units': 'bar', 'T_units': 'degC'}
-
-    return State.define(p=16.99, T=38.4, fluid=fluid, EOS='REFPROP', **units)
-
-
-def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):
-    p = 1699000
-    T = 311.5499999
-    rhomass = 16.176330381770875
-    assert_allclose(state_si_main_op_REFPROP.p(), p, rtol=1e-4)
-    assert_allclose(state_si_main_op_REFPROP.T(), T, rtol=1e-4)
-    assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass, rtol=1e-4)
-
 
 def test_heos_error():
     fluid = {'Methane': 0.69945,
