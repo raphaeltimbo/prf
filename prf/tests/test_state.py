@@ -6,24 +6,39 @@ from numpy.testing import assert_allclose
 
 
 def test_convert_units():
-    p = 1698999.99999
-    T = 303.15
-    speed = 104.71975511965977
-
-    units = {'T_units': 'degC', 'p_units': 'bar', 'speed_units': 'RPM'}
+    units = {
+        'p_units': 'bar',
+        'T_units': 'degC',
+        'speed_units': 'RPM',
+        'flow_m_units': 'kg/h',
+        'flow_v_units': 'm**3/h',
+        'power_units': 'kW'
+        }
 
     @convert_to_base_units
     def func(**kwargs):
         return kwargs
 
-    converted = func(p=16.99, T=30, speed=1000, **units)
+    converted = func(p=16.99, T=30, speed=1000, power=10,
+                     flow_v=3600, flow_m=3600, **units)
     p_ = converted['p']
     T_ = converted['T']
     speed_ = converted['speed']
+    flow_m_ = converted['flow_m']
+    flow_v_ = converted['flow_v']
+    power_ = converted['power']
 
-    assert_allclose(p_, p)
-    assert_allclose(T_, T)
-    assert_allclose(speed_, speed)
+    assert_allclose(p_, 1698999.99999)
+    assert_allclose(T_, 303.15)
+    assert_allclose(speed_, 104.71975511965977)
+    assert_allclose(flow_m_, 1)
+    assert_allclose(flow_v_, 1)
+    assert_allclose(power_, 10000)
+
+    # wrong units
+    with pytest.raises(ValueError):
+        func(p=1, flow_m_units='kg**/h')
+
 
 
 @pytest.fixture
@@ -31,13 +46,13 @@ def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
     p = 101008
     T = 273
-    return State.define(p=p, T=T, fluid=fluid, EOS='HEOS')
+    return State.define(p=p, T=T, fluid=fluid, EOS='REFPROP')
 
 
 def test_state_si_air(state_si_air):
     p = 101008
     T = 273
-    rho = 1.2893965217814896
+    rho = 1.2893942613777385
     assert_allclose(state_si_air.p(), p)
     assert_allclose(state_si_air.T(), T)
     assert_allclose(state_si_air.rhomass(), rho)
@@ -49,13 +64,13 @@ def state_en_air():
     p = 14.649971812683193
     T = 31.73000040000001
     units = {'p_units': 'psi', 'T_units': 'degF'}
-    return State.define(fluid=fluid, p=p, T=T, EOS='HEOS', **units)
+    return State.define(fluid=fluid, p=p, T=T, EOS='REFPROP', **units)
 
 
 def test_state_en_air(state_en_air):
     p = 101008
     T = 273
-    rho = 1.2893965217814896
+    rho = 1.289394261380401
     assert_allclose(state_en_air.p(), p)
     assert_allclose(state_en_air.T(), T)
     assert_allclose(state_en_air.rhomass(), rho)
@@ -77,13 +92,13 @@ def state_si_main_op():
              'Water': 0.00200}
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
-    return State.define(p=16.99, T=38.4, fluid=fluid, EOS='HEOS', **units)
+    return State.define(p=16.99, T=38.4, fluid=fluid, EOS='REFPROP', **units)
 
 
 def test_state_si_main_op(state_si_main_op):
     p = 1699000
     T = 311.5499999
-    rhomass = 16.176449459148156
+    rhomass = 16.176361737467335
     assert_allclose(state_si_main_op.p(), p)
     assert_allclose(state_si_main_op.T(), T)
     assert_allclose(state_si_main_op.rhomass(), rhomass)
@@ -97,13 +112,13 @@ def state_si_main_test():
              'Oxygen': 0.00071}
     units = {'p_units': 'bar', 'T_units': 'degK'}
 
-    return State.define(p=1.839, T=291.5, fluid=fluid, EOS='HEOS', **units)
+    return State.define(p=1.839, T=291.5, fluid=fluid, EOS='REFPROP', **units)
 
 
 def test_state_si_main_test(state_si_main_test):
     p = 183900
     T = 291.5
-    rhomass = 4.436646748577415
+    rhomass = 4.436768406942847
     assert_allclose(state_si_main_test.p(), p)
     assert_allclose(state_si_main_test.T(), T)
     assert_allclose(state_si_main_test.rhomass(), rhomass)
@@ -112,7 +127,7 @@ def test_state_si_main_test(state_si_main_test):
 def test_copy(state_si_main_test):
     p = 183900
     T = 291.5
-    rhomass = 4.436646748577415
+    rhomass = 4.436768406942847
     assert_allclose(state_si_main_test.p(), p)
     assert_allclose(state_si_main_test.T(), T)
     assert_allclose(state_si_main_test.rhomass(), rhomass)

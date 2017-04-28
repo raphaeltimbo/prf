@@ -52,6 +52,13 @@ def convert_to_base_units(func):
     # get units from kwargs. Set default if not provided.
     @wraps(func)
     def inner(*args, **kwargs):
+        for k, unit in kwargs.items():
+            if '_units' in k:
+                try:
+                    Q_(1, unit)
+                except Exception as exc:
+                    raise ValueError('Wrong units -> {unit}') from exc
+
         p_units = kwargs.get('p_units', ureg.Pa)
         T_units = kwargs.get('T_units', ureg.degK)
         speed_units = kwargs.get('speed_units', ureg.rad / ureg.s)
