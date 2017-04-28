@@ -188,8 +188,12 @@ def test_ps_hs_ds():
     ps = State.define(p=16.99, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(ps.T(), 311.54999999999995, rtol=1e-4)
 
+    ds = State.define(d=16.176361737467335, s=4163.202483953783, fluid=fluid, **units)
+    assert_allclose(ds.T(), 311.54999999999995, rtol=1e-4)
+
+    # hs may cause an error when all tests are carried out at the same time
+    # this does not occur if we only run test_state
     hs = State.define(h=741544.2914857446, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(hs.T(), 311.54999999999995, rtol=1e-4)
 
-    ds = State.define(d=16.176361737467335, s=4163.202483953783, fluid=fluid, **units)
-    assert_allclose(ds.T(), 311.54999999999995, rtol=1e-4)
+

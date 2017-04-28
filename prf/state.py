@@ -212,7 +212,8 @@ class State(CP.AbstractState):
             state = cls(EOS, _fluid)
         except ValueError as exc:
             raise ValueError(
-                f'This fluid is not be supported by {EOS}.') from exc
+                f'This fluid is not be supported by {EOS}.'
+            ) from exc
 
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
