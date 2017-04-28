@@ -150,7 +150,6 @@ def test_copy(state_si_main_test):
     assert state_si_main_test != s1
 
 
-
 def test_heos_error():
     fluid = {'Methane': 0.69945,
              'Ethane': 0.09729,
