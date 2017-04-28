@@ -186,8 +186,10 @@ def test_ps_hs_ds():
     units = {'p_units': 'bar', 'T_units': 'degC'}
 
     ps = State.define(p=16.99, s=4163.202483953783, fluid=fluid, **units)
-    hs = State.define(h=741544.2914857446, s=4163.202483953783, fluid=fluid, **units)
-    ds = State.define(d=16.176361737467335, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(ps.T(), 311.54999999999995, rtol=1e-4)
+
+    hs = State.define(h=741544.2914857446, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(hs.T(), 311.54999999999995, rtol=1e-4)
+
+    ds = State.define(d=16.176361737467335, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(ds.T(), 311.54999999999995, rtol=1e-4)
