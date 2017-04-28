@@ -40,7 +40,6 @@ def test_convert_units():
         func(p=1, flow_m_units='kg**/h')
 
 
-
 @pytest.fixture
 def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
@@ -215,4 +214,3 @@ def test_ps_hs_ds():
     assert_allclose(ps.T(), 311.54999999999995)
     assert_allclose(hs.T(), 311.54999999999995)
     assert_allclose(ds.T(), 311.54999999999995)
-# TODO add test to copy method
