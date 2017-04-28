@@ -88,6 +88,13 @@ def test_point(suc_1, disch_1):
     assert point.disch == disch_1
     assert_allclose(point.flow_m, 29833.2)
     assert_allclose(point.speed, 7666)
+    assert_allclose(point.flow_v, 6724., rtol=1e-4)
+    # create point with flow_v
+    point = Point(suc=suc_1, disch=disch_1, speed=7666, flow_v=6724.)
+    assert_allclose(point.flow_m, 29833.2, rtol=1e-4)
+
+    with pytest.raises(Exception):
+        Point(suc=suc_1, disch=disch_1, speed=7666.)
 
 
 def test_point_calc_1(suc_1, disch_1):
@@ -195,3 +202,25 @@ def test_point_calc_from_suc_eff_vol_ratio(point_1):
     assert_allclose(p0.head, p1.head)
     assert_allclose(p0.power, p1.power)
     assert_allclose(p0.volume_ratio, p1.volume_ratio)
+
+
+def test_point_calc_from_suc_head_power(point_1):
+    p0 = point_1
+    p1 = Point(suc=p0.suc, head=p0.head, power=p0.power,
+               speed=p0.speed, flow_m=p0.flow_m)
+
+    assert p0 != p1
+    assert_allclose(p0.suc.T(), p1.suc.T())
+    assert_allclose(p0.suc.p(), p1.suc.p())
+    assert_allclose(p0.disch.T(), p1.disch.T())
+    assert_allclose(p0.disch.p(), p1.disch.p())
+    assert_allclose(p0.speed, p1.speed)
+    assert_allclose(p0.flow_m, p1.flow_m)
+    assert_allclose(p0.flow_v, p1.flow_v)
+    assert_allclose(p0.eff, p1.eff)
+    assert_allclose(p0.head, p1.head)
+    assert_allclose(p0.power, p1.power)
+    assert_allclose(p0.volume_ratio, p1.volume_ratio)
+
+
+# TODO add tests for load curves
