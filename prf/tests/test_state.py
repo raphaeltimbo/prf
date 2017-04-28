@@ -174,4 +174,24 @@ def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):
     assert_allclose(state_si_main_op_REFPROP.T(), T)
     assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass, rtol=1e-4)
 
+
+def test_heos_error():
+    fluid = {'Methane': 0.69945,
+             'Ethane': 0.09729,
+             'Propane': 0.05570,
+             'n-Butane': 0.01780,
+             'Isobutane': 0.01020,
+             'n-Pentane': 0.00390,
+             'Isopentane': 0.00360,
+             'n-Hexane': 0.00180,
+             'Nitrogen': 0.01490,
+             'HydrogenSulfide': 0.00017,
+             'CarbonDioxide': 0.09259,
+             'Water': 0.00200}
+    units = {'p_units': 'bar', 'T_units': 'degC'}
+
+    with pytest.raises(ValueError):
+        State.define(p=16.99, T=38.4, fluid=fluid, EOS='HEOS', **units)
+
+
 # TODO add test to copy method

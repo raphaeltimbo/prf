@@ -57,7 +57,7 @@ def convert_to_base_units(func):
                 try:
                     Q_(1, unit)
                 except Exception as exc:
-                    raise ValueError('Wrong units -> {unit}') from exc
+                    raise ValueError(f'Wrong units -> {unit}') from exc
 
         p_units = kwargs.get('p_units', ureg.Pa)
         T_units = kwargs.get('T_units', ureg.degK)
@@ -208,7 +208,12 @@ class State(CP.AbstractState):
         # create an adequate fluid string to cp.AbstractState
         _fluid = '&'.join(constituents)
 
-        state = cls(EOS, _fluid)
+        try:
+            state = cls(EOS, _fluid)
+        except ValueError as exc:
+            raise ValueError(
+                f'This fluid is not be supported by {EOS}.') from exc
+
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
 
