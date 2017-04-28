@@ -4,6 +4,8 @@ from prf.state import *
 from copy import copy
 from numpy.testing import assert_allclose
 
+skip = False  # skip slow tests
+
 
 def test_convert_units():
     units = {
@@ -52,9 +54,11 @@ def test_state_si_air(state_si_air):
     p = 101008
     T = 273
     rho = 1.2893942613777385
+    k = 1.4027565065533025
     assert_allclose(state_si_air.p(), p)
     assert_allclose(state_si_air.T(), T)
     assert_allclose(state_si_air.rhomass(), rho)
+    assert_allclose(state_si_air.k(), k)
 
 
 @pytest.fixture
@@ -193,6 +197,7 @@ def test_heos_error():
         State.define(p=16.99, T=38.4, fluid=fluid, EOS='HEOS', **units)
 
 
+@pytest.mark.skipif(skip is True, reason='Slow test')
 def test_ps_hs_ds():
     fluid = {'Methane': 0.69945,
              'Ethane': 0.09729,
