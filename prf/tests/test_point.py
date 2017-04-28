@@ -3,7 +3,7 @@ from prf.state import *
 from prf.point import *
 from numpy.testing import assert_allclose
 
-skip = False  # skip slow tests
+skip = True  # skip slow tests
 
 
 @pytest.fixture

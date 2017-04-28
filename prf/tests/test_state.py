@@ -55,10 +55,10 @@ def test_state_si_air(state_si_air):
     T = 273
     rho = 1.2893942613777385
     k = 1.4027565065533025
-    assert_allclose(state_si_air.p(), p)
-    assert_allclose(state_si_air.T(), T)
-    assert_allclose(state_si_air.rhomass(), rho)
-    assert_allclose(state_si_air.k(), k)
+    assert_allclose(state_si_air.p(), p, rtol=1e-4)
+    assert_allclose(state_si_air.T(), T, rtol=1e-4)
+    assert_allclose(state_si_air.rhomass(), rho, rtol=1e-4)
+    assert_allclose(state_si_air.k(), k, rtol=1e-4)
 
 
 @pytest.fixture
@@ -74,9 +74,9 @@ def test_state_en_air(state_en_air):
     p = 101008
     T = 273
     rho = 1.289394261380401
-    assert_allclose(state_en_air.p(), p)
-    assert_allclose(state_en_air.T(), T)
-    assert_allclose(state_en_air.rhomass(), rho)
+    assert_allclose(state_en_air.p(), p, rtol=1e-4)
+    assert_allclose(state_en_air.T(), T, rtol=1e-4)
+    assert_allclose(state_en_air.rhomass(), rho, rtol=1e-4)
 
 
 @pytest.fixture
@@ -102,9 +102,9 @@ def test_state_si_main_op(state_si_main_op):
     p = 1699000
     T = 311.5499999
     rhomass = 16.176361737467335
-    assert_allclose(state_si_main_op.p(), p)
-    assert_allclose(state_si_main_op.T(), T)
-    assert_allclose(state_si_main_op.rhomass(), rhomass)
+    assert_allclose(state_si_main_op.p(), p, rtol=1e-4)
+    assert_allclose(state_si_main_op.T(), T, rtol=1e-4)
+    assert_allclose(state_si_main_op.rhomass(), rhomass, rtol=1e-4)
 
 
 @pytest.fixture
@@ -122,30 +122,30 @@ def test_state_si_main_test(state_si_main_test):
     p = 183900
     T = 291.5
     rhomass = 4.436768406942847
-    assert_allclose(state_si_main_test.p(), p)
-    assert_allclose(state_si_main_test.T(), T)
-    assert_allclose(state_si_main_test.rhomass(), rhomass)
+    assert_allclose(state_si_main_test.p(), p, rtol=1e-4)
+    assert_allclose(state_si_main_test.T(), T, rtol=1e-4)
+    assert_allclose(state_si_main_test.rhomass(), rhomass, rtol=1e-4)
 
 
 def test_copy(state_si_main_test):
     p = 183900
     T = 291.5
     rhomass = 4.436768406942847
-    assert_allclose(state_si_main_test.p(), p)
-    assert_allclose(state_si_main_test.T(), T)
-    assert_allclose(state_si_main_test.rhomass(), rhomass)
+    assert_allclose(state_si_main_test.p(), p, rtol=1e-4)
+    assert_allclose(state_si_main_test.T(), T, rtol=1e-4)
+    assert_allclose(state_si_main_test.rhomass(), rhomass, rtol=1e-4)
 
     s1 = copy(state_si_main_test)
     s2 = copy(state_si_main_test)
 
     s2.update(CP.PT_INPUTS, 200000, 300)
-    assert_allclose(s2.p(), 200000)
-    assert_allclose(s2.T(), 300)
+    assert_allclose(s2.p(), 200000, rtol=1e-4)
+    assert_allclose(s2.T(), 300, rtol=1e-4)
     assert_allclose(s2.rhomass(), 4.687447306413212, rtol=1e-4)
     assert state_si_main_test != s2
 
-    assert_allclose(s1.p(), p)
-    assert_allclose(s1.T(), T)
+    assert_allclose(s1.p(), p, rtol=1e-4)
+    assert_allclose(s1.T(), T, rtol=1e-4)
     assert_allclose(s1.rhomass(), rhomass, rtol=1e-4)
     assert state_si_main_test != s1
 
@@ -173,8 +173,8 @@ def test_state_si_main_op_REFPROP(state_si_main_op_REFPROP):
     p = 1699000
     T = 311.5499999
     rhomass = 16.176330381770875
-    assert_allclose(state_si_main_op_REFPROP.p(), p)
-    assert_allclose(state_si_main_op_REFPROP.T(), T)
+    assert_allclose(state_si_main_op_REFPROP.p(), p, rtol=1e-4)
+    assert_allclose(state_si_main_op_REFPROP.T(), T, rtol=1e-4)
     assert_allclose(state_si_main_op_REFPROP.rhomass(), rhomass, rtol=1e-4)
 
 
@@ -216,6 +216,6 @@ def test_ps_hs_ds():
     ps = State.define(p=16.99, s=4163.202483953783, fluid=fluid, **units)
     hs = State.define(h=741544.2914857446, s=4163.202483953783, fluid=fluid, **units)
     ds = State.define(d=16.176361737467335, s=4163.202483953783, fluid=fluid, **units)
-    assert_allclose(ps.T(), 311.54999999999995)
-    assert_allclose(hs.T(), 311.54999999999995)
-    assert_allclose(ds.T(), 311.54999999999995)
+    assert_allclose(ps.T(), 311.54999999999995, rtol=1e-4)
+    assert_allclose(hs.T(), 311.54999999999995, rtol=1e-4)
+    assert_allclose(ds.T(), 311.54999999999995, rtol=1e-4)
