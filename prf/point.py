@@ -6,7 +6,7 @@ from scipy.optimize import newton
 from prf.state import *
 
 
-__all__ = ['Point', 'convert_to_base_units', 'load_curves']
+__all__ = ['Point', 'Curve', 'convert_to_base_units', 'load_curves']
 
 
 class Point:
@@ -531,6 +531,15 @@ class Curve:
         self._point0 = self.points[0]
         self.suc = self._point0.suc
         self.speed = self._point0.speed
+
+        # interpolated curves
+        self.suc_p_curve = self._interpolate_curve('suc', 'p')
+        self.suc_T_curve = self._interpolate_curve('suc', 'T')
+        self.disch_p_curve = self._interpolate_curve('disch', 'p')
+        self.disch_T_curve = self._interpolate_curve('disch', 'T')
+        self.head_curve = self._interpolate_curve('head')
+        self.eff_curve = self._interpolate_curve('eff')
+        self.power_curve = self._interpolate_curve('power')
 
     def _interpolate_curve(self, *attributes):
         """
