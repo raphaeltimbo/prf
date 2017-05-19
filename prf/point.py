@@ -509,3 +509,66 @@ def load_curves(file, suc, speed, **kwargs):
 
     return points
 
+
+class Curve:
+    """Curve.
+    
+    A curve is a collection of points that share the same suction
+    state and the same speed.
+    
+    Parameters
+    ----------
+    
+    points : list
+        List with the points
+    
+    """
+
+    def __init__(self, points):
+        self.points = points
+
+        # get one point to extract attributes
+        self._point0 = self.points[0]
+        self.suc = self._point0.suc
+        self.speed = self._point0.speed
+
+    def _interpolate_curve(self, *attributes):
+        """
+        Auxiliary function to create an interpolated curve
+        for each various points attributes.
+        
+        Parameters
+        ----------
+        attributes : points.attribute
+            The point attributes to create the interpolated curve.
+            
+        Returns
+        -------
+        interpolated_curve : np.poly1d
+            Interpolated curve using np.poly1d function.
+        """
+        # create a list for the attribute iterating on the points list
+        flow_v = []
+        attr_list = []
+
+        for point in self.points:
+            attribute = point  # start with point
+            for attr in attributes:
+                # iterate on attributes (e.g. first point.suc is called, then suc.T)
+                attribute = getattr(attribute, attr)
+            if callable(attribute):
+                attr_list.append(attribute.__call__())
+            else:
+                attr_list.append(attribute)
+
+            flow_v.append(point.flow_v)
+
+        poly_degree = 1
+        if len(flow_v) > 2:
+            poly_degree = 3
+
+        curve = np.poly1d(
+            np.polyfit(flow_v, attr_list, poly_degree)
+        )
+
+        return curve

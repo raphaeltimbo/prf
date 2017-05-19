@@ -12,14 +12,15 @@ class Impeller:
     def __init__(self, points, b, D, e=0.87e-6):
         """
         Impeller instance is initialized with the dimensional curve.
-        The created instance will hold instances of the dimensional curves
-        and of the non dimensional curves generated.
+        The created instance will hold a non dimensional curve generated 
+        a dimensional curve based on current suction condition and speed.
+        The impeller also has a current point that depends on the flow. 
+        Current condition can be set after instantiation.
 
-        Non dimensional points are calculated when
-        the impeller is instantiated.
-        
         Parameters
         ----------
+        curves : list 
+            List with curves instances.
         points : list
             List with points instances.
         b : float
