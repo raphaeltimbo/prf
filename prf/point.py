@@ -525,6 +525,13 @@ class Curve:
     """
 
     def __init__(self, points):
+        # for one single point:
+        if not isinstance(points, list):
+            p0 = points
+            p1 = Point(suc=p0.suc, eff=p0.eff, volume_ratio=p0.volume_ratio,
+                       speed=p0.speed, flow_m=p0.flow_m+1)
+            points = [p0, p1]
+
         self.points = points
 
         # get one point to extract attributes
@@ -581,3 +588,6 @@ class Curve:
         )
 
         return curve
+
+    def __getitem__(self, item):
+        return self.points[item]

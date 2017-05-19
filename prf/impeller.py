@@ -9,7 +9,7 @@ __all__ = ['Impeller', 'NonDimPoint']
 
 
 class Impeller:
-    def __init__(self, points, b, D, e=0.87e-6):
+    def __init__(self, curves, b, D, e=0.87e-6):
         """
         Impeller instance is initialized with the dimensional curve.
         The created instance will hold a non dimensional curve generated 
@@ -21,8 +21,6 @@ class Impeller:
         ----------
         curves : list 
             List with curves instances.
-        points : list
-            List with points instances.
         b : float
             Impeller width (m).
         D : float
@@ -42,15 +40,23 @@ class Impeller:
         Examples
         --------
         """
-        # for one single point:
-        if not isinstance(points, list):
-            points = [points]
-        self.points = points
+        if isinstance(curves, list) and isinstance(curves[0], Curve):
+                self.curves = curves
+        elif isinstance(curves, Curve):
+            self.curves = [curves]
+        elif isinstance(curves, list) and isinstance(curves[0], Point):
+            self.curves = [Curve(curves)]
+        elif isinstance(curves, Point):
+            self.curves = [Curve(curves)]
+        else:
+            raise TypeError('Must be a point, curve or list of points - curves')
+
+        self.points = list(self.curves[0])
         self.b = b
         self.D = D
         self.e = e
         self.non_dim_points = []
-        for point in points:
+        for point in self.points:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
         # impeller current state
