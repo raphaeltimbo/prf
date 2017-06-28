@@ -213,7 +213,7 @@ def plot_mach(imp, ax=None):
     ax.plot(imp.mach(), imp.new_points[0].mach_comparison['diff'], 'Dr')
 
     ax.set_xlabel('Mach No. Specified $(Mm_{sp})$')
-    ax.set_ylabel('$Mm_t - Mm_{sp}')
+    ax.set_ylabel('$Mm_t - Mm_{sp}$')
 
     ax.set_xlim(0, 1.6)
 
