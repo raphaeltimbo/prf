@@ -460,56 +460,6 @@ class Point:
 # TODO add power
 
 
-def load_curves(file, suc, speed, **kwargs):
-    """Load curve from excel file.
-    
-    Parameters
-    ----------
-    file : excel file
-        Excel file with the following columns:
-        flowh, headpol, flowp, power
-    suc : prf.State
-        Suction state for the curve.
-    speed : float
-        Speed in 1/s
-    npoints : int, optional
-        Number of points to be created from the curves.
-        
-    Returns
-    -------
-    points : list
-        List with points obtained from the file.
-    """
-    n_points = kwargs.pop('n_points', 8)
-    df = pd.read_excel(file)
-    df = df.fillna(method='pad')  # fill if number of points is different
-
-    polydegree = 3
-
-    head_curve = np.poly1d(np.polyfit(
-        df.flowh.values, df.headpol.values, polydegree
-    ))
-
-    power_curve = np.poly1d(np.polyfit(
-        df.flowp.values, df.power.values, polydegree
-    ))
-
-    min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
-
-    flow_range = np.linspace(min_flow, max_flow, n_points)
-    head_range = head_curve(flow_range)
-    power_range = power_curve(flow_range)
-
-    points = []
-
-    for f, h, p in zip(flow_range, head_range, power_range):
-        points.append(Point(
-            suc=suc, head=h, power=p, flow_v=f, speed=speed, **kwargs
-        ))
-
-    return points
-
-
 class Curve:
     """Curve.
     
@@ -591,3 +541,53 @@ class Curve:
 
     def __getitem__(self, item):
         return self.points[item]
+
+    @classmethod
+    def load_from_excel(cls, file, suc, speed, **kwargs):
+        """Load curve from excel file.
+
+        Parameters
+        ----------
+        file : excel file
+            Excel file with the following columns:
+            flowh, headpol, flowp, power
+        suc : prf.State
+            Suction state for the curve.
+        speed : float
+            Speed in 1/s
+        npoints : int, optional
+            Number of points to be created from the curves.
+
+        Returns
+        -------
+        points : list
+            List with points obtained from the file.
+        """
+        n_points = kwargs.pop('n_points', 8)
+        df = pd.read_excel(file)
+        df = df.fillna(method='pad')  # fill if number of points is different
+
+        polydegree = 3
+
+        head_curve = np.poly1d(np.polyfit(
+            df.flowh.values, df.headpol.values, polydegree
+        ))
+
+        power_curve = np.poly1d(np.polyfit(
+            df.flowp.values, df.power.values, polydegree
+        ))
+
+        min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
+
+        flow_range = np.linspace(min_flow, max_flow, n_points)
+        head_range = head_curve(flow_range)
+        power_range = power_curve(flow_range)
+
+        points = []
+
+        for f, h, p in zip(flow_range, head_range, power_range):
+            points.append(Point(
+                suc=suc, head=h, power=p, flow_v=f, speed=speed, **kwargs
+            ))
+
+        return cls(points)
