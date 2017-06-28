@@ -6,7 +6,7 @@ from scipy.optimize import newton
 from prf.state import *
 
 
-__all__ = ['Point', 'Curve', 'convert_to_base_units', 'load_curves']
+__all__ = ['Point', 'Curve', 'convert_to_base_units']
 
 
 class Point:
