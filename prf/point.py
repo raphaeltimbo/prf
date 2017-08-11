@@ -10,33 +10,34 @@ __all__ = ['Point', 'Curve', 'convert_to_base_units']
 
 
 class Point:
+    """Point.
+
+    A point in the compressor map that can be defined in different ways.
+
+    Parameters
+    ----------
+    speed : float
+        Speed in 1/s.
+    flow_v or flow_m : float
+        Volumetric or mass flow.
+    suc, disch : prf.State, prf.State
+        Suction and discharge states for the point.
+    suc, head, eff : prf.State, float, float
+        Suction state, polytropic head and polytropic efficiency.
+    suc, head, power : prf.State, float, float
+        Suction state, polytropic head and gas power.
+    suc, eff, vol_ratio : prf.State, float, float
+        Suction state, polytropic efficiecy and volume ratio.
+
+    Returns
+    -------
+    Point : prf.Point
+        A point in the compressor map.
+
+    """
     @convert_to_base_units
     def __init__(self, *args, **kwargs):
-        """Point.
 
-        A point in the compressor map that can be defined in different ways.
-
-        Parameters
-        ----------
-        speed : float
-            Speed in 1/s.
-        flow_v or flow_m : float
-            Volumetric or mass flow.
-        suc, disch : prf.State, prf.State
-            Suction and discharge states for the point.
-        suc, head, eff : prf.State, float, float
-            Suction state, polytropic head and polytropic efficiency.
-        suc, head, power : prf.State, float, float
-            Suction state, polytropic head and gas power.
-        suc, eff, vol_ratio : prf.State, float, float
-            Suction state, polytropic efficiecy and volume ratio.
-
-        Returns
-        -------
-        Point : prf.Point
-            A point in the compressor map.
-
-        """
         # TODO create dictionary with optional inputs
         self.suc = kwargs.get('suc')
         # dummy state used to avoid copying states

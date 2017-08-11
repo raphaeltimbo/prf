@@ -102,6 +102,7 @@ class State(CP.AbstractState):
 
     This class is inherited from CP.AbstractState.
     Some extra functionality has been added.
+    To create a State see constructor .define().
     """
     # new class to add methods to AbstractState
     # no call to super(). see :
