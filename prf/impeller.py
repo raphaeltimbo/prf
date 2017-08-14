@@ -9,37 +9,38 @@ __all__ = ['Impeller', 'NonDimPoint']
 
 
 class Impeller:
+    """
+    Impeller instance is initialized with the dimensional curve.
+    The created instance will hold a non dimensional curve generated
+    a dimensional curve based on current suction condition and speed.
+    The impeller also has a current point that depends on the flow.
+    Current condition can be set after instantiation.
+
+    Parameters
+    ----------
+    curves : list
+        List with curves instances.
+    b : float
+        Impeller width (m).
+    D : float
+        Impeller diameter (m).
+    e : float
+        Impeller roughness.
+        Defaults to 0.87 um.
+
+    Returns
+    -------
+    non_dim_points : list
+        List with non dimensional point instances.
+
+    Attributes
+    ----------
+
+    Examples
+    --------
+    """
     def __init__(self, curves, b, D, e=0.87e-6):
-        """
-        Impeller instance is initialized with the dimensional curve.
-        The created instance will hold a non dimensional curve generated 
-        a dimensional curve based on current suction condition and speed.
-        The impeller also has a current point that depends on the flow. 
-        Current condition can be set after instantiation.
 
-        Parameters
-        ----------
-        curves : list 
-            List with curves instances.
-        b : float
-            Impeller width (m).
-        D : float
-            Impeller diameter (m).
-        e : float
-            Impeller roughness.
-            Defaults to 0.87 um.
-
-        Returns
-        -------
-        non_dim_points : list
-            List with non dimensional point instances.
-
-        Attributes
-        ----------
-
-        Examples
-        --------
-        """
         if isinstance(curves, list) and isinstance(curves[0], Curve):
                 self.curves = curves
         elif isinstance(curves, Curve):
