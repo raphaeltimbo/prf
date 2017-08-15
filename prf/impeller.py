@@ -494,8 +494,8 @@ class Impeller:
                     Td = df['Td'][p]
                     disch = State.define(p=pd, T=Td, fluid=comp[p], **kwargs)
 
-                    flow = test_points_data['mass_flow'][p]
-                    speed = test_points_data['speed'][p]
+                    flow = df['mass_flow'][p]
+                    speed = df['speed'][p]
 
                     yield Point(speed=speed, flow_m=flow, suc=suc, disch=disch, **kwargs)
 
@@ -512,9 +512,11 @@ class Impeller:
         b = spec_points_data['b'][0]
 
         # TODO change impeller state to spec conditions
-        # point_sp = point_from_df(spec_points_data, **kwargs)
+        point_sp = [p for p in point_from_df(spec_points_data, **kwargs)]
+        point_sp = point_sp[0]
 
         imp = cls(curve_test, b, D)
+        imp.current_point = point_sp
 
         return imp
 
