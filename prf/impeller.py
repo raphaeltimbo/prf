@@ -78,8 +78,8 @@ class Impeller:
         self.head_curve = None
         self.eff_curve = None
         self.power_curve = None
-        self.current_point = None
         self.disch = None
+        self._current_point = None
         self._calc_new()
 
     def __repr__(self):
@@ -127,6 +127,21 @@ class Impeller:
         self._flow_v = new_flow_v
         self._calc_new()
 
+    @property
+    def current_point(self):
+        return self._current_point
+
+    @current_point.setter
+    def current_point(self, new_point):
+        self._flow_v = new_point.flow_v
+        self._speed = new_point.speed
+        self._suc = new_point.suc
+        # self._current_point is set by _calc_new()
+        # This is done so that cases for flow_v, speed
+        # and suc are also handled. Setting it here
+        # could cause an infinite recursion
+        self._calc_new()
+
     def _calc_new(self):
         """Calculate new points.
         
@@ -152,10 +167,10 @@ class Impeller:
         current_disch.update(CP.PT_INPUTS, current_disch_p, current_disch_T)
 
         self.disch = current_disch
-        self.current_point = Point(suc=self.suc,
-                                   disch=current_disch,
-                                   flow_v=self.flow_v,
-                                   speed=self.speed)
+        self._current_point = Point(suc=self.suc,
+                                    disch=current_disch,
+                                    flow_v=self.flow_v,
+                                    speed=self.speed)
         self.check_similarity()
 
     def check_similarity(self):
@@ -446,8 +461,6 @@ class Impeller:
             Impeller object with the test curve and current
             condition according to specified.
         """
-        test_points_data = pd.read_excel(file, sheetname='TEST-PYTHON')
-        spec_points_data = pd.read_excel(file, sheetname='SPECIFIED-PYTHON')
 
         def comp_from_df(df):
             # get fluids from dataframe
@@ -486,6 +499,9 @@ class Impeller:
 
                     yield Point(speed=speed, flow_m=flow, suc=suc, disch=disch, **kwargs)
 
+        test_points_data = pd.read_excel(file, sheetname='TEST-PYTHON')
+        spec_points_data = pd.read_excel(file, sheetname='SPECIFIED-PYTHON')
+
         points_test = []
         for point in point_from_df(test_points_data, **kwargs):
             points_test.append(point)
@@ -494,6 +510,9 @@ class Impeller:
 
         D = spec_points_data['D'][0]
         b = spec_points_data['b'][0]
+
+        # TODO change impeller state to spec conditions
+        # point_sp = point_from_df(spec_points_data, **kwargs)
 
         imp = cls(curve_test, b, D)
 
