@@ -52,3 +52,7 @@ def test_mach(impeller):
     assert_allclose(impeller.mach(impeller.points[0].suc,
                                   impeller.points[0].speed),
                     mach, rtol=1e-4)
+
+# TODO Add tests for current_point property
+# TODO Add tests for load_from_excel
+
