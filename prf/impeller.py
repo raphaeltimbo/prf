@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import CoolProp.CoolProp as CP
 from .point import *
+from .state import *
 from warnings import warn
 from copy import copy
 
@@ -427,6 +429,75 @@ class Impeller:
                                                                  ratio_t=volume_ratio_old)
 
         return point_new
+
+    @classmethod
+    def load_from_excel(cls, file, **kwargs):
+        """Load curve from excel file.
+
+        Parameters
+        ----------
+        file : excel file
+            Excel file with the following sheets:
+            'TEST-PYTHON' and 'SPECIFIED-PYTHON'
+
+        Returns
+        -------
+        imp : prf.Impeller
+            Impeller object with the test curve and current
+            condition according to specified.
+        """
+        test_points_data = pd.read_excel(file, sheetname='TEST-PYTHON')
+        spec_points_data = pd.read_excel(file, sheetname='SPECIFIED-PYTHON')
+
+        def comp_from_df(df):
+            # get fluids from dataframe
+            fluids = []
+            for col in df.columns:
+                if col in fluid_list:
+                    fluids.append(col)
+            # get composition for each point
+            test_points_comp = {}
+
+            for p in df.T:
+                point_comp = {}
+                for f in fluids:
+                    point_comp[f] = df[f][p]
+                test_points_comp[p] = point_comp
+
+            return test_points_comp
+
+        # create point from df
+        def point_from_df(df, **kwargs):
+            comp = comp_from_df(df)
+
+            for p in df.T:
+                if not df['ps'][p] == 0:
+                    # create suction state
+                    ps = df['ps'][p]
+                    Ts = df['Ts'][p]
+                    suc = State.define(p=ps, T=Ts, fluid=comp[p], **kwargs)
+                    # create suction state
+                    pd = df['pd'][p]
+                    Td = df['Td'][p]
+                    disch = State.define(p=pd, T=Td, fluid=comp[p], **kwargs)
+
+                    flow = test_points_data['mass_flow'][p]
+                    speed = test_points_data['speed'][p]
+
+                    yield Point(speed=speed, flow_m=flow, suc=suc, disch=disch, **kwargs)
+
+        points_test = []
+        for point in point_from_df(test_points_data, **kwargs):
+            points_test.append(point)
+
+        curve_test = Curve(points_test)
+
+        D = spec_points_data['D'][0]
+        b = spec_points_data['b'][0]
+
+        imp = cls(curve_test, b, D)
+
+        return imp
 
 
 class NonDimPoint:
