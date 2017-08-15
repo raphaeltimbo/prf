@@ -6,37 +6,38 @@ from scipy.optimize import newton
 from prf.state import *
 
 
-__all__ = ['Point', 'convert_to_base_units', 'load_curves']
+__all__ = ['Point', 'Curve', 'convert_to_base_units']
 
 
 class Point:
+    """Point.
+
+    A point in the compressor map that can be defined in different ways.
+
+    Parameters
+    ----------
+    speed : float
+        Speed in 1/s.
+    flow_v or flow_m : float
+        Volumetric or mass flow.
+    suc, disch : prf.State, prf.State
+        Suction and discharge states for the point.
+    suc, head, eff : prf.State, float, float
+        Suction state, polytropic head and polytropic efficiency.
+    suc, head, power : prf.State, float, float
+        Suction state, polytropic head and gas power.
+    suc, eff, vol_ratio : prf.State, float, float
+        Suction state, polytropic efficiecy and volume ratio.
+
+    Returns
+    -------
+    Point : prf.Point
+        A point in the compressor map.
+
+    """
     @convert_to_base_units
     def __init__(self, *args, **kwargs):
-        """Point.
 
-        A point in the compressor map that can be defined in different ways.
-
-        Parameters
-        ----------
-        speed : float
-            Speed in 1/s.
-        flow_v or flow_m : float
-            Volumetric or mass flow.
-        suc, disch : prf.State, prf.State
-            Suction and discharge states for the point.
-        suc, head, eff : prf.State, float, float
-            Suction state, polytropic head and polytropic efficiency.
-        suc, head, power : prf.State, float, float
-            Suction state, polytropic head and gas power.
-        suc, eff, vol_ratio : prf.State, float, float
-            Suction state, polytropic efficiecy and volume ratio.
-
-        Returns
-        -------
-        Point : prf.Point
-            A point in the compressor map.
-
-        """
         # TODO create dictionary with optional inputs
         self.suc = kwargs.get('suc')
         # dummy state used to avoid copying states
@@ -460,52 +461,134 @@ class Point:
 # TODO add power
 
 
-def load_curves(file, suc, speed, **kwargs):
-    """Load curve from excel file.
+class Curve:
+    """Curve.
+    
+    A curve is a collection of points that share the same suction
+    state and the same speed.
     
     Parameters
     ----------
-    file : excel file
-        Excel file with the following columns:
-        flowh, headpol, flowp, power
-    suc : prf.State
-        Suction state for the curve.
-    speed : float
-        Speed in 1/s
-    npoints : int, optional
-        Number of points to be created from the curves.
-        
-    Returns
-    -------
+    
     points : list
-        List with points obtained from the file.
+        List with the points
+    
     """
-    n_points = kwargs.pop('n_points', 8)
-    df = pd.read_excel(file)
-    df = df.fillna(method='pad')  # fill if number of points is different
 
-    polydegree = 3
+    def __init__(self, points):
+        # for one single point:
+        if not isinstance(points, list):
+            p0 = points
+            p1 = Point(suc=p0.suc, eff=p0.eff, volume_ratio=p0.volume_ratio,
+                       speed=p0.speed, flow_m=p0.flow_m+1)
+            points = [p0, p1]
 
-    head_curve = np.poly1d(np.polyfit(
-        df.flowh.values, df.headpol.values, polydegree
-    ))
+        self.points = points
 
-    power_curve = np.poly1d(np.polyfit(
-        df.flowp.values, df.power.values, polydegree
-    ))
+        # get one point to extract attributes
+        self._point0 = self.points[0]
+        self.suc = self._point0.suc
+        self.speed = self._point0.speed
 
-    min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
+        # interpolated curves
+        self.suc_p_curve = self._interpolate_curve('suc', 'p')
+        self.suc_T_curve = self._interpolate_curve('suc', 'T')
+        self.disch_p_curve = self._interpolate_curve('disch', 'p')
+        self.disch_T_curve = self._interpolate_curve('disch', 'T')
+        self.head_curve = self._interpolate_curve('head')
+        self.eff_curve = self._interpolate_curve('eff')
+        self.power_curve = self._interpolate_curve('power')
 
-    flow_range = np.linspace(min_flow, max_flow, n_points)
-    head_range = head_curve(flow_range)
-    power_range = power_curve(flow_range)
+    def _interpolate_curve(self, *attributes):
+        """
+        Auxiliary function to create an interpolated curve
+        for each various points attributes.
+        
+        Parameters
+        ----------
+        attributes : points.attribute
+            The point attributes to create the interpolated curve.
+            
+        Returns
+        -------
+        interpolated_curve : np.poly1d
+            Interpolated curve using np.poly1d function.
+        """
+        # create a list for the attribute iterating on the points list
+        flow_v = []
+        attr_list = []
 
-    points = []
+        for point in self.points:
+            attribute = point  # start with point
+            for attr in attributes:
+                # iterate on attributes (e.g. first point.suc is called, then suc.T)
+                attribute = getattr(attribute, attr)
+            if callable(attribute):
+                attr_list.append(attribute.__call__())
+            else:
+                attr_list.append(attribute)
 
-    for f, h, p in zip(flow_range, head_range, power_range):
-        points.append(Point(
-            suc=suc, head=h, power=p, flow_v=f, speed=speed, **kwargs
+            flow_v.append(point.flow_v)
+
+        poly_degree = 1
+        if len(flow_v) > 2:
+            poly_degree = 3
+
+        curve = np.poly1d(
+            np.polyfit(flow_v, attr_list, poly_degree)
+        )
+
+        return curve
+
+    def __getitem__(self, item):
+        return self.points[item]
+
+    @classmethod
+    def load_from_excel(cls, file, suc, speed, **kwargs):
+        """Load curve from excel file.
+
+        Parameters
+        ----------
+        file : excel file
+            Excel file with the following columns:
+            flowh, headpol, flowp, power
+        suc : prf.State
+            Suction state for the curve.
+        speed : float
+            Speed in 1/s
+        npoints : int, optional
+            Number of points to be created from the curves.
+
+        Returns
+        -------
+        points : list
+            List with points obtained from the file.
+        """
+        n_points = kwargs.pop('n_points', 8)
+        df = pd.read_excel(file)
+        df = df.fillna(method='pad')  # fill if number of points is different
+
+        polydegree = 3
+
+        head_curve = np.poly1d(np.polyfit(
+            df.flowh.values, df.headpol.values, polydegree
         ))
 
-    return points
+        power_curve = np.poly1d(np.polyfit(
+            df.flowp.values, df.power.values, polydegree
+        ))
 
+        min_flow, max_flow = (np.min(df.flowh.values), np.max(df.flowh.values))
+
+        flow_range = np.linspace(min_flow, max_flow, n_points)
+        head_range = head_curve(flow_range)
+        power_range = power_curve(flow_range)
+
+        points = []
+
+        for f, h, p in zip(flow_range, head_range, power_range):
+            points.append(Point(
+                suc=suc, head=h, power=p, flow_v=f, speed=speed, **kwargs
+            ))
+
+        return cls(points)

@@ -223,4 +223,17 @@ def test_point_calc_from_suc_head_power(point_1):
     assert_allclose(p0.volume_ratio, p1.volume_ratio)
 
 
+def test_curve(point_1):
+    p0 = point_1
+    p1 = Point(suc=p0.suc, eff=p0.eff, volume_ratio=p0.volume_ratio,
+               speed=p0.speed, flow_m=p0.flow_m+1)
+    flow_v = p0.flow_v
+    curve = Curve([p0, p1])
+    assert_allclose(p0.suc.p(), curve.suc_p_curve(flow_v))
+    assert_allclose(p0.suc.T(), curve.suc_T_curve(flow_v))
+    assert_allclose(p0.disch.p(), curve.disch_p_curve(flow_v))
+    assert_allclose(p0.disch.T(), curve.disch_T_curve(flow_v))
+    assert_allclose(p0.head, curve.head_curve(flow_v))
+    assert_allclose(p0.eff, curve.eff_curve(flow_v))
+    assert_allclose(p0.power, curve.power_curve(flow_v))
 # TODO add tests for load curves

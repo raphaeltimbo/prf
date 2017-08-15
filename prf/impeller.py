@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import CoolProp.CoolProp as CP
 from .point import *
+from .state import *
 from warnings import warn
 from copy import copy
 
@@ -9,47 +11,55 @@ __all__ = ['Impeller', 'NonDimPoint']
 
 
 class Impeller:
-    def __init__(self, points, b, D, e=0.87e-6):
-        """
-        Impeller instance is initialized with the dimensional curve.
-        The created instance will hold instances of the dimensional curves
-        and of the non dimensional curves generated.
+    """
+    Impeller instance is initialized with the dimensional curve.
+    The created instance will hold a non dimensional curve generated
+    a dimensional curve based on current suction condition and speed.
+    The impeller also has a current point that depends on the flow.
+    Current condition can be set after instantiation.
 
-        Non dimensional points are calculated when
-        the impeller is instantiated.
-        
-        Parameters
-        ----------
-        points : list
-            List with points instances.
-        b : float
-            Impeller width (m).
-        D : float
-            Impeller diameter (m).
-        e : float
-            Impeller roughness.
-            Defaults to 0.87 um.
+    Parameters
+    ----------
+    curves : list
+        List with curves instances.
+    b : float
+        Impeller width (m).
+    D : float
+        Impeller diameter (m).
+    e : float
+        Impeller roughness.
+        Defaults to 0.87 um.
 
-        Returns
-        -------
-        non_dim_points : list
-            List with non dimensional point instances.
+    Returns
+    -------
+    non_dim_points : list
+        List with non dimensional point instances.
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        Examples
-        --------
-        """
-        # for one single point:
-        if not isinstance(points, list):
-            points = [points]
-        self.points = points
+    Examples
+    --------
+    """
+    def __init__(self, curves, b, D, e=0.87e-6):
+
+        if isinstance(curves, list) and isinstance(curves[0], Curve):
+                self.curves = curves
+        elif isinstance(curves, Curve):
+            self.curves = [curves]
+        elif isinstance(curves, list) and isinstance(curves[0], Point):
+            self.curves = [Curve(curves)]
+        elif isinstance(curves, Point):
+            self.curves = [Curve(curves)]
+        else:
+            raise TypeError('Must be a point, curve or list of points - curves')
+
+        self.points = list(self.curves[0])
         self.b = b
         self.D = D
         self.e = e
         self.non_dim_points = []
-        for point in points:
+        for point in self.points:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
         # impeller current state
@@ -59,6 +69,7 @@ class Impeller:
 
         # the current points and curve
         self.new_points = None
+        self.new_curve = None
         self.not_valid_points = None
         self.suc_p_curve = None
         self.suc_T_curve = None
@@ -67,8 +78,8 @@ class Impeller:
         self.head_curve = None
         self.eff_curve = None
         self.power_curve = None
-        self.current_point = None
         self.disch = None
+        self._current_point = None
         self._calc_new()
 
     def __repr__(self):
@@ -116,6 +127,21 @@ class Impeller:
         self._flow_v = new_flow_v
         self._calc_new()
 
+    @property
+    def current_point(self):
+        return self._current_point
+
+    @current_point.setter
+    def current_point(self, new_point):
+        self._flow_v = new_point.flow_v
+        self._speed = new_point.speed
+        self._suc = new_point.suc
+        # self._current_point is set by _calc_new()
+        # This is done so that cases for flow_v, speed
+        # and suc are also handled. Setting it here
+        # could cause an infinite recursion
+        self._calc_new()
+
     def _calc_new(self):
         """Calculate new points.
         
@@ -126,38 +152,14 @@ class Impeller:
         self.new_points = [self.new_point(self.suc, self.speed, i)
                            for i in range(len(self.points))]
 
-        flow_v = [p.flow_v for p in self.new_points]
-        suc_p = [p.suc.p() for p in self.new_points]
-        suc_T = [p.suc.T() for p in self.new_points]
-        disch_p = [p.disch.p() for p in self.new_points]
-        disch_T = [p.disch.T() for p in self.new_points]
-        head = [p.head for p in self.new_points]
-        eff = [p.eff for p in self.new_points]
-        power = [p.power for p in self.new_points]
-
-        if len(flow_v) < 2:
-            flow_v = [flow_v[0],
-                      1.0001*flow_v[0]]
-            suc_p = [i for pair in zip(suc_p, suc_p) for i in pair]
-            suc_T = [i for pair in zip(suc_T, suc_T) for i in pair]
-            disch_p = [i for pair in zip(disch_p, disch_p) for i in pair]
-            disch_T = [i for pair in zip(disch_T, disch_T) for i in pair]
-            head = [i for pair in zip(head, head) for i in pair]
-            eff = [i for pair in zip(eff, eff) for i in pair]
-            power = [i for pair in zip(power, power) for i in pair]
-
-        poly_degree = 1
-
-        if len(flow_v) > 2:
-            poly_degree = 3
-
-        self.suc_p_curve = np.poly1d(np.polyfit(flow_v, suc_p, poly_degree))
-        self.suc_T_curve = np.poly1d(np.polyfit(flow_v, suc_T, poly_degree))
-        self.disch_p_curve = np.poly1d(np.polyfit(flow_v, disch_p, poly_degree))
-        self.disch_T_curve = np.poly1d(np.polyfit(flow_v, disch_T, poly_degree))
-        self.head_curve = np.poly1d(np.polyfit(flow_v, head, poly_degree))
-        self.eff_curve = np.poly1d(np.polyfit(flow_v, eff, poly_degree))
-        self.power_curve = np.poly1d(np.polyfit(flow_v, power, poly_degree))
+        self.new_curve = Curve(self.new_points)
+        self.suc_p_curve = self.new_curve.suc_p_curve
+        self.suc_T_curve = self.new_curve.suc_T_curve
+        self.disch_p_curve = self.new_curve.disch_p_curve
+        self.disch_T_curve = self.new_curve.disch_T_curve
+        self.head_curve = self.new_curve.head_curve
+        self.eff_curve = self.new_curve.eff_curve
+        self.power_curve = self.new_curve.power_curve
 
         current_disch_p = self.disch_p_curve(self.flow_v)
         current_disch_T = self.disch_T_curve(self.flow_v)
@@ -165,10 +167,10 @@ class Impeller:
         current_disch.update(CP.PT_INPUTS, current_disch_p, current_disch_T)
 
         self.disch = current_disch
-        self.current_point = Point(suc=self.suc,
-                                   disch=current_disch,
-                                   flow_v=self.flow_v,
-                                   speed=self.speed)
+        self._current_point = Point(suc=self.suc,
+                                    disch=current_disch,
+                                    flow_v=self.flow_v,
+                                    speed=self.speed)
         self.check_similarity()
 
     def check_similarity(self):
@@ -442,6 +444,81 @@ class Impeller:
                                                                  ratio_t=volume_ratio_old)
 
         return point_new
+
+    @classmethod
+    def load_from_excel(cls, file, **kwargs):
+        """Load curve from excel file.
+
+        Parameters
+        ----------
+        file : excel file
+            Excel file with the following sheets:
+            'TEST-PYTHON' and 'SPECIFIED-PYTHON'
+
+        Returns
+        -------
+        imp : prf.Impeller
+            Impeller object with the test curve and current
+            condition according to specified.
+        """
+
+        def comp_from_df(df):
+            # get fluids from dataframe
+            fluids = []
+            for col in df.columns:
+                if col in fluid_list:
+                    fluids.append(col)
+            # get composition for each point
+            test_points_comp = {}
+
+            for p in df.T:
+                point_comp = {}
+                for f in fluids:
+                    point_comp[f] = df[f][p]
+                test_points_comp[p] = point_comp
+
+            return test_points_comp
+
+        # create point from df
+        def point_from_df(df, **kwargs):
+            comp = comp_from_df(df)
+
+            for p in df.T:
+                if not df['ps'][p] == 0:
+                    # create suction state
+                    ps = df['ps'][p]
+                    Ts = df['Ts'][p]
+                    suc = State.define(p=ps, T=Ts, fluid=comp[p], **kwargs)
+                    # create suction state
+                    pd = df['pd'][p]
+                    Td = df['Td'][p]
+                    disch = State.define(p=pd, T=Td, fluid=comp[p], **kwargs)
+
+                    flow = df['mass_flow'][p]
+                    speed = df['speed'][p]
+
+                    yield Point(speed=speed, flow_m=flow, suc=suc, disch=disch, **kwargs)
+
+        test_points_data = pd.read_excel(file, sheetname='TEST-PYTHON')
+        spec_points_data = pd.read_excel(file, sheetname='SPECIFIED-PYTHON')
+
+        points_test = []
+        for point in point_from_df(test_points_data, **kwargs):
+            points_test.append(point)
+
+        curve_test = Curve(points_test)
+
+        D = spec_points_data['D'][0]
+        b = spec_points_data['b'][0]
+
+        # TODO change impeller state to spec conditions
+        point_sp = [p for p in point_from_df(spec_points_data, **kwargs)]
+        point_sp = point_sp[0]
+
+        imp = cls(curve_test, b, D)
+        imp.current_point = point_sp
+
+        return imp
 
 
 class NonDimPoint:
