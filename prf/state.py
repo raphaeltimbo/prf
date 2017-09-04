@@ -1,6 +1,7 @@
 import os
 import CoolProp.CoolProp as CP
 import pint
+import matplotlib.pyplot as plt
 from itertools import combinations
 from functools import wraps
 
@@ -233,4 +234,41 @@ class State(CP.AbstractState):
 
     def k(self):
         return self.cpmass() / self.cvmass()
+
+    def kinematic_viscosity(self):
+        return self.viscosity() / self.rhomass()
+
+    def plot_envelope(self, ax=None):
+        """Plot phase envelop for a given state.
+
+        Parameters
+        ----------
+        state : prf.State
+
+        ax : matplotlib.axes, optional
+            Matplotlib axes, if None creates a new.
+
+        Returns
+        -------
+        ax : matplotlib.axes
+            Matplotlib axes with plot.
+        """
+        if ax is None:
+            ax = plt.gca()
+
+        self.build_phase_envelope('')
+        p_e = self.get_phase_envelope_data()
+
+        if len(p_e.T) == 0 and self.EOS == 'REFPROP':
+            raise ValueError('Envelope data not produced with REFPROP backend'
+                             ' for pure fluid. Try to use HEOS')
+
+        ax.plot(p_e.T, p_e.p, '-')
+
+        ax.set_xlabel('Temperature $(K)$')
+        ax.set_ylabel('Pressure $(Pa)$')
+        ax.set_yscale('log')
+
+        return ax
+
 
