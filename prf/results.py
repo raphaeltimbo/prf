@@ -153,36 +153,6 @@ def plot_power_curve(imp, flow='flow_v', plot_current_point=True, ax=None):
     return ax
 
 
-def plot_envelope(state, ax=None):
-    """Plot phase envelop for a given state.
-    
-    Parameters
-    ----------
-    state : prf.State
-    
-    ax : matplotlib.axes, optional
-        Matplotlib axes, if None creates a new.
-        
-    Returns
-    -------
-    ax : matplotlib.axes
-        Matplotlib axes with plot.
-    """
-    if ax is None:
-        ax = plt.gca()
-
-    state.build_phase_envelope('')
-    p_e = state.get_phase_envelope_data()
-
-    ax.plot(p_e.T, p_e.p, '-')
-
-    ax.set_xlabel('Temperature $(K)$')
-    ax.set_ylabel('Pressure $(Pa)$')
-    ax.set_yscale('log')
-
-    return ax
-
-
 def plot_mach(imp, ax=None):
     if ax is None:
         ax = plt.gca()
