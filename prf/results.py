@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 __all__ = ['plot_head_curve', 'plot_disch_p_curve', 'plot_eff_curve',
-           'plot_envelope', 'plot_power_curve', 'plot_mach']
+           'plot_power_curve', 'plot_mach']
 
 plt.style.use('seaborn-white')
 
