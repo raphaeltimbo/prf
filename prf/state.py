@@ -260,8 +260,8 @@ class State(CP.AbstractState):
         p_e = self.get_phase_envelope_data()
 
         if len(p_e.T) == 0 and self.EOS == 'REFPROP':
-            raise ValueError('Envelope data not produced with REFPROP backend'
-                             ' for pure fluid. Try to use HEOS')
+            raise ValueError('Envelope data not produced with REFPROP backend '
+                             'for pure fluid. Try to use HEOS')
 
         ax.plot(p_e.T, p_e.p, '-')
 
