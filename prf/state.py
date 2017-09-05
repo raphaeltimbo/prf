@@ -6,7 +6,8 @@ from itertools import combinations
 from functools import wraps
 
 
-__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units']
+__all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
+           '__version__CP', '__version__REFPROP']
 
 # define pint unit registry
 new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
@@ -24,6 +25,10 @@ for mix1, mix2 in combinations(mixture, 2):
 
 # list of available fluids
 fluid_list = CP.get_global_param_string('fluids_list').split(',')
+
+# versions
+__version__CP = CP.get_global_param_string('version')
+__version__REFPROP = CP.get_global_param_string('REFPROP_version')
 
 
 def normalize_mix(molar_fractions):
