@@ -1,4 +1,5 @@
 import os
+import platform
 import CoolProp.CoolProp as CP
 import pint
 import matplotlib.pyplot as plt
@@ -15,7 +16,11 @@ ureg = pint.UnitRegistry()
 ureg.load_definitions(new_units)
 Q_ = ureg.Quantity
 
-CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, '/home/raphael/REFPROP-cmake/build/')
+if platform.system() == 'Windows':
+    REFPROP_PATH = 'C:/Program Files (x86)/REFPROP'
+else:
+    REFPROP_PATH = '/home/raphael/REFPROP-cmake/build/'
+CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, REFPROP_PATH)
 
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
 for mix1, mix2 in combinations(mixture, 2):
