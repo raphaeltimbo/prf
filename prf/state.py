@@ -268,13 +268,23 @@ class State(CP.AbstractState):
         if ax is None:
             ax = plt.gca()
 
-        # phase envelope
-        self.build_phase_envelope('')
-        p_e = self.get_phase_envelope_data()
+        # deal with issue #1544
+        if self.EOS == 'REFPROP' and len(self.fluid_names()) == 1:
+            fluid = self.fluid_dict()
+            if 'N2' not in fluid:
+                fluid['N2'] = 1e-12
+            else:
+                fluid['CO2'] = 1e-12
 
-        if len(p_e.T) == 0 and self.EOS == 'REFPROP':
-            raise ValueError('Envelope data not produced with REFPROP backend '
-                             'for pure fluid. Try to use HEOS')
+            new_fluid = self.define(p=self.p(), T=self.T(), fluid=fluid)
+
+            # phase envelope
+            new_fluid.build_phase_envelope('')
+            p_e = new_fluid.get_phase_envelope_data()
+
+        else:
+            self.build_phase_envelope('')
+            p_e = self.get_phase_envelope_data()
 
         ax.plot(p_e.T, p_e.p, '-')
 
