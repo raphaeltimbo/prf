@@ -1,10 +1,12 @@
 import os
 import platform
+import warnings
 import CoolProp.CoolProp as CP
 import pint
 import matplotlib.pyplot as plt
 from itertools import combinations
 from functools import wraps
+from CoolProp.Plots import PropertyPlot
 
 
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
@@ -266,6 +268,7 @@ class State(CP.AbstractState):
         if ax is None:
             ax = plt.gca()
 
+        # phase envelope
         self.build_phase_envelope('')
         p_e = self.get_phase_envelope_data()
 
@@ -281,4 +284,22 @@ class State(CP.AbstractState):
 
         return ax
 
+    def plot_ph(self):
+        """Plot pressure vs enthalpy."""
 
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            plot = PropertyPlot(self, 'PH', tp_limits='ACHP')
+            plot.calc_isolines()
+
+        return plot
+
+    def plot_pt(self):
+        """Plot pressure vs enthalpy."""
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            plot = PropertyPlot(self, 'PT', tp_limits='ACHP')
+            plot.calc_isolines()
+
+        return plot
