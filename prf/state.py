@@ -248,6 +248,25 @@ class State(CP.AbstractState):
 
         return state
 
+    @classmethod
+    @convert_to_base_units
+    def defineHA(cls, p=None, T=None, h=None, s=None, d=None,
+                 r=None,
+                 EOS='REFPROP',
+                 **kwargs):
+        mol_water = CP.HAPropsSI('Y', 'T', T, 'P', p, 'R', r)
+
+        total = 1 - mol_water
+
+        comp = {
+            'Water': mol_water,
+            'Nitrogen': total * 0.7812,
+            'Oxygen': total * 0.2095,
+            'Argon': total * 0.0093
+            }
+
+        return cls.define(p=p, T=T, fluid=comp, EOS=EOS)
+
     def k(self):
         return self.cpmass() / self.cvmass()
 
