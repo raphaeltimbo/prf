@@ -260,9 +260,10 @@ class State(CP.AbstractState):
 
         comp = {
             'Water': mol_water,
-            'Nitrogen': total * 0.7812,
-            'Oxygen': total * 0.2095,
-            'Argon': total * 0.0093
+            'Argon': total * 0.00935
+	    'CO2': total * 0.000319
+            'Nitrogen': total * 0.780840,
+            'Oxygen': total * 0.209476,
             }
 
         return cls.define(p=p, T=T, fluid=comp, EOS=EOS)
