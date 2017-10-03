@@ -260,8 +260,8 @@ class State(CP.AbstractState):
 
         comp = {
             'Water': mol_water,
-            'Argon': total * 0.00935
-	    'CO2': total * 0.000319
+            'Argon': total * 0.00935,
+	    'CO2': total * 0.000319,
             'Nitrogen': total * 0.780840,
             'Oxygen': total * 0.209476,
             }
