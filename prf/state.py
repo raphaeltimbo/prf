@@ -278,7 +278,7 @@ class State(CP.AbstractState):
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
-    def _plot_point(self, ax, **kwargs):
+    def plot_point(self, ax, **kwargs):
         """Plot point.
 
         Plot point in the given axis. Function will check for axis units and
@@ -306,6 +306,7 @@ class State(CP.AbstractState):
         # default plot parameters
         kwargs.setdefault('marker', '2')
         kwargs.setdefault('color', 'k')
+        kwargs.setdefault('label', self.__repr__())
 
         ax.scatter(x_value, y_value, **kwargs)
 
@@ -365,8 +366,7 @@ class State(CP.AbstractState):
             plot = ModifiedPropertyPlot(_self, 'PH', **kwargs)
             plot.calc_isolines()
 
-        plot.axis.scatter(self.hmass(), self.p(), marker='2',
-                          color='k', label=self.__repr__())
+        self.plot_point(plot.axis)
 
         return plot
 
