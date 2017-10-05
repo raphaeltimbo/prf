@@ -218,6 +218,7 @@ class State(CP.AbstractState):
         1.2893965217814896
         >>> # pure fluid
         >>> s = State.define(p=101008, T=273, fluid='CO2')
+        >>> s.rhomass()
         1.9716931060214515
         """
         # define constituents and molar fractions to create and update state
@@ -258,6 +259,38 @@ class State(CP.AbstractState):
             state.update(CP.DmassSmass_INPUTS, d, s)
 
         return state
+
+    @convert_to_base_units
+    def update2(self, **kwargs):
+        """Simple state update.
+
+        This method simplifies the state update. Only keyword arguments are
+        required to update.
+
+        Parameters
+        ----------
+        **kwargs : float
+            Kwargs with values to update (e.g.: state.update2(p=100200, T=290)
+        """
+        # TODO add tests to update function.
+
+        inputs = ''.join(k for k in kwargs.keys() if '_units' not in k)
+
+        cp_update_dict = {'pT': CP.PT_INPUTS,
+                          'Tp': CP.PT_INPUTS,
+                          'pQ': CP.PQ_INPUTS,
+                          'Qp': CP.PQ_INPUTS,
+                          'ps': CP.PSmass_INPUTS,
+                          'sp': CP.PSmass_INPUTS,
+                          'hp': CP.HmassP_INPUTS,
+                          'ph': CP.HmassP_INPUTS}
+
+        try:
+            cp_update = cp_update_dict[inputs]
+        except:
+            raise KeyError('Update key not implemented')
+
+        super().update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
 
     @classmethod
     @convert_to_base_units
