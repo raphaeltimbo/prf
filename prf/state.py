@@ -128,6 +128,10 @@ class State(CP.AbstractState):
         self.EOS = EOS
         self.fluid = fluid
 
+        # dict relating common properties and their call to CoolProp
+        self._prop_dict = dict(Pressure='p', Temperature='T', Enthalpy='hmass',
+                               Entropy='smass')
+
     def fluid_dict(self):
         # preserve the dictionary from define method
         fluid_dict = {}
@@ -267,9 +271,10 @@ class State(CP.AbstractState):
 
         comp = {
             'Water': mol_water,
-            'Nitrogen': total * 0.7812,
-            'Oxygen': total * 0.2095,
-            'Argon': total * 0.0093
+            'Argon': total * 0.00935,
+            'CO2': total * 0.000319,
+            'Nitrogen': total * 0.780840,
+            'Oxygen': total * 0.209476,
             }
 
         return cls.define(p=p, T=T, fluid=comp, EOS=EOS)
@@ -280,13 +285,42 @@ class State(CP.AbstractState):
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
+    def _plot_point(self, ax, **kwargs):
+        """Plot point.
+
+        Plot point in the given axis. Function will check for axis units and
+        plot the point accordingly.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes, optional
+            Matplotlib axes, if None creates a new.
+
+        Returns
+        -------
+        ax : matplotlib.axes
+            Matplotlib axes with plot.
+        """
+        x_prop = ax.get_xlabel()
+        y_prop = ax.get_ylabel()
+
+        for prop in self._prop_dict.keys():
+            if prop in x_prop:
+                x_value = getattr(self, self._prop_dict[prop])()
+            if prop in y_prop:
+                y_value = getattr(self, self._prop_dict[prop])()
+
+        # default plot parameters
+        kwargs.setdefault('marker', '2')
+        kwargs.setdefault('color', 'k')
+
+        ax.scatter(x_value, y_value, **kwargs)
+
     def plot_envelope(self, ax=None):
         """Plot phase envelop for a given state.
 
         Parameters
         ----------
-        state : prf.State
-
         ax : matplotlib.axes, optional
             Matplotlib axes, if None creates a new.
 
@@ -329,9 +363,13 @@ class State(CP.AbstractState):
         # copy state to avoid changing it
         _self = copy(self)
 
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            plot = ModifiedPropertyPlot(_self, 'PH', tp_limits='ACHP', **kwargs)
+            plot = ModifiedPropertyPlot(_self, 'PH', **kwargs)
             plot.calc_isolines()
 
         plot.axis.scatter(self.hmass(), self.p(), marker='2',
