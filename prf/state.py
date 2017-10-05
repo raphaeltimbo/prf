@@ -195,9 +195,10 @@ class State(CP.AbstractState):
             State's entropy
         d : float
 
-        fluid : dict
+        fluid : dict or str
             Dictionary with constituent and composition
             (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
+            A pure fluid can be created with a string.
         EOS : string
             String with HEOS or REFPROP
 
@@ -211,12 +212,18 @@ class State(CP.AbstractState):
         >>> s = State.define(fluid=fluid, p=101008, T=273, EOS='HEOS')
         >>> s.rhomass()
         1.2893965217814896
+        >>> # pure fluid
+        >>> s = State.define(p=101008, T=273, fluid='CO2')
+        1.9716931060214515
         """
         # define constituents and molar fractions to create and update state
 
         constituents = []
         molar_fractions = []
 
+        # if fluid is a string, consider pure fluid
+        if isinstance(fluid, str):
+            fluid = {fluid: 1}
         for k, v in fluid.items():
             if EOS == 'REFPROP':
                 k = CP.get_REFPROPname(k)
