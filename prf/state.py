@@ -276,21 +276,25 @@ class State(CP.AbstractState):
 
         inputs = ''.join(k for k in kwargs.keys() if '_units' not in k)
 
+        order_dict = {'Tp': 'pT',
+                      'Qp': 'pQ',
+                      'sp': 'ps',
+                      'ph': 'hp'}
+
+        if inputs in order_dict:
+            inputs = order_dict[inputs]
+
         cp_update_dict = {'pT': CP.PT_INPUTS,
-                          'Tp': CP.PT_INPUTS,
                           'pQ': CP.PQ_INPUTS,
-                          'Qp': CP.PQ_INPUTS,
                           'ps': CP.PSmass_INPUTS,
-                          'sp': CP.PSmass_INPUTS,
-                          'hp': CP.HmassP_INPUTS,
-                          'ph': CP.HmassP_INPUTS}
+                          'hp': CP.HmassP_INPUTS}
 
         try:
             cp_update = cp_update_dict[inputs]
         except:
             raise KeyError('Update key not implemented')
 
-        super().update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
+        self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
 
     @classmethod
     @convert_to_base_units
@@ -318,7 +322,7 @@ class State(CP.AbstractState):
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
-    def _plot_point(self, ax, **kwargs):
+    def plot_point(self, ax, **kwargs):
         """Plot point.
 
         Plot point in the given axis. Function will check for axis units and
@@ -346,6 +350,7 @@ class State(CP.AbstractState):
         # default plot parameters
         kwargs.setdefault('marker', '2')
         kwargs.setdefault('color', 'k')
+        kwargs.setdefault('label', self.__repr__())
 
         ax.scatter(x_value, y_value, **kwargs)
 
@@ -405,8 +410,7 @@ class State(CP.AbstractState):
             plot = ModifiedPropertyPlot(_self, 'PH', **kwargs)
             plot.calc_isolines()
 
-        plot.axis.scatter(self.hmass(), self.p(), marker='2',
-                          color='k', label=self.__repr__())
+        self.plot_point(plot.axis)
 
         return plot
 
@@ -435,7 +439,7 @@ class ModifiedPropertyPlot(PropertyPlot):
         sat_props = self.props[CoolProp.iQ].copy()
         if 'lw' in sat_props: sat_props['lw'] *= 2.0
         else: sat_props['lw'] = 1.0
-        if 'alpha' in sat_props: min([sat_props['alpha']*2.0,1.0])
+        if 'alpha' in sat_props: min([sat_props['alpha']*1.0,1.0])
         else: sat_props['alpha'] = 1.0
 
         for i in self.isolines:
