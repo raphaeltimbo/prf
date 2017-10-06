@@ -449,13 +449,33 @@ class State(CP.AbstractState):
         # copy state to avoid changing it
         _self = copy(self)
 
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             plot = ModifiedPropertyPlot(_self, 'PT', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            plot.props[CoolProp.iHmass]['lw'] = 0.2
+            plot.props[CoolProp.iHmass]['color'] = 'C0'
+            plot.props[CoolProp.iHmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iSmass]['lw'] = 0.2
+            plot.props[CoolProp.iSmass]['color'] = 'C1'
+            plot.props[CoolProp.iSmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
             plot.calc_isolines()
 
-        plot.axis.scatter(self.T(), self.p(), marker='2',
-                          color='k', label=self.__repr__())
+        self.plot_point(plot.axis)
 
         return plot
 
