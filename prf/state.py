@@ -16,6 +16,18 @@ from CoolProp.Plots.Common import interpolate_values_1d
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
            '__version__CP', '__version__REFPROP']
 
+# set style and colors
+plt.style.use('seaborn-white')
+plt.style.use({
+    'lines.linewidth': 2.5,
+    'axes.grid': True,
+    'axes.linewidth': 0.1,
+    'grid.color': '.9',
+    'grid.linestyle': '--',
+    'legend.frameon': True,
+    'legend.framealpha': 0.2
+})
+
 # define pint unit registry
 new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
 ureg = pint.UnitRegistry()
@@ -408,6 +420,24 @@ class State(CP.AbstractState):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             plot = ModifiedPropertyPlot(_self, 'PH', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            # isothermal
+            plot.props[CoolProp.iT]['lw'] = 0.2
+            plot.props[CoolProp.iT]['color'] = 'C0'
+            plot.props[CoolProp.iT]['alpha'] = 0.2
+
+            plot.props[CoolProp.iSmass]['lw'] = 0.2
+            plot.props[CoolProp.iSmass]['color'] = 'C1'
+            plot.props[CoolProp.iSmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
             plot.calc_isolines()
 
         self.plot_point(plot.axis)
