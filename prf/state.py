@@ -514,6 +514,41 @@ class State(CP.AbstractState):
 
         return plot
 
+    def plot_ps(self, **kwargs):
+        """Plot pressure vs density."""
+        # copy state to avoid changing it
+        _self = copy(self)
+
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            plot = ModifiedPropertyPlot(_self, 'PS', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            plot.props[CoolProp.iT]['lw'] = 0.2
+            plot.props[CoolProp.iT]['color'] = 'C0'
+            plot.props[CoolProp.iT]['alpha'] = 0.2
+
+            plot.props[CoolProp.iHmass]['lw'] = 0.2
+            plot.props[CoolProp.iHmass]['color'] = 'C1'
+            plot.props[CoolProp.iHmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
+            plot.calc_isolines()
+
+        self.plot_point(plot.axis)
+
+        return plot
+
 
 class ModifiedPropertyPlot(PropertyPlot):
     """Modify CoolProp's property plot."""
