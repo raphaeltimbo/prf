@@ -43,6 +43,15 @@ def test_convert_units():
 
 
 @pytest.fixture
+def pure_fluid():
+    return State.define(p=101008, T=273, fluid='CarbonDioxide')
+
+
+def test_pure_fluid(pure_fluid):
+    assert_allclose(pure_fluid.rhomass(), 1.9716931060214515)
+
+
+@pytest.fixture
 def state_si_air():
     fluid = {'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092}
     p = 101008

@@ -16,6 +16,18 @@ from CoolProp.Plots.Common import interpolate_values_1d
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
            '__version__CP', '__version__REFPROP']
 
+# set style and colors
+plt.style.use('seaborn-white')
+plt.style.use({
+    'lines.linewidth': 2.5,
+    'axes.grid': True,
+    'axes.linewidth': 0.1,
+    'grid.color': '.9',
+    'grid.linestyle': '--',
+    'legend.frameon': True,
+    'legend.framealpha': 0.2
+})
+
 # define pint unit registry
 new_units = os.path.join(os.path.dirname(__file__), 'new_units.txt')
 ureg = pint.UnitRegistry()
@@ -130,7 +142,7 @@ class State(CP.AbstractState):
 
         # dict relating common properties and their call to CoolProp
         self._prop_dict = dict(Pressure='p', Temperature='T', Enthalpy='hmass',
-                               Entropy='smass')
+                               Entropy='smass', Density='rhomass')
 
     def fluid_dict(self):
         # preserve the dictionary from define method
@@ -199,9 +211,10 @@ class State(CP.AbstractState):
             State's entropy
         d : float
 
-        fluid : dict
+        fluid : dict or str
             Dictionary with constituent and composition
             (e.g.: ({'Oxygen': 0.2096, 'Nitrogen': 0.7812, 'Argon': 0.0092})
+            A pure fluid can be created with a string.
         EOS : string
             String with HEOS or REFPROP
 
@@ -215,12 +228,19 @@ class State(CP.AbstractState):
         >>> s = State.define(fluid=fluid, p=101008, T=273, EOS='HEOS')
         >>> s.rhomass()
         1.2893965217814896
+        >>> # pure fluid
+        >>> s = State.define(p=101008, T=273, fluid='CO2')
+        >>> s.rhomass()
+        1.9716931060214515
         """
         # define constituents and molar fractions to create and update state
 
         constituents = []
         molar_fractions = []
 
+        # if fluid is a string, consider pure fluid
+        if isinstance(fluid, str):
+            fluid = {fluid: 1}
         for k, v in fluid.items():
             if EOS == 'REFPROP':
                 k = CP.get_REFPROPname(k)
@@ -251,6 +271,42 @@ class State(CP.AbstractState):
             state.update(CP.DmassSmass_INPUTS, d, s)
 
         return state
+
+    @convert_to_base_units
+    def update2(self, **kwargs):
+        """Simple state update.
+
+        This method simplifies the state update. Only keyword arguments are
+        required to update.
+
+        Parameters
+        ----------
+        **kwargs : float
+            Kwargs with values to update (e.g.: state.update2(p=100200, T=290)
+        """
+        # TODO add tests to update function.
+
+        inputs = ''.join(k for k in kwargs.keys() if '_units' not in k)
+
+        order_dict = {'Tp': 'pT',
+                      'Qp': 'pQ',
+                      'sp': 'ps',
+                      'ph': 'hp'}
+
+        if inputs in order_dict:
+            inputs = order_dict[inputs]
+
+        cp_update_dict = {'pT': CP.PT_INPUTS,
+                          'pQ': CP.PQ_INPUTS,
+                          'ps': CP.PSmass_INPUTS,
+                          'hp': CP.HmassP_INPUTS}
+
+        try:
+            cp_update = cp_update_dict[inputs]
+        except:
+            raise KeyError('Update key not implemented')
+
+        self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
 
     @classmethod
     @convert_to_base_units
@@ -364,6 +420,24 @@ class State(CP.AbstractState):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             plot = ModifiedPropertyPlot(_self, 'PH', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            # isothermal
+            plot.props[CoolProp.iT]['lw'] = 0.2
+            plot.props[CoolProp.iT]['color'] = 'C0'
+            plot.props[CoolProp.iT]['alpha'] = 0.2
+
+            plot.props[CoolProp.iSmass]['lw'] = 0.2
+            plot.props[CoolProp.iSmass]['color'] = 'C1'
+            plot.props[CoolProp.iSmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
             plot.calc_isolines()
 
         self.plot_point(plot.axis)
@@ -375,13 +449,103 @@ class State(CP.AbstractState):
         # copy state to avoid changing it
         _self = copy(self)
 
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             plot = ModifiedPropertyPlot(_self, 'PT', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            plot.props[CoolProp.iHmass]['lw'] = 0.2
+            plot.props[CoolProp.iHmass]['color'] = 'C0'
+            plot.props[CoolProp.iHmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iSmass]['lw'] = 0.2
+            plot.props[CoolProp.iSmass]['color'] = 'C1'
+            plot.props[CoolProp.iSmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
             plot.calc_isolines()
 
-        plot.axis.scatter(self.T(), self.p(), marker='2',
-                          color='k', label=self.__repr__())
+        self.plot_point(plot.axis)
+
+        return plot
+
+    def plot_pd(self, **kwargs):
+        """Plot pressure vs density."""
+        # copy state to avoid changing it
+        _self = copy(self)
+
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            plot = ModifiedPropertyPlot(_self, 'PD', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            plot.props[CoolProp.iT]['lw'] = 0.2
+            plot.props[CoolProp.iT]['color'] = 'C0'
+            plot.props[CoolProp.iT]['alpha'] = 0.2
+
+            plot.props[CoolProp.iHmass]['lw'] = 0.2
+            plot.props[CoolProp.iHmass]['color'] = 'C1'
+            plot.props[CoolProp.iHmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iSmass]['lw'] = 0.2
+            plot.props[CoolProp.iSmass]['color'] = 'C2'
+            plot.props[CoolProp.iSmass]['alpha'] = 0.2
+
+            plot.calc_isolines()
+
+        self.plot_point(plot.axis)
+
+        return plot
+
+    def plot_ps(self, **kwargs):
+        """Plot pressure vs density."""
+        # copy state to avoid changing it
+        _self = copy(self)
+
+        # default values for plot
+        kwargs.setdefault('unit_system', 'SI')
+        kwargs.setdefault('tp_limits', 'ACHP')
+
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            plot = ModifiedPropertyPlot(_self, 'PS', **kwargs)
+
+            plot.props[CoolProp.iQ]['lw'] = 0.8
+            plot.props[CoolProp.iQ]['color'] = 'k'
+            plot.props[CoolProp.iQ]['alpha'] = 0.8
+
+            plot.props[CoolProp.iT]['lw'] = 0.2
+            plot.props[CoolProp.iT]['color'] = 'C0'
+            plot.props[CoolProp.iT]['alpha'] = 0.2
+
+            plot.props[CoolProp.iHmass]['lw'] = 0.2
+            plot.props[CoolProp.iHmass]['color'] = 'C1'
+            plot.props[CoolProp.iHmass]['alpha'] = 0.2
+
+            plot.props[CoolProp.iDmass]['lw'] = 0.2
+            plot.props[CoolProp.iDmass]['color'] = 'C2'
+            plot.props[CoolProp.iDmass]['alpha'] = 0.2
+
+            plot.calc_isolines()
+
+        self.plot_point(plot.axis)
 
         return plot
 
@@ -395,7 +559,7 @@ class ModifiedPropertyPlot(PropertyPlot):
         sat_props = self.props[CoolProp.iQ].copy()
         if 'lw' in sat_props: sat_props['lw'] *= 2.0
         else: sat_props['lw'] = 1.0
-        if 'alpha' in sat_props: min([sat_props['alpha']*2.0,1.0])
+        if 'alpha' in sat_props: min([sat_props['alpha']*1.0,1.0])
         else: sat_props['alpha'] = 1.0
 
         for i in self.isolines:
