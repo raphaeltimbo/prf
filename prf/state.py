@@ -49,13 +49,15 @@ def set_refprop_path(REFPROP_PATH):
 paths = ['C:/Program Files (x86)/REFPROP', '/home/raphael/REFPROP-cmake/build/',
          os.path.join(os.path.dirname(__file__))]
 
+REFPROP_LOADED = False
 for path in paths:
     for f in ['/REFPRP64.DLL', '/librefprop.so']:
         file = Path(path + f)
         if file.is_file():
             set_refprop_path(path)
-        else:
-            warnings.warn("Error trying to set REFPROP path.")
+            REFPROP_LOADED = True
+if REFPROP_LOADED is False:
+    warnings.warn("Error trying to set REFPROP path.")
 
 
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
