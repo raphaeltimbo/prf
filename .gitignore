@@ -92,3 +92,4 @@ ENV/
 /prf/debug.py
 *.profile
 /prf/tests/coverage/
+/prf/REFPROP/

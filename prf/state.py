@@ -7,6 +7,7 @@ import CoolProp
 import pint
 import matplotlib.pyplot as plt
 from copy import copy
+from pathlib import Path
 from itertools import combinations
 from functools import wraps
 from CoolProp.Plots import PropertyPlot
@@ -34,11 +35,28 @@ ureg = pint.UnitRegistry()
 ureg.load_definitions(new_units)
 Q_ = ureg.Quantity
 
-if platform.system() == 'Windows':
-    REFPROP_PATH = 'C:/Program Files (x86)/REFPROP'
-else:
-    REFPROP_PATH = '/home/raphael/REFPROP-cmake/build/'
-CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, REFPROP_PATH)
+
+def set_refprop_path(REFPROP_PATH):
+    """Sets the refprop path.
+    Parameters
+    ----------
+    REFPROP_PATH : str
+        Path to the refprop files.
+    """
+    CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, REFPROP_PATH)
+
+
+paths = ['C:/Program Files (x86)/REFPROP', '/home/raphael/REFPROP-cmake/build/',
+         os.path.join(os.path.dirname(__file__))]
+
+for path in paths:
+    for f in ['/REFPRP64.DLL', '/librefprop.so']:
+        file = Path(path + f)
+        if file.is_file():
+            set_refprop_path(path)
+        else:
+            warnings.warn("Error trying to set REFPROP path.")
+
 
 mixture = ['CarbonDioxide', 'Nitrogen', 'R134a', 'Oxygen']
 for mix1, mix2 in combinations(mixture, 2):
