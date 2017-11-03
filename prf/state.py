@@ -387,10 +387,10 @@ class State(CP.AbstractState):
         Ludtke pg 52, eq 2.9.
         """
         p = self.p()
-        v = 1 / self.rhomolar()
-        dp_dv = self.first_partial_deriv(CP.iP, CP.iDmolar, CP.iSmolar)
+        rho = self.rhomolar()
+        dp_drho = self.first_partial_deriv(CP.iP, CP.iDmolar, CP.iSmolar)
 
-        kv = -(v / p) * (dp_dv)
+        kv = (rho/p) * (dp_drho)
 
         return kv
 

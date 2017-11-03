@@ -68,6 +68,8 @@ def test_state_si_air(state_si_air):
     assert_allclose(state_si_air.T(), T, rtol=1e-4)
     assert_allclose(state_si_air.rhomass(), rho, rtol=1e-4)
     assert_allclose(state_si_air.k(), k, rtol=1e-4)
+    assert_allclose(state_si_air.kT(), 1.401086393510824)
+    assert_allclose(state_si_air.kv(), 1.401953107443435)
 
 
 @pytest.fixture
