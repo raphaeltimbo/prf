@@ -372,6 +372,28 @@ class State(CP.AbstractState):
 
         return kT
 
+    def kv(self):
+        """Isentropic volume exponent.
+
+        Calculates the isentropic volume exponent.
+
+        Returns
+        -------
+        kT : float
+            Isentropic volume exponent.
+
+        Notes
+        -----
+        Ludtke pg 52, eq 2.9.
+        """
+        p = self.p()
+        v = 1 / self.rhomolar()
+        dp_dv = self.first_partial_deriv(CP.iP, CP.iDmolar, CP.iSmolar)
+
+        kv = -(v / p) * (dp_dv)
+
+        return kv
+
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
