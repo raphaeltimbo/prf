@@ -350,6 +350,28 @@ class State(CP.AbstractState):
     def k(self):
         return self.cpmass() / self.cvmass()
 
+    def kT(self):
+        """Isentropic temperature exponent.
+
+        Calculates the isentropic temperature exponent.
+
+        Returns
+        -------
+        kT : float
+            Isentropic temperature exponent.
+
+        Notes
+        -----
+        Ludtke pg 52, eq 2.15.
+        """
+        p = self.p()
+        T = self.T()
+        dT_dp = self.first_partial_deriv(CP.iT, CP.iP, CP.iSmolar)
+
+        kT = 1 / (1 - (p / T) * (dT_dp))
+
+        return kT
+
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
