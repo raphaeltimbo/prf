@@ -44,6 +44,12 @@ class Impeller:
     """
     def __init__(self, curves, b, D, e=0.87e-6):
 
+        class Config:
+            """config class for impeller"""
+            def __init__(self, curves):
+                # TODO create config
+                pass
+
         if isinstance(curves, list) and isinstance(curves[0], Curve):
             self.curves = curves
         elif isinstance(curves, Curve):
@@ -54,6 +60,8 @@ class Impeller:
             self.curves = [Curve(curves)]
         else:
             raise TypeError('Must be a point, curve or list of points - curves')
+
+        self.config = Config()
 
         self.points = list(self.curves[0])
         self.b = b
