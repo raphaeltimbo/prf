@@ -13,8 +13,9 @@ __all__ = ['Impeller', 'NonDimPoint']
 class Impeller:
     """
     Impeller instance is initialized with the dimensional curve.
-    The created instance will hold a non dimensional curve generated
-    a dimensional curve based on current suction condition and speed.
+    The created instance will hold the dimensional curve used in instantiation
+    a non dimensional curve generated from the given dimensional curve and
+    another dimensional curve based on current suction condition and speed.
     The impeller also has a current point that depends on the flow.
     Current condition can be set after instantiation.
 
