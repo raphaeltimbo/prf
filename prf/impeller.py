@@ -500,8 +500,11 @@ class Impeller:
 
                     yield Point(speed=speed, flow_m=flow, suc=suc, disch=disch, **kwargs)
 
-        test_points_data = pd.read_excel(file, sheetname='TEST-PYTHON')
-        spec_points_data = pd.read_excel(file, sheetname='SPECIFIED-PYTHON')
+        sec = kwargs.get('sec', '-SEC1')
+        test_points_data = pd.read_excel(file,
+                                         sheetname=('TEST-PYTHON' + sec))
+        spec_points_data = pd.read_excel(file,
+                                         sheetname=('SPECIFIED-PYTHON' + sec))
 
         points_test = []
         for point in point_from_df(test_points_data, **kwargs):
