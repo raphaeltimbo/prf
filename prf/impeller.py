@@ -45,7 +45,7 @@ class Impeller:
     def __init__(self, curves, b, D, e=0.87e-6):
 
         if isinstance(curves, list) and isinstance(curves[0], Curve):
-                self.curves = curves
+            self.curves = curves
         elif isinstance(curves, Curve):
             self.curves = [curves]
         elif isinstance(curves, list) and isinstance(curves[0], Point):
