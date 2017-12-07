@@ -483,7 +483,11 @@ class Curve:
                        speed=p0.speed, flow_m=p0.flow_m+1)
             points = [p0, p1]
 
-        self.points = points
+        self.points = sorted(points, key=lambda point: point.flow_v)
+
+        # set each point as attribute
+        for i, p in enumerate(self.points):
+            setattr(self, 'point_' + str(i), p)
 
         # get one point to extract attributes
         self._point0 = self.points[0]
