@@ -12,7 +12,7 @@ __all__ = ['Impeller', 'NonDimPoint']
 
 class Impeller:
     """
-    Impeller instance is initialized with the dimensional curve.
+    Impeller instance is initialized with the dimensional curve (init_curve).
     The created instance will hold the dimensional curve used in instantiation
     a non dimensional curve generated from the given dimensional curve and
     another dimensional curve based on current suction condition and speed.
@@ -21,8 +21,8 @@ class Impeller:
 
     Parameters
     ----------
-    curves : list
-        List with curves instances.
+    init_curves : list
+        List with curves instances used to instantiate the impeller.
     b : float
         Impeller width (m).
     D : float
@@ -42,28 +42,28 @@ class Impeller:
     Examples
     --------
     """
-    def __init__(self, curves, b, D, e=0.87e-6):
+    def __init__(self, init_curves, b, D, e=0.87e-6):
 
         class Config:
             """config class for impeller"""
-            def __init__(self, curves):
+            def __init__(self):
                 # TODO create config
                 pass
 
-        if isinstance(curves, list) and isinstance(curves[0], Curve):
-            self.curves = curves
-        elif isinstance(curves, Curve):
-            self.curves = [curves]
-        elif isinstance(curves, list) and isinstance(curves[0], Point):
-            self.curves = [Curve(curves)]
-        elif isinstance(curves, Point):
-            self.curves = [Curve(curves)]
+        if isinstance(init_curves, list) and isinstance(init_curves[0], Curve):
+            self.init_curves = init_curves
+        elif isinstance(init_curves, Curve):
+            self.init_curves = [init_curves]
+        elif isinstance(init_curves, list) and isinstance(init_curves[0], Point):
+            self.init_curves = [Curve(init_curves)]
+        elif isinstance(init_curves, Point):
+            self.init_curves = [Curve(init_curves)]
         else:
             raise TypeError('Must be a point, curve or list of points - curves')
 
         self.config = Config()
 
-        self.points = list(self.curves[0])
+        self.points = list(self.init_curves[0])
         self.b = b
         self.D = D
         self.e = e
