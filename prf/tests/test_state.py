@@ -138,6 +138,24 @@ def test_state_si_main_test(state_si_main_test):
     assert_allclose(state_si_main_test.rhomass(), rhomass, rtol=1e-4)
 
 
+def test_update2(state_si_main_test):
+    assert_allclose(state_si_main_test.hmass(), 465259.11039224325)
+
+    state_si_main_test.update2(p=200000, T=state_si_main_test.T())
+
+    assert_allclose(state_si_main_test.p(), 200000)
+    assert_allclose(state_si_main_test.hmass(), 465079.0360722606)
+
+    state_si_main_test.update2(T=292, p=state_si_main_test.p())
+    assert_allclose(state_si_main_test.hmass(), 465503.7486914678)
+
+    state_si_main_test.update2(Q=1, p=state_si_main_test.p())
+    assert_allclose(state_si_main_test.hmass(), 417658.1777523439)
+
+    # TODO add tests for pQ, sp, ps, ...
+
+
+
 def test_copy(state_si_main_test):
     p = 183900
     T = 291.5
