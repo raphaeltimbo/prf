@@ -61,6 +61,10 @@ class Impeller:
         else:
             raise TypeError('Must be a point, curve or list of points - curves')
 
+        # set each curve as an attribute
+        for c in self.init_curves:
+            setattr(self, 'init_curve_' + f'{c.speed:.0f}', c)
+
         self.config = Config()
 
         self.points = list(self.init_curves[0])
