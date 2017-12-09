@@ -493,14 +493,14 @@ class InterpolatedCurve(np.poly1d):
         self.args = np.polyfit(self.x, self.y, self._deg)
         super().__init__(self.args)
 
-        @property
-        def deg(self):
-            return self._deg
+    @property
+    def deg(self):
+        return self._deg
 
-        @deg.setter
-        def deg(self, value):
-            self._deg = value
-            self.__init__(self.x, self.y, self._deg)
+    @deg.setter
+    def deg(self, value):
+        self._deg = value
+        self.__init__(self.x, self.y, self._deg)
 
 
 class Curve:
