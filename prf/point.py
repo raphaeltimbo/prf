@@ -470,7 +470,7 @@ class InterpolatedCurve(np.poly1d):
 
     Plots are also added in this class.
     """
-    def __init__(self, x, y, deg=3):
+    def __init__(self, x, y, deg=3, ylabel=None):
         """
         Auxiliary function to create an interpolated curve
         for each various points attributes.
@@ -494,6 +494,7 @@ class InterpolatedCurve(np.poly1d):
         self.y = y
         self._deg = deg
         self.args = np.polyfit(self.x, self.y, self._deg)
+        self.ylabel = ylabel
 
         super().__init__(self.args)
 
@@ -504,7 +505,7 @@ class InterpolatedCurve(np.poly1d):
     @deg.setter
     def deg(self, value):
         self._deg = value
-        self.__init__(self.x, self.y, self._deg)
+        self.__init__(self.x, self.y, self._deg, self.ylabel)
 
     def plot(self, ax=None, plot_kws=None):
         if ax is None:
@@ -516,6 +517,8 @@ class InterpolatedCurve(np.poly1d):
         flow = np.linspace(self.x[0], self.x[-1], 20)
         ax.plot(flow, self(flow), **plot_kws)
 
+        ax.set_xlabel('Volumetric flow $(m^3 / s)$')
+        ax.set_ylabel(self.ylabel)
         return ax
 
 
@@ -563,13 +566,20 @@ class Curve:
         self.power = [p.power for p in self.points]
 
         # interpolated curves
-        self.suc_p_curve = InterpolatedCurve(self.flow_v, self.suc_p)
-        self.suc_T_curve = InterpolatedCurve(self.flow_v, self.suc_T)
-        self.disch_p_curve = InterpolatedCurve(self.flow_v, self.disch_p)
-        self.disch_T_curve = InterpolatedCurve(self.flow_v, self.disch_T)
-        self.head_curve = InterpolatedCurve(self.flow_v, self.head)
-        self.eff_curve = InterpolatedCurve(self.flow_v, self.eff)
-        self.power_curve = InterpolatedCurve(self.flow_v, self.power)
+        self.suc_p_curve = InterpolatedCurve(self.flow_v, self.suc_p,
+                                             ylabel='Pressure $(Pa)$')
+        self.suc_T_curve = InterpolatedCurve(self.flow_v, self.suc_T,
+                                             ylabel='Temperature $(K)$')
+        self.disch_p_curve = InterpolatedCurve(self.flow_v, self.disch_p,
+                                               ylabel='Pressure $(Pa)$')
+        self.disch_T_curve = InterpolatedCurve(self.flow_v, self.disch_T,
+                                               ylabel='Temperature $(K)$')
+        self.head_curve = InterpolatedCurve(self.flow_v, self.head,
+                                            ylabel='Head $(J / kg)$')
+        self.eff_curve = InterpolatedCurve(self.flow_v, self.eff,
+                                           ylabel='Efficiency')
+        self.power_curve = InterpolatedCurve(self.flow_v, self.power,
+                                             ylabel='Power $(W)$')
 
     def __getitem__(self, item):
         return self.points[item]
