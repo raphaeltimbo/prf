@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import CoolProp as CP
+import matplotlib.pyplot as plt
 from copy import copy
 from scipy.optimize import newton
 from prf.state import *
@@ -466,6 +467,8 @@ class InterpolatedCurve(np.poly1d):
 
     This class inherit from np.poly1d, changing the polydegree to a
     property to that its value can be changed after instantiation.
+
+    Plots are also added in this class.
     """
     def __init__(self, x, y, deg=3):
         """
@@ -491,6 +494,7 @@ class InterpolatedCurve(np.poly1d):
         self.y = y
         self._deg = deg
         self.args = np.polyfit(self.x, self.y, self._deg)
+
         super().__init__(self.args)
 
     @property
@@ -501,6 +505,18 @@ class InterpolatedCurve(np.poly1d):
     def deg(self, value):
         self._deg = value
         self.__init__(self.x, self.y, self._deg)
+
+    def plot(self, ax=None, plot_kws=None):
+        if ax is None:
+            ax = plt.gca()
+
+        if plot_kws is None:
+            plot_kws = dict()
+
+        flow = np.linspace(self.x[0], self.x[-1], 20)
+        ax.plot(flow, self(flow), **plot_kws)
+
+        return ax
 
 
 class Curve:
@@ -542,7 +558,6 @@ class Curve:
         self.suc_T = [p.suc.T() for p in self.points]
         self.disch_p = [p.disch.p() for p in self.points]
         self.disch_T = [p.disch.T() for p in self.points]
-
         self.head = [p.head for p in self.points]
         self.eff = [p.eff for p in self.points]
         self.power = [p.power for p in self.points]
