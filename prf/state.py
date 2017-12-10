@@ -397,6 +397,13 @@ class State(CP.AbstractState):
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
 
+    def z(self):
+        """Compressibility factor"""
+        z = (self.p() * self.molar_mass()
+             / (self.rhomass() * self.gas_constant() * self.T()))
+
+        return z
+
     def plot_point(self, ax, **kwargs):
         """Plot point.
 
