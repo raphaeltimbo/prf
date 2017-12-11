@@ -497,6 +497,9 @@ class Impeller:
             comp = comp_from_df(df)
 
             for p in df.T:
+                # point used to calibrate k values from the seal
+                if p == 'PONTO10':
+                    continue
                 if not df['ps'][p] == 0:
                     # create suction state
                     ps = df['ps'][p]
@@ -533,6 +536,8 @@ class Impeller:
 
         imp = cls(curve_test, b, D)
         imp.current_point = point_sp
+
+        # TODO point for seal calibration
 
         return imp
 

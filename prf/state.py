@@ -284,6 +284,8 @@ class State(CP.AbstractState):
                 state.update(CP.PT_INPUTS, p, T)
             if s is not None:
                 state.update(CP.PSmass_INPUTS, p, s)
+            if h is not None:
+                state.update(CP.HmassP_INPUTS, h, p)
         if h and s is not None:
             state.update(CP.HmassSmass_INPUTS, h, s)
         if d and s is not None:
