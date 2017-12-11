@@ -6,7 +6,7 @@ import CoolProp
 import pint
 import matplotlib.pyplot as plt
 from copy import copy
-from pathlib import Path
+from pathlib import Path, PosixPath
 from itertools import combinations
 from functools import wraps
 from CoolProp.Plots import PropertyPlot
@@ -54,7 +54,15 @@ for path in paths:
         file = Path(path + f)
         if file.is_file():
             set_refprop_path(path)
-            REFPROP_LOADED = True
+            # check if fluids are there
+            path_dirs = set(i.name for i in Path(path).iterdir())
+            if isinstance(Path(path), PosixPath):
+                if 'fluids' in path_dirs:
+                    REFPROP_LOADED = True
+            else:
+                if 'fluids' in path_dirs or 'FLUIDS' in path_dirs:
+                    REFPROP_LOADED = True
+
 if REFPROP_LOADED is False:
     warnings.warn("Error trying to set REFPROP path.")
 
