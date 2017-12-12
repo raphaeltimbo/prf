@@ -7,7 +7,7 @@ import pint
 import matplotlib.pyplot as plt
 from copy import copy
 from pathlib import Path, PosixPath
-from itertools import combinations
+from itertools import combinations, permutations
 from functools import wraps
 from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots.Common import interpolate_values_1d
@@ -59,9 +59,13 @@ for path in paths:
             if isinstance(Path(path), PosixPath):
                 if 'fluids' in path_dirs:
                     REFPROP_LOADED = True
+                    hmx_file = Path(path + '/fluids/HMX.BNC')
+                    break
             else:
                 if 'fluids' in path_dirs or 'FLUIDS' in path_dirs:
                     REFPROP_LOADED = True
+                    hmx_file = Path(path + '/fluids/HMX.BNC')
+                    break
 
 if REFPROP_LOADED is False:
     warnings.warn("Error trying to set REFPROP path.")
@@ -280,6 +284,17 @@ class State(CP.AbstractState):
         try:
             state = cls(EOS, _fluid)
         except ValueError as exc:
+            # check if pair is available at hmx.bnc file
+            with open(hmx_file, encoding='latin') as f:
+                for pair in permutations(constituents, 2):
+                    pair = '/'.join(pair).upper()
+                    for line in f:
+                        if pair in str(line).upper():
+                            continue
+                        else:
+                            raise ValueError(
+                                f'Pair {pair} is not available in HMX.BNC.'
+                            ) from exc
             raise ValueError(
                 f'This fluid is not be supported by {EOS}.'
             ) from exc
