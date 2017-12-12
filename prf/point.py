@@ -557,6 +557,7 @@ class Curve:
 
         # attributes from each point
         self.flow_v = [p.flow_v for p in self.points]
+        self.flow_m = [p.flow_m for p in self.points]
         self.suc_p = [p.suc.p() for p in self.points]
         self.suc_T = [p.suc.T() for p in self.points]
         self.disch_p = [p.disch.p() for p in self.points]
