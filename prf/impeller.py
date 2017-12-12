@@ -42,7 +42,8 @@ class Impeller:
     Examples
     --------
     """
-    def __init__(self, init_curves, b, D, e=0.87e-6):
+    def __init__(self, init_curves, b, D, e=0.87e-6,
+                 suc=None, speed=None, flow_v=None):
 
         class Config:
             """config class for impeller"""
@@ -76,9 +77,9 @@ class Impeller:
             self.non_dim_points.append(NonDimPoint.from_impeller(self, point))
 
         # impeller current state
-        self._suc = self.points[0].suc
-        self._speed = self.points[0].speed
-        self._flow_v = self.points[0].flow_v
+        self._suc = self.points[0].suc if suc is None else suc
+        self._speed = self.points[0].speed if speed is None else speed
+        self._flow_v = self.points[0].flow_v if flow_v is None else flow_v
 
         # the current points and curve
         self.new_points = None
