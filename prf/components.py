@@ -2,6 +2,8 @@ import numpy as np
 from itertools import chain
 from scipy.optimize import newton
 
+__all__ = ['Stream', 'Mixer']
+
 
 class Stream:
     def __init__(self, state=None, flow_m=None):
@@ -60,17 +62,17 @@ class Mixer:
         # solve for energy
         def energy(new_T):
             # get available property
-            prop = {k: v for k, v in unk_state.init_args.items() if v is not None}
+            prop = {k: v for k, v in unk_state.state.init_args.items() if v is not None}
             unk_state.state.update2(T=new_T, **prop)
 
             input_energy = 0
             for inp in self.inputs:
-                energy = inp.flow_m * inp.state.hmass()
-                input_energy += energy
+                inp_energy = inp.flow_m * inp.state.hmass()
+                input_energy += inp_energy
             output_energy = 0
             for out in self.outputs:
-                energy = out.flow_m * out.state.hmass()
-                output_energy += energy
+                out_energy = out.flow_m * out.state.hmass()
+                output_energy += out_energy
 
             return (input_energy / self.total_mass) - (output_energy / self.total_mass)
 
