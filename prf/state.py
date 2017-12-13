@@ -301,6 +301,7 @@ class State(CP.AbstractState):
 
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
+        state.init_args = dict(p=p, T=T, h=h, s=s, d=d)
 
         if p is not None:
             if T is not None:
