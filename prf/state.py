@@ -336,7 +336,8 @@ class State(CP.AbstractState):
         order_dict = {'Tp': 'pT',
                       'Qp': 'pQ',
                       'sp': 'ps',
-                      'ph': 'hp'}
+                      'ph': 'hp',
+                      'Th': 'hT'}
 
         if inputs in order_dict:
             inputs = order_dict[inputs]
@@ -344,12 +345,13 @@ class State(CP.AbstractState):
         cp_update_dict = {'pT': CP.PT_INPUTS,
                           'pQ': CP.PQ_INPUTS,
                           'ps': CP.PSmass_INPUTS,
-                          'hp': CP.HmassP_INPUTS}
+                          'hp': CP.HmassP_INPUTS,
+                          'hT': CP.HmassT_INPUTS}
 
         try:
             cp_update = cp_update_dict[inputs]
         except:
-            raise KeyError('Update key not implemented')
+            raise KeyError(f'Update key {inputs} not implemented')
 
         self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
 
