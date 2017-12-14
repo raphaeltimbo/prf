@@ -19,9 +19,9 @@ def test_mixer():
     assert_allclose(stream1.flow_m, 2)
     assert_allclose(stream2.flow_m, 3)
 
-    assert_allclose(stream0.state.hmass(), 498833.05345178104)
-    assert_allclose(stream1.state.hmass(), 502853.62131474464)
-    assert_allclose(stream2.state.hmass(), 501513.4320281485)
+    assert_allclose(stream0.state.hmass(), 498833.05345178104, rtol=1e-4)
+    assert_allclose(stream1.state.hmass(), 502853.62131474464, rtol=1e-4)
+    assert_allclose(stream2.state.hmass(), 501513.4320281485, rtol=1e-4)
 
 
 

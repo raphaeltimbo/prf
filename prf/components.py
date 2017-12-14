@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain
-from scipy.optimize import newton
+from scipy.optimize import newton, brentq
 
 __all__ = ['Stream', 'Component', 'Mixer']
 
@@ -19,6 +19,9 @@ class Component:
         # unknown mass and state
         self.unk_mass = None
         self.unk_state = None
+        self.prop = None
+        self.var_prop = None
+        self.energy_x0 = None
 
         self.total_mass = None
 
@@ -53,31 +56,43 @@ class Component:
         for link in chain(self.inputs, self.outputs):
             if link.state.p() == -np.infty or link.state.p() == np.infty:
                 unk_state.append(link)
+            else:
+                #  record a state as reference for initial guess
+                ref_state_args = link.state.init_args
+
         if len(unk_state) > 1:
             raise ValueError(f'More than one undetermined mass {unk_mass}')
 
-        self.unk_state = unk_state[0]
+        unk_state = unk_state[0].state
+        self.prop = {k: v for k, v in
+                     unk_state.init_args.items() if v is not None}
+        self.var_prop = 'T' if 'p' in self.prop else 'p'
+        # initial guess based on value of some of the links
 
-    def energy_balance(self, new_value):
+        self.energy_x0 = ref_state_args[self.var_prop]
+        self.unk_state = unk_state
+
+    def energy_balance(self, new_value, var_prop):
         # get available property
         unk_state = self.unk_state
         # var_prop -> property that will change to obtain convergence
-        # var_prop = self.var_prop
 
-        prop = {k: v for k, v in unk_state.state.init_args.items() if v is not None}
-        var_prop = 'p' if 'T' in prop else 'T'
+        prop = self.prop
         prop[var_prop] = new_value
 
-        unk_state.state.update2(**prop)
+        unk_state.update2(**prop)
 
         input_energy = 0
         for inp in self.inputs:
             inp_energy = inp.flow_m * inp.state.hmass()
             input_energy += inp_energy
+
         output_energy = 0
         for out in self.outputs:
             out_energy = out.flow_m * out.state.hmass()
             output_energy += out_energy
+
+        print(prop)
 
         return (input_energy / self.total_mass) - (output_energy / self.total_mass)
 
@@ -89,7 +104,9 @@ class Component:
 
         # solve for energy
         self.get_unk_state()
-        newton(self.energy_balance, 300)
+
+        newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
+        # brentq(self.energy_balance, 273.15, 350)
 
         for i, inp in enumerate(self.inputs):
             setattr(self, f'inp{i}', inp)
