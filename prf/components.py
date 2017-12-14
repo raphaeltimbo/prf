@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain
-from scipy.optimize import newton, brentq
+from scipy.optimize import newton
 
 __all__ = ['Stream', 'Component', 'Mixer']
 
@@ -68,7 +68,6 @@ class Component:
                      unk_state.init_args.items() if v is not None}
         self.var_prop = 'T' if 'p' in self.prop else 'p'
         # initial guess based on value of some of the links
-
         self.energy_x0 = ref_state_args[self.var_prop]
         self.unk_state = unk_state
 
@@ -104,7 +103,6 @@ class Component:
         self.get_unk_state()
 
         newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
-        # brentq(self.energy_balance, 273.15, 350)
 
         for i, inp in enumerate(self.inputs):
             setattr(self, f'inp{i}', inp)
