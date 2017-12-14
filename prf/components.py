@@ -41,7 +41,6 @@ class Component:
                 unk_mass.append(link)
         if len(unk_mass) > 1:
             raise MassError(f'More than one undetermined mass {unk_mass}')
-
         elif len(unk_mass) == 0:
             # check if mass balance is satisfied
             input_mass = sum((inp.flow_m for inp in self.inputs))
@@ -75,7 +74,7 @@ class Component:
                 ref_state_args = link.state.init_args
 
         if len(unk_state) > 1:
-            raise ValueError(f'More than one undetermined mass {unk_mass}')
+            raise ValueError(f'More than one undetermined state {unk_state}')
 
         unk_state = unk_state[0].state
         self.prop = {k: v for k, v in
