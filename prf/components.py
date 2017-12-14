@@ -3,7 +3,7 @@ from itertools import chain
 from scipy.optimize import newton
 from .exceptions import MassError
 
-__all__ = ['Stream', 'Component', 'Mixer']
+__all__ = ['Stream', 'Component', 'Mixer', 'Valve']
 
 
 class Stream:
