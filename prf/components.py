@@ -135,3 +135,54 @@ class Mixer(Component):
         """
         # total mass will be calculated after call to run()
         super().__init__()
+
+
+class Valve(Component):
+    """Simple valve.
+
+    Valve that will give an isenthalpic expansion.
+    """
+
+    def __init__(self, cv):
+        self.cv = cv
+        super().__init__()
+
+    def p_d(self):
+        inp = self.inputs[0]
+        m = inp.flow_m
+        p_u = inp.state.p()
+        T_u = inp.state.T()
+        MW = inp.state.molar_mass()
+        z_u = inp.state.z()
+        cv = self.cv
+
+        p_d = p_u * np.sqrt(1 - (z_u * T_u / MW) * (m / (cv * p_u)) ** 2)
+
+        return p_d
+
+    def calc_mass_flow(self):
+        inp = self.inputs[0]
+        out = self.outputs[0]
+
+        p_u = inp.state.p()
+        p_d = out.state.init_args['p']
+        T_u = inp.state.T()
+        MW = inp.state.molar_mass()
+        z_u = inp.state.z()
+        cv = self.cv
+
+        m = (cv * p_u * np.sqrt(1 - (p_d / p_u) ** 2)
+             / (np.sqrt(z_u * T_u / MW)))
+
+        return m
+
+    def run(self):
+        inp = self.inputs[0]
+
+        try:
+            self.get_unk_mass()
+        except MassError:
+            inp.flow_m = self.calc_mass_flow()
+
+        super().run()
+
