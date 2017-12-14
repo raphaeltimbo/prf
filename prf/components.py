@@ -92,8 +92,6 @@ class Component:
             out_energy = out.flow_m * out.state.hmass()
             output_energy += out_energy
 
-        print(prop)
-
         return (input_energy / self.total_mass) - (output_energy / self.total_mass)
 
     def run(self):
