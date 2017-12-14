@@ -12,7 +12,7 @@ class Stream:
         self.flow_m = flow_m
 
     def __repr__(self):
-        return f'Flow: {self.flow_m} - {self.state.__repr__()}'
+        return f'Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
 
 
 class Component:
@@ -42,7 +42,17 @@ class Component:
         if len(unk_mass) > 1:
             raise MassError(f'More than one undetermined mass {unk_mass}')
 
-        self.unk_mass = unk_mass[0]
+        elif len(unk_mass) == 0:
+            # check if mass balance is satisfied
+            input_mass = sum((inp.flow_m for inp in self.inputs))
+            output_mass = sum((out.flow_m for out in self.outputs))
+            if np.allclose(input_mass, output_mass):
+                self.total_mass = input_mass
+            else:
+                raise MassError(f'Error in mass balance input:{input_mass} kg/s'
+                                f' output:{output_mass} kg/s')
+        else:
+            self.unk_mass = unk_mass[0]
 
         # solve first for mass
     def mass_balance(self, new_mass):
@@ -99,9 +109,9 @@ class Component:
 
     def run(self):
         self.get_unk_mass()
-        newton(self.mass_balance, 0)
-
-        self.total_mass = sum((inp.flow_m for inp in self.inputs))
+        if self.total_mass is None:
+            newton(self.mass_balance, 0)
+            self.total_mass = sum((inp.flow_m for inp in self.inputs))
 
         # solve for energy
         self.get_unk_state()
