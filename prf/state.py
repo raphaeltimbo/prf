@@ -182,6 +182,13 @@ class State(CP.AbstractState):
             fluid_dict[k] = v
         return fluid_dict
 
+    def not_defined(self):
+        """Verifies if the state is defined."""
+        if self.T() == -np.infty:
+            return True
+        else:
+            return False
+
     def __repr__(self):
         return 'State: {:.5} Pa @ {:.5} K'.format(self.p(), self.T())
 
