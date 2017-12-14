@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import chain
 from scipy.optimize import newton
+from .exceptions import MassError
 
 __all__ = ['Stream', 'Component', 'Mixer']
 
@@ -9,6 +10,9 @@ class Stream:
     def __init__(self, state=None, flow_m=None):
         self.state = state
         self.flow_m = flow_m
+
+    def __repr__(self):
+        return f'Flow: {self.flow_m} - {self.state.__repr__()}'
 
 
 class Component:
@@ -36,7 +40,7 @@ class Component:
             if link.flow_m is None:
                 unk_mass.append(link)
         if len(unk_mass) > 1:
-            raise ValueError(f'More than one undetermined mass {unk_mass}')
+            raise MassError(f'More than one undetermined mass {unk_mass}')
 
         self.unk_mass = unk_mass[0]
 
