@@ -1,9 +1,63 @@
 import numpy as np
+import inspect
 from itertools import chain
 from scipy.optimize import newton
 from .exceptions import MassError
 
 __all__ = ['Stream', 'Component', 'Mixer', 'Valve']
+
+
+##################################################
+# Helper functions
+##################################################
+
+def automatic_docstring(func):
+    """Decorator that will automatically generate docstrings."""
+    doc = 'Options: \n'
+
+    sig = inspect.signature(func).parameters
+    options = sig['options'].default
+
+    for k, v in options.items():
+        line = f'{k}: {v} \n'
+        doc += line
+
+    def wrapped(option):
+        func(option)
+
+    wrapped.__doc__ = doc
+
+    return wrapped
+
+
+class Parameter:
+    """Parameter class.
+
+    This class is used to create objects that hold configuration
+    parameters.
+
+    """
+    def __init__(self, values):
+        self.values = values
+        try:
+            self.current_value = values[0]
+        except TypeError:
+            self.current_value = values
+
+        kwargs = {k: v for k, v in enumerate(values)}
+
+        @automatic_docstring
+        def set_to(options=kwargs):
+            self.current_value = self.values[options]
+
+        self.set_to = set_to
+
+    def __repr__(self):
+        return str(self.current_value)
+
+##################################################
+# Streams
+##################################################
 
 
 class Stream:
@@ -14,6 +68,10 @@ class Stream:
     def __repr__(self):
         return f'Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
 
+
+##################################################
+# Components
+##################################################
 
 class Component:
     def __init__(self):
@@ -29,9 +87,15 @@ class Component:
 
         self.total_mass = None
 
+        # call setup
+        self.setup()
+
     def link(self, inputs, outputs):
         self.inputs = inputs
         self.outputs = outputs
+
+    def setup(self):
+        pass
 
     def get_unk_mass(self):
         unk_mass = []
@@ -114,7 +178,6 @@ class Component:
 
         # solve for energy
         self.get_unk_state()
-
         newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
 
         for i, inp in enumerate(self.inputs):
@@ -133,6 +196,9 @@ class Mixer(Component):
 
         """
         # total mass will be calculated after call to run()
+        self.pressure_assignment = Parameter(['Equalize All',
+                                              'Set Outlet to Lowest Inlet'])
+
         super().__init__()
 
 
