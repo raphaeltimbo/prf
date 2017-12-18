@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import CoolProp as CP
 import matplotlib.pyplot as plt
+import warnings
 from copy import copy
 from scipy.optimize import newton
 from prf.state import *
@@ -493,7 +494,9 @@ class InterpolatedCurve(np.poly1d):
         self.x = x
         self.y = y
         self._deg = deg
-        self.args = np.polyfit(self.x, self.y, self._deg)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self.args = np.polyfit(self.x, self.y, self._deg)
         self.ylabel = ylabel
 
         super().__init__(self.args)

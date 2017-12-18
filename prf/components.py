@@ -299,4 +299,3 @@ class Valve(Component):
             inp.flow_m = self.calc_mass_flow()
 
         super().run()
-
