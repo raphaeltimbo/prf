@@ -84,4 +84,25 @@ def test_valve():
     valve0.link(inputs=[stream3], outputs=[stream4])
     valve0.run()
 
+    assert_allclose(stream3.flow_m, 107637.87833389692)
+    assert_allclose(stream4.flow_m, 107637.87833389692)
+    assert_allclose(stream4.state.T(), 294.4749311434537)
+
+    state3 = prf.State.define(p=1e6, T=300, fluid='CO2')
+    state4 = prf.State.define(p=0.5e6, fluid='CO2')
+
+    stream3 = prf.Stream(state=state3, flow_m=107637.87833389692)
+    stream4 = prf.Stream(state=state4, flow_m=None)
+
+    valve0 = prf.Valve(10)
+    valve0.link(inputs=[stream3], outputs=[stream4])
+    valve0.run()
+
+    assert_allclose(stream4.flow_m, 107637.87833389692)
+    assert_allclose(valve0.total_mass, 107637.87833389692)
+    assert_allclose(stream4.state.T(), 294.4749311434537)
+
+
+
+
 

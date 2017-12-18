@@ -99,6 +99,7 @@ class Component:
         self.inputs = inputs
         self.outputs = outputs
         self.connections = list(chain(self.inputs, self.outputs))
+        self.setup()
 
     def setup(self):
         pass
@@ -184,8 +185,7 @@ class Component:
         return (input_energy / self.total_mass) - (output_energy / self.total_mass)
 
     def run(self):
-        self.setup()
-        
+
         self.get_unk_mass()
         if self.total_mass is None:
             newton(self.mass_balance, 0)
@@ -219,10 +219,13 @@ class Mixer(Component):
 
     def setup(self):
         pressure = []
+        temperature = []
         for con in self.connections:
             for k, v in con.state.init_args.items():
                 if k == 'p' and v is not None:
                     pressure.append(v)
+                if k == 'T' and v is not None:
+                    temperature.append(v)
 
         if self.pressure_assignment.current_value == 'Equalize All':
             if len(pressure) > 1:
@@ -232,6 +235,8 @@ class Mixer(Component):
 
             for con in self.connections:
                 con.state.setup_args['p'] = pressure[0]
+                if len(self.inputs) == 1:
+                    con.state.setup_args['T'] = temperature[0]
                 if (con.state.not_defined and
                         con.state.init_args != con.state.setup_args):
                     props = {k: v for k, v in con.state.setup_args.items() if v is not None}
@@ -257,7 +262,7 @@ class Valve(Component):
     Valve that will give an isenthalpic expansion.
     """
 
-    def __init__(self, cv):
+    def __init__(self, cv=None):
         self.cv = cv
         super().__init__()
 
