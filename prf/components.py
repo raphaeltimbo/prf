@@ -1,10 +1,11 @@
 import numpy as np
 import inspect
+from copy import copy
 from itertools import chain
 from scipy.optimize import newton
 from .exceptions import MassError
 
-__all__ = ['Stream', 'Component', 'Mixer', 'Valve']
+__all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter']
 
 
 ##################################################
@@ -65,6 +66,11 @@ class Stream:
         self.state = state
         self.flow_m = flow_m
 
+        # setup args will initially be set to init_args.
+        # later this attribute can be used to store args
+        # defined during the setup process.
+        self.state.setup_args = copy(state.init_args)
+
     def __repr__(self):
         return f'Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
 
@@ -77,6 +83,7 @@ class Component:
     def __init__(self):
         self.inputs = None
         self.outputs = None
+        self.connections = None
 
         # unknown mass and state
         self.unk_mass = None
@@ -87,12 +94,10 @@ class Component:
 
         self.total_mass = None
 
-        # call setup
-        self.setup()
-
     def link(self, inputs, outputs):
         self.inputs = inputs
         self.outputs = outputs
+        self.connections = list(chain(self.inputs, self.outputs))
 
     def setup(self):
         pass
@@ -135,18 +140,25 @@ class Component:
                 unk_state.append(link)
             else:
                 #  record a state as reference for initial guess
-                ref_state_args = link.state.init_args
+                ref_state_args = link.state.setup_args
 
         if len(unk_state) > 1:
             raise ValueError(f'More than one undetermined state {unk_state}')
 
-        unk_state = unk_state[0].state
-        self.prop = {k: v for k, v in
-                     unk_state.init_args.items() if v is not None}
-        self.var_prop = 'T' if 'p' in self.prop else 'p'
-        # initial guess based on value of some of the links
-        self.energy_x0 = ref_state_args[self.var_prop]
+        try:
+            unk_state = unk_state[0].state
+        except IndexError:
+            # unk_state is None if list is empty
+            unk_state = None
+
         self.unk_state = unk_state
+
+        if self.unk_state is not None:
+            self.prop = {k: v for k, v in
+                         unk_state.setup_args.items() if v is not None}
+            self.var_prop = 'T' if 'p' in self.prop else 'p'
+            # initial guess based on value of some of the links
+            self.energy_x0 = ref_state_args[self.var_prop]
 
     def energy_balance(self, new_value, var_prop):
         # get available property
@@ -178,7 +190,8 @@ class Component:
 
         # solve for energy
         self.get_unk_state()
-        newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
+        if self.unk_state is not None:
+            newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
 
         for i, inp in enumerate(self.inputs):
             setattr(self, f'inp{i}', inp)
