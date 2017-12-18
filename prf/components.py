@@ -1,6 +1,7 @@
 import numpy as np
 import inspect
 from copy import copy
+from warnings import warn
 from itertools import chain
 from scipy.optimize import newton
 from .exceptions import MassError
@@ -213,6 +214,33 @@ class Mixer(Component):
                                               'Set Outlet to Lowest Inlet'])
 
         super().__init__()
+
+    def setup(self):
+        pressure = []
+        for con in self.connections:
+            for k, v in con.state.init_args.items():
+                if k == 'p' and v is not None:
+                    pressure.append(v)
+
+        if self.pressure_assignment.current_value == 'Equalize All':
+            if len(pressure) > 1:
+                warn(f'Pressure of streams are over defined for {self.pressure_assignment}')
+
+            for con in self.connections:
+                con.state.setup_args['p'] = pressure[0]
+                if (con.state.not_defined and
+                            con.state.init_args != con.state.setup_args):
+                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                    if len(props) == 2:
+                        con.state.update2(**props)
+
+        elif self.pressure_assignment.current_value == 'Set Outlet to Lowest Inlet':
+            out_state = self.outlets[0].state
+            if out_state.init_args['p'] is not None:
+                warn(f'Pressure of streams are over defined for {self.pressure_assignment}')
+            out_state.setup_args['p'] = min(pressure)
+            props = {k: v for k, v in out_state.setup_args if v is not None}
+            out_state.update2(**props)
 
 
 class Valve(Component):
