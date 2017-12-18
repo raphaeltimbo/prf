@@ -1,10 +1,10 @@
 import numpy as np
 import inspect
 from copy import copy
-from warnings import warn
 from itertools import chain
 from scipy.optimize import newton
-from .exceptions import MassError
+from .exceptions import MassError, OverDefinedWarning
+from warnings import warn
 
 __all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter']
 
@@ -184,6 +184,8 @@ class Component:
         return (input_energy / self.total_mass) - (output_energy / self.total_mass)
 
     def run(self):
+        self.setup()
+        
         self.get_unk_mass()
         if self.total_mass is None:
             newton(self.mass_balance, 0)
@@ -224,23 +226,29 @@ class Mixer(Component):
 
         if self.pressure_assignment.current_value == 'Equalize All':
             if len(pressure) > 1:
-                warn(f'Pressure of streams are over defined for {self.pressure_assignment}')
+                warn(f'Pressure of streams are over defined'
+                     f' for {self.pressure_assignment}',
+                     OverDefinedWarning)
 
             for con in self.connections:
                 con.state.setup_args['p'] = pressure[0]
                 if (con.state.not_defined and
-                            con.state.init_args != con.state.setup_args):
+                        con.state.init_args != con.state.setup_args):
                     props = {k: v for k, v in con.state.setup_args.items() if v is not None}
                     if len(props) == 2:
                         con.state.update2(**props)
 
-        elif self.pressure_assignment.current_value == 'Set Outlet to Lowest Inlet':
-            out_state = self.outlets[0].state
+        elif (self.pressure_assignment.current_value
+              == 'Set Outlet to Lowest Inlet'):
+            out_state = self.outputs[0].state
             if out_state.init_args['p'] is not None:
-                warn(f'Pressure of streams are over defined for {self.pressure_assignment}')
+                warn(f'Pressure of streams are over defined'
+                     f' for {self.pressure_assignment}',
+                     OverDefinedWarning)
             out_state.setup_args['p'] = min(pressure)
-            props = {k: v for k, v in out_state.setup_args if v is not None}
-            out_state.update2(**props)
+            props = {k: v for k, v in out_state.setup_args.items() if v is not None}
+            if len(props) == 2:
+                out_state.update2(**props)
 
 
 class Valve(Component):
