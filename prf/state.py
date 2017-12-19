@@ -175,6 +175,9 @@ class State(CP.AbstractState):
         self._prop_dict = dict(Pressure='p', Temperature='T', Enthalpy='hmass',
                                Entropy='smass', Density='rhomass')
 
+        self.init_args = None
+        self.setup_args = None
+
     def fluid_dict(self):
         # preserve the dictionary from define method
         fluid_dict = {}
@@ -208,20 +211,14 @@ class State(CP.AbstractState):
         )
 
     def __reduce__(self):
-        # implemented to enable pickling
-        p_ = self.p()
-        T_ = self.T()
         fluid_ = self.fluid_dict()
-        kwargs = {'p': p_, 'T': T_, 'fluid': fluid_}
+        kwargs = {k: v for k, v in self.init_args.items() if v is not None}
+        kwargs['fluid'] = fluid_
         return self._rebuild, (self.__class__, kwargs)
 
     @staticmethod
     def _rebuild(cls, kwargs):
-        p = kwargs.get('p')
-        T = kwargs.get('T')
-        fluid = kwargs.get('fluid')
-
-        return cls.define(p=p, T=T, fluid=fluid)
+        return cls.define(**kwargs)
 
     @classmethod
     @convert_to_base_units

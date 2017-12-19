@@ -75,10 +75,19 @@ class Stream:
     def __repr__(self):
         return f'Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
 
+    def __eq__(self, other):
+        eq_flow = (self.flow_m == other.flow_m)
+        eq_state = np.array(
+            (np.allclose(self.state.p(), other.state.p()),
+             np.allclose(self.state.T(), other.state.p()),
+             np.allclose(self.state.molar_mass(), other.state.molar_mass())))
+
+        return eq_flow and eq_state.all()
 
 ##################################################
 # Components
 ##################################################
+
 
 class Component:
     def __init__(self):
