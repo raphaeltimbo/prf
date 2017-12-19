@@ -175,9 +175,6 @@ class State(CP.AbstractState):
         self._prop_dict = dict(Pressure='p', Temperature='T', Enthalpy='hmass',
                                Entropy='smass', Density='rhomass')
 
-        self.init_args = None
-        self.setup_args = None
-
     def fluid_dict(self):
         # preserve the dictionary from define method
         fluid_dict = {}

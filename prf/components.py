@@ -1,10 +1,12 @@
 import numpy as np
 import inspect
-from copy import copy
+from copy import copy, deepcopy
 from itertools import chain
 from scipy.optimize import newton
 from .exceptions import MassError, OverDefinedWarning
 from warnings import warn
+from .impeller import Impeller
+from .point import Point
 
 __all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter']
 
@@ -63,7 +65,8 @@ class Parameter:
 
 
 class Stream:
-    def __init__(self, state=None, flow_m=None):
+    def __init__(self, name=None, state=None, flow_m=None):
+        self.name = name
         self.state = state
         self.flow_m = flow_m
 
@@ -73,16 +76,27 @@ class Stream:
         self.state.setup_args = copy(state.init_args)
 
     def __repr__(self):
-        return f'Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
+        return f'\n' \
+               f'Stream: {self.name} - \n Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
 
     def __eq__(self, other):
         eq_flow = (self.flow_m == other.flow_m)
         eq_state = np.array(
             (np.allclose(self.state.p(), other.state.p()),
-             np.allclose(self.state.T(), other.state.p()),
+             np.allclose(self.state.T(), other.state.T()),
              np.allclose(self.state.molar_mass(), other.state.molar_mass())))
 
         return eq_flow and eq_state.all()
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        result.state.setup_args = self.state.setup_args
+
+        return result
 
 ##################################################
 # Components
@@ -313,3 +327,88 @@ class Valve(Component):
             inp.flow_m = self.calc_mass_flow()
 
         super().run()
+
+
+class Compressor(Component):
+    def __init__(self, impeller=None, speed=None, flow_m=None, b=None, D=None):
+        self.init_impeller = impeller
+        self.impeller = None
+        self.speed = speed
+        self.b = b
+        self.D = D
+        super().__init__()
+
+    def run(self):
+        inp = self.inputs[0]
+        out = self.outputs[0]
+
+        if self.init_impeller is None:
+            point = Point(speed=self.speed, flow_m=inp.flow_m, suc=inp.state, disch=out.state)
+            self.impeller = Impeller(point, b=self.b, D=self.D)
+        else:
+            self.impeller.suc = inp.state
+            out.state.update2(p=self.impeller.disch.p(), T=self.impeller.disch.T())
+
+        super().run()
+
+
+class ConvergenceBlock(Component):
+    def __init__(self, stream, units):
+        self.stream = stream
+        self.units = units
+
+        self._units = None
+
+        # convergence information
+        self.tolerance = 0.1
+        self.iter = 0
+        self.converged = False
+        self.y0 = None
+        self.y1 = None
+        super().__init__()
+
+    def run(self, new_x):
+        print(self.iter)
+        # initialize
+        if self.iter == 0:
+            self._units = deepcopy(self.units)
+
+        units0 = deepcopy(self._units)
+
+        # select stream
+        for unit in units0:
+            for stream in unit.connections:
+                if stream.name == self.stream:
+                    s0 = deepcopy(stream)
+                    s1 = deepcopy(stream)
+
+        # select prop
+        s0.state.setup_args['T'] = new_x
+
+        for unit in units0:
+            new_inputs = []
+            for i, inp in enumerate(unit.inputs):
+                if inp.name == self.stream:
+                    new_inputs.append(s0)
+                else:
+                    new_inputs.append(inp)
+
+            new_outputs = []
+            for i, out in enumerate(unit.outputs):
+                if out.name == self.stream:
+                    new_outputs.append(s1)
+                else:
+                    new_outputs.append(out)
+
+            unit.link(inputs=new_inputs, outputs=new_outputs)
+
+        for unit in units0:
+            unit.run()
+
+        self.y0 = s0.state.T()
+        self.y1 = s1.state.T()
+
+        self.iter += 1
+
+        return self.y1 - self.y0
+
