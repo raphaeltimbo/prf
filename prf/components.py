@@ -8,7 +8,8 @@ from warnings import warn
 from .impeller import Impeller
 from .point import Point
 
-__all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter']
+__all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter', 'Compressor',
+           'ConvergenceBlock']
 
 
 ##################################################
@@ -368,7 +369,6 @@ class ConvergenceBlock(Component):
         super().__init__()
 
     def run(self, new_x):
-        print(self.iter)
         # initialize
         if self.iter == 0:
             self._units = deepcopy(self.units)
