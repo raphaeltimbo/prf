@@ -225,6 +225,10 @@ class Component:
         for i, out in enumerate(self.outputs):
             setattr(self, f'out{i}', out)
 
+    def __repr__(self):
+        return f'Inputs: \n {self.inputs} \n' \
+               f'Outputs: \n {self.outputs} \n'
+
 
 class Mixer(Component):
     def __init__(self):
@@ -360,6 +364,8 @@ class ConvergenceBlock(Component):
 
         self._units = None
 
+        self.converged_units = None
+
         # convergence information
         self.tolerance = 0.1
         self.iter = 0
@@ -368,7 +374,7 @@ class ConvergenceBlock(Component):
         self.y1 = None
         super().__init__()
 
-    def run(self, new_x):
+    def converge(self, new_x):
         # initialize
         if self.iter == 0:
             self._units = deepcopy(self.units)
@@ -410,5 +416,10 @@ class ConvergenceBlock(Component):
 
         self.iter += 1
 
+        self.converged_units = units0
+
         return self.y1 - self.y0
+
+    def run(self):
+        newton(self.converge, 300)
 
