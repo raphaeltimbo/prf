@@ -16,6 +16,11 @@ from CoolProp.Plots.Common import interpolate_values_1d
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
            '__version__CP', '__version__REFPROP']
 
+
+############################################################
+# Config path and styles
+############################################################
+
 # set style and colors
 plt.style.use('seaborn-white')
 plt.style.use({
@@ -78,11 +83,62 @@ for mix1, mix2 in combinations(mixture, 2):
     CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
 
 # list of available fluids
-fluid_list = CP.get_global_param_string('fluids_list').split(',')
+_fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
 # versions
 __version__CP = CP.get_global_param_string('version')
 __version__REFPROP = CP.get_global_param_string('REFPROP_version')
+
+
+############################################################
+# Fluid names
+############################################################
+
+
+class Fluid:
+    def __init__(self, name):
+        self.name = name
+        self.possible_names = []
+
+    def __repr__(self):
+        return f'{type(self).__name__}({self.__dict__}'
+
+# create from _fluid_list
+fluid_list = {name: Fluid(name) for name in _fluid_list}
+
+# define possible names
+fluid_list['n-Pentane'].possible_names.extend(
+    ['pentane', 'n-pentane'])
+fluid_list['Isopentane'].possible_names.extend(
+    ['isopentane', 'i-pentane'])
+fluid_list['n-Hexane'].possible_names.extend(
+    ['hexane', 'n-hexane'])
+fluid_list['Isohexane'].possible_names.extend(
+    ['isohexane', 'i-hexane'])
+fluid_list['HydrogenSulfide'].possible_names.extend(
+    ['hydrogen sulfide'])
+fluid_list['CarbonDioxide'].possible_names.extend(
+    ['carbon dioxide'])
+
+
+def get_name(name):
+    """Seach for compatible fluid name."""
+
+    for k, v in fluid_list.items():
+        if name in v.possible_names:
+            name = k
+
+    fluid_name = CP.get_REFPROPname(name)
+
+    if fluid_name == '':
+        raise ValueError(f'Fluid {name} not available. See prf.fluid_list. ')
+
+    return fluid_name
+
+
+############################################################
+# Helper functions
+############################################################
 
 
 def normalize_mix(molar_fractions):
@@ -155,6 +211,10 @@ def convert_to_base_units(func):
         return func(*args, **kwargs)
 
     return inner
+
+############################################################
+# State
+############################################################
 
 
 class State(CP.AbstractState):
@@ -274,8 +334,8 @@ class State(CP.AbstractState):
         if isinstance(fluid, str):
             fluid = {fluid: 1}
         for k, v in fluid.items():
-            if EOS == 'REFPROP':
-                k = CP.get_REFPROPname(k)
+            k = get_name(k)
+
             constituents.append(k)
             molar_fractions.append(v)
 
