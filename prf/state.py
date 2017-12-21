@@ -181,6 +181,7 @@ def convert_to_base_units(func):
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
         flow_v_units = kwargs.get('flow_v_units', ureg.m**3 / ureg.s)
         power_units = kwargs.get('power_units', ureg.W)
+        head_units = kwargs.get('head_units', ureg.J / ureg.kg)
 
         for arg_name, value in kwargs.items():
             if arg_name == 'p':
@@ -207,6 +208,10 @@ def convert_to_base_units(func):
                 power_ = Q_(value, power_units)
                 power_.ito_base_units()
                 kwargs[arg_name] = power_.magnitude
+            elif arg_name is 'head':
+                head_ = Q_(value, head_units)
+                head_.ito_base_units()
+                kwargs[arg_name] = head_.magnitude
 
         return func(*args, **kwargs)
 
