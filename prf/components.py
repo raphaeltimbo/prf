@@ -67,7 +67,7 @@ class Parameter:
 
 
 class Stream:
-    def __init__(self, name=None, state=None, flow_m=None):
+    def __init__(self, name, state=None, flow_m=None):
         self.name = name
         self.state = state
         self.flow_m = flow_m

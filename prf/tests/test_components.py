@@ -9,11 +9,11 @@ def test_exceptions():
     state1 = prf.State.define(p=1.1e6, fluid='CO2')
     state2 = prf.State.define(p=1.1e6, T=305, fluid='CO2')
 
-    stream0 = prf.Stream(state=state0, flow_m=1)
-    stream1 = prf.Stream(state=state1, flow_m=None)
-    stream2 = prf.Stream(state=state2, flow_m=None)
+    stream0 = prf.Stream('s0', state=state0, flow_m=1)
+    stream1 = prf.Stream('s1', state=state1, flow_m=None)
+    stream2 = prf.Stream('s2', state=state2, flow_m=None)
 
-    mix0 = prf.Mixer()
+    mix0 = prf.Mixer('mix0')
     mix0.link(inputs=[stream0, stream1], outputs=[stream2])
     with pytest.raises(MassError) as exc:
         mix0.run()
@@ -26,12 +26,12 @@ def test_warnings():
     state1 = prf.State.define(p=1.1e6, fluid='CO2')
     state2 = prf.State.define(p=1.2e6, T=305, fluid='CO2')
 
-    stream0 = prf.Stream(state=state0, flow_m=1)
-    stream1 = prf.Stream(state=state1, flow_m=2)
-    stream2 = prf.Stream(state=state2, flow_m=None)
+    stream0 = prf.Stream('s0', state=state0, flow_m=1)
+    stream1 = prf.Stream('s1', state=state1, flow_m=2)
+    stream2 = prf.Stream('s2', state=state2, flow_m=None)
 
     with pytest.warns(OverDefinedWarning):
-        mix0 = prf.Mixer()
+        mix0 = prf.Mixer('mix0')
         mix0.link(inputs=[stream0, stream1], outputs=[stream2])
         mix0.run()
 
@@ -40,11 +40,11 @@ def test_warnings():
     state1 = prf.State.define(p=1.0e6, fluid='CO2')
     state2 = prf.State.define(1.0e6, T=305, fluid='CO2')
 
-    stream0 = prf.Stream(state=state0, flow_m=1)
-    stream1 = prf.Stream(state=state1, flow_m=2)
-    stream2 = prf.Stream(state=state2, flow_m=None)
+    stream0 = prf.Stream('s0', state=state0, flow_m=1)
+    stream1 = prf.Stream('s1', state=state1, flow_m=2)
+    stream2 = prf.Stream('s2', state=state2, flow_m=None)
 
-    mix0 = prf.Mixer()
+    mix0 = prf.Mixer('mix0')
     mix0.pressure_assignment.set_to(1)
     mix0.link(inputs=[stream0, stream1], outputs=[stream2])
     mix0.setup()
@@ -56,11 +56,11 @@ def test_mixer():
     state1 = prf.State.define(fluid='CO2')
     state2 = prf.State.define(T=305, fluid='CO2')
 
-    stream0 = prf.Stream(state=state0, flow_m=1)
-    stream1 = prf.Stream(state=state1, flow_m=2)
-    stream2 = prf.Stream(state=state2, flow_m=None)
+    stream0 = prf.Stream('s0', state=state0, flow_m=1)
+    stream1 = prf.Stream('s1', state=state1, flow_m=2)
+    stream2 = prf.Stream('s2', state=state2, flow_m=None)
 
-    mix0 = prf.Mixer()
+    mix0 = prf.Mixer('mix0')
     mix0.link(inputs=[stream0, stream1], outputs=[stream2])
     mix0.run()
 
@@ -77,8 +77,8 @@ def test_valve():
     state3 = prf.State.define(p=1e6, T=300, fluid='CO2')
     state4 = prf.State.define(p=0.5e6, fluid='CO2')
 
-    stream3 = prf.Stream(state=state3, flow_m=None)
-    stream4 = prf.Stream(state=state4, flow_m=None)
+    stream3 = prf.Stream('s3', state=state3, flow_m=None)
+    stream4 = prf.Stream('s4', state=state4, flow_m=None)
 
     valve0 = prf.Valve(10)
     valve0.link(inputs=[stream3], outputs=[stream4])
@@ -91,12 +91,12 @@ def test_valve():
     state3 = prf.State.define(p=1e6, T=300, fluid='CO2')
     state4 = prf.State.define(p=0.5e6, fluid='CO2')
 
-    stream3 = prf.Stream(state=state3, flow_m=107637.87833389692)
-    stream4 = prf.Stream(state=state4, flow_m=None)
+    stream3 = prf.Stream('s3', state=state3, flow_m=107637.87833389692)
+    stream4 = prf.Stream('s4', state=state4, flow_m=None)
 
     valve0 = prf.Valve(10)
     valve0.link(inputs=[stream3], outputs=[stream4])
-    valve0.run()
+    valve0.run('valve0')
 
     assert_allclose(stream4.flow_m, 107637.87833389692, rtol=1e-5)
     assert_allclose(valve0.total_mass, 107637.87833389692, rtol=1e-5)
