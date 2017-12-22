@@ -2,11 +2,12 @@ import numpy as np
 import inspect
 from copy import copy, deepcopy
 from itertools import chain
-from scipy.optimize import newton
+from scipy.optimize import newton, root
 from .exceptions import MassError, OverDefinedWarning
 from warnings import warn
 from .impeller import Impeller
 from .point import Point
+from .state import State
 
 __all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter', 'Compressor',
            'ConvergenceBlock']
@@ -105,97 +106,27 @@ class Stream:
 
 
 class Component:
-    def __init__(self):
+    def __init__(self, name=None):
+        self.name = name
         self.inputs = None
         self.outputs = None
         self.connections = None
 
-        # unknown mass and state
-        self.unk_mass = None
-        self.unk_state = None
-        self.prop = None
-        self.var_prop = None
-        self.energy_x0 = None
-
-        self.total_mass = None
+        # unknowns
+        self.unks = None
 
     def link(self, inputs, outputs):
         self.inputs = inputs
         self.outputs = outputs
         self.connections = list(chain(self.inputs, self.outputs))
-        self.setup()
 
-    def setup(self):
-        pass
-
-    def get_unk_mass(self):
-        unk_mass = []
-
-        for link in chain(self.inputs, self.outputs):
-            if link.flow_m is None:
-                unk_mass.append(link)
-        if len(unk_mass) > 1:
-            raise MassError(f'More than one undetermined mass {unk_mass}')
-        elif len(unk_mass) == 0:
-            # check if mass balance is satisfied
-            input_mass = sum((inp.flow_m for inp in self.inputs))
-            output_mass = sum((out.flow_m for out in self.outputs))
-            if np.allclose(input_mass, output_mass):
-                self.total_mass = input_mass
-            else:
-                raise MassError(f'Error in mass balance input:{input_mass} kg/s'
-                                f' output:{output_mass} kg/s')
-        else:
-            self.unk_mass = unk_mass[0]
-
-        # solve first for mass
-    def mass_balance(self, new_mass):
-        unk_mass = self.unk_mass
-        unk_mass.flow_m = new_mass
+    def mass_balance(self):
         input_mass = sum((inp.flow_m for inp in self.inputs))
         output_mass = sum((out.flow_m for out in self.outputs))
 
         return input_mass - output_mass
 
-    def get_unk_state(self):
-        # search for undetermined state
-        unk_state = []
-
-        for link in chain(self.inputs, self.outputs):
-            if link.state.p() == -np.infty or link.state.p() == np.infty:
-                unk_state.append(link)
-            else:
-                #  record a state as reference for initial guess
-                ref_state_args = link.state.setup_args
-
-        if len(unk_state) > 1:
-            raise ValueError(f'More than one undetermined state {unk_state}')
-
-        try:
-            unk_state = unk_state[0].state
-        except IndexError:
-            # unk_state is None if list is empty
-            unk_state = None
-
-        self.unk_state = unk_state
-
-        if self.unk_state is not None:
-            self.prop = {k: v for k, v in
-                         unk_state.setup_args.items() if v is not None}
-            self.var_prop = 'T' if 'p' in self.prop else 'p'
-            # initial guess based on value of some of the links
-            self.energy_x0 = ref_state_args[self.var_prop]
-
-    def energy_balance(self, new_value, var_prop):
-        # get available property
-        unk_state = self.unk_state
-        # var_prop -> property that will change to obtain convergence
-
-        prop = self.prop
-        prop[var_prop] = new_value
-
-        unk_state.update2(**prop)
-
+    def energy_balance(self):
         input_energy = 0
         for inp in self.inputs:
             inp_energy = inp.flow_m * inp.state.hmass()
@@ -206,24 +137,72 @@ class Component:
             out_energy = out.flow_m * out.state.hmass()
             output_energy += out_energy
 
-        return (input_energy / self.total_mass) - (output_energy / self.total_mass)
+        total_mass = sum((inp.flow_m for inp in self.inputs))
+
+        return (input_energy / total_mass) - (output_energy / total_mass)
+
+    def setup(self):
+        """setup constraints"""
+
+    def balance(self, x):
+        """update each stream with iteration value"""
+        for i, unk in enumerate(self.unks):
+            s_name, prop = unk.split('_', maxsplit=1)
+            for con in self.connections:
+                if con.name == s_name:
+                    if prop == 'flow_m':
+                        print(con)
+                        con.flow_m = x[i]
+                    else:
+                        con.state.setup_args[prop] = x[i]
+                props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                try:
+                    con.state.update2(**props)
+                except ValueError:
+                    # if refprop does not converge, try CP's HEOS
+                    heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                    heos_state.setup_args = con.state.setup_args
+                    con.state = heos_state
+
+        y = np.zeros_like(x)
+
+        y[0] = self.mass_balance()
+        y[1] = self.energy_balance()
+
+        return y
+
+    def set_x0(self):
+        x0 = []
+        for unk in self.unks:
+            if unk[-1] == 'p':
+                x0.append(1000)
+            if unk[-1] == 'T':
+                x0.append(300)
+            if unk[-1] == 'm':
+                x0.append(1)
+
+        return x0
 
     def run(self):
+        # apply constraints
+        self.setup()
+        # check all unknowns
+        unks = []
+        for con in self.connections:
+            if con.flow_m is None:
+                unks.append(con.name + '_flow_m')
 
-        self.get_unk_mass()
-        if self.total_mass is None:
-            newton(self.mass_balance, 0)
-            self.total_mass = sum((inp.flow_m for inp in self.inputs))
+            if con.state.not_defined:
+                if con.state.setup_args['p'] is None:
+                    unks.append(con.name + '_p')
+                if con.state.setup_args['T'] is None:
+                    unks.append(con.name + '_T')
 
-        # solve for energy
-        self.get_unk_state()
-        if self.unk_state is not None:
-            newton(self.energy_balance, self.energy_x0, args=(self.var_prop,))
+        self.unks = unks
 
-        for i, inp in enumerate(self.inputs):
-            setattr(self, f'inp{i}', inp)
-        for i, out in enumerate(self.outputs):
-            setattr(self, f'out{i}', out)
+        x0 = self.set_x0()
+
+        root(self.balance, x0)
 
     def __repr__(self):
         return f'Inputs: \n {self.inputs} \n' \
@@ -231,7 +210,7 @@ class Component:
 
 
 class Mixer(Component):
-    def __init__(self):
+    def __init__(self, name):
         """A mixer.
 
         A mixer has inputs and outputs streams.
@@ -239,49 +218,25 @@ class Mixer(Component):
         of mass and energy.
 
         """
-        # total mass will be calculated after call to run()
         self.pressure_assignment = Parameter(['Equalize All',
                                               'Set Outlet to Lowest Inlet'])
-
-        super().__init__()
+        super().__init__(name)
 
     def setup(self):
         pressure = []
-        temperature = []
         for con in self.connections:
-            for k, v in con.state.init_args.items():
-                if k == 'p' and v is not None:
-                    pressure.append(v)
-                if k == 'T' and v is not None:
-                    temperature.append(v)
+            if con.state.init_args['p'] is not None:
+                pressure.append(con.state.init_args['p'])
 
         if self.pressure_assignment.current_value == 'Equalize All':
-            if len(pressure) > 1:
-                warn(f'Pressure of streams are over defined'
-                     f' for {self.pressure_assignment}',
-                     OverDefinedWarning)
-
             for con in self.connections:
-                con.state.setup_args['p'] = pressure[0]
-                if len(self.inputs) == 1:
-                    con.state.setup_args['T'] = temperature[0]
-                if (con.state.not_defined and
-                        con.state.init_args != con.state.setup_args):
-                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
-                    if len(props) == 2:
-                        con.state.update2(**props)
+                if con.state.init_args['p'] is None:
+                    con.state.setup_args['p'] = pressure[0]
 
-        elif (self.pressure_assignment.current_value
-              == 'Set Outlet to Lowest Inlet'):
-            out_state = self.outputs[0].state
-            if out_state.init_args['p'] is not None:
-                warn(f'Pressure of streams are over defined'
-                     f' for {self.pressure_assignment}',
-                     OverDefinedWarning)
-            out_state.setup_args['p'] = min(pressure)
-            props = {k: v for k, v in out_state.setup_args.items() if v is not None}
-            if len(props) == 2:
-                out_state.update2(**props)
+        if self.pressure_assignment.current_value == 'Set Outlet to Lowest Inlet':
+            for con in self.connections:
+                if con.state.init_args['p'] is None:
+                    con.state.setup_args['p'] = min(pressure)
 
 
 class Valve(Component):
@@ -294,7 +249,11 @@ class Valve(Component):
         self.cv = cv
         super().__init__()
 
-    def p_d(self):
+    def setup(self):
+        if self.cv is not None:
+            self.calc_pressures()
+
+    def calc_pressures(self, new_p):
         inp = self.inputs[0]
         m = inp.flow_m
         p_u = inp.state.p()
@@ -303,7 +262,7 @@ class Valve(Component):
         z_u = inp.state.z()
         cv = self.cv
 
-        p_d = p_u * np.sqrt(1 - (z_u * T_u / MW) * (m / (cv * p_u)) ** 2)
+        p_d = (p_u * np.sqrt(1 - (z_u * T_u / MW) * (m / (cv * p_u)) ** 2))
 
         return p_d
 
@@ -323,6 +282,22 @@ class Valve(Component):
 
         return m
 
+    def calc_cv(self):
+        inp = self.inputs[0]
+        out = self.outputs[0]
+
+        p_u = inp.state.p()
+        p_d = out.state.p()
+        T_u = inp.state.T()
+        MW = inp.state.molar_mass()
+        z_u = inp.state.z()
+        m = inp.flow_m
+
+        cv = (m * np.sqrt(z_u * T_u / MW)
+              / p_u * np.sqrt(1 - (p_d / p_u)**2))
+
+        self.cv = cv
+
     def run(self):
         inp = self.inputs[0]
 
@@ -332,6 +307,9 @@ class Valve(Component):
             inp.flow_m = self.calc_mass_flow()
 
         super().run()
+
+        if self.cv is None:
+            self.calc_cv()
 
 
 class Compressor(Component):
