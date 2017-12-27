@@ -77,6 +77,18 @@ class Stream:
         # defined during the setup process.
         self.state.setup_args = copy(state.init_args)
 
+        self.constrained_mass = False
+
+    def constrain_mass(self, value):
+        """Constrain the mass flow to a value.
+
+        This function should be used during setup of a unit
+        to constrain the flow mass value of a stream.
+        """
+
+        self.constrained_mass = True
+        self.flow_m = value
+
     def __repr__(self):
         return f'\n' \
                f'Stream: {self.name} - \n Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
@@ -156,18 +168,25 @@ class Component:
                     else:
                         con.state.setup_args[prop] = x[i]
                 props = {k: v for k, v in con.state.setup_args.items() if v is not None}
-                try:
-                    con.state.update2(**props)
-                except ValueError:
-                    # if refprop does not converge, try CP's HEOS
-                    heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
-                    heos_state.setup_args = con.state.setup_args
-                    con.state = heos_state
+        try:
+            con.state.update2(**props)
+        except ValueError:
+            # if refprop does not converge, try CP's HEOS
+            heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+            heos_state.setup_args = con.state.setup_args
+            con.state = heos_state
 
         y = np.zeros_like(x)
 
-        y[0] = self.mass_balance()
-        y[1] = self.energy_balance()
+        if len(self.unks) == 1:
+            if 'flow_m' in self.unks[0]:
+                y[0] = self.mass_balance()
+            else:
+                y[0] = self.energy_balance()
+
+        else:
+            y[0] = self.mass_balance()
+            y[1] = self.energy_balance()
 
         return y
 
@@ -244,72 +263,57 @@ class Valve(Component):
 
     Valve that will give an isenthalpic expansion.
     """
-
-    def __init__(self, cv=None):
+    def __init__(self, name, cv=None, v_open=0.5):
         self.cv = cv
-        super().__init__()
+        self.v_open = v_open
+
+        super().__init__(name)
 
     def setup(self):
-        if self.cv is not None:
-            self.calc_pressures()
-
-    def calc_pressures(self, new_p):
-        inp = self.inputs[0]
-        m = inp.flow_m
-        p_u = inp.state.p()
-        T_u = inp.state.T()
-        MW = inp.state.molar_mass()
-        z_u = inp.state.z()
-        cv = self.cv
-
-        p_d = (p_u * np.sqrt(1 - (z_u * T_u / MW) * (m / (cv * p_u)) ** 2))
-
-        return p_d
-
-    def calc_mass_flow(self):
+        # same input and output mass
         inp = self.inputs[0]
         out = self.outputs[0]
 
-        p_u = inp.state.p()
-        p_d = out.state.init_args['p']
-        T_u = inp.state.T()
-        MW = inp.state.molar_mass()
-        z_u = inp.state.z()
-        cv = self.cv
+        if out.flow_m is None:
+            out.constrain_mass(inp.flow_m)
+        else:
+            inp.constrain_mass(out.flow_m)
 
-        m = (cv * p_u * np.sqrt(1 - (p_d / p_u) ** 2)
-             / (np.sqrt(z_u * T_u / MW)))
+        if self.cv is not None:
+            m = inp.flow_m
+            cv = self.cv
+            v_open = self.v_open
+            try:
+                rho = inp.state.rhomass()
+            except ValueError:
+                rho = out.state.rhomass()
 
-        return m
+            dP = ((m / cv)**2) / (v_open * rho)
+
+    def calc_dP(self, p):
+        inp = self.inputs[0]
+        out = self.outputs[0]
+
+        if inp.state.setup_args['p'] is None:
+            inp.state.setup_args['p'] = p
+        else:
+            out.state.setup_args['p'] = p
+
 
     def calc_cv(self):
-        inp = self.inputs[0]
-        out = self.outputs[0]
+        m = self.inputs[0].flow_m
+        v_open = self.v_open
+        dP = self.inputs[0].state.p() - self.outputs[0].state.p()
+        rho = self.inputs[0].state.rhomass()
 
-        p_u = inp.state.p()
-        p_d = out.state.p()
-        T_u = inp.state.T()
-        MW = inp.state.molar_mass()
-        z_u = inp.state.z()
-        m = inp.flow_m
-
-        cv = (m * np.sqrt(z_u * T_u / MW)
-              / p_u * np.sqrt(1 - (p_d / p_u)**2))
-
-        self.cv = cv
+        return m / np.sqrt(v_open * dP * rho)
 
     def run(self):
-        inp = self.inputs[0]
-
-        try:
-            self.get_unk_mass()
-        except MassError:
-            inp.flow_m = self.calc_mass_flow()
-
         super().run()
 
         if self.cv is None:
-            self.calc_cv()
+            self.cv = self.calc_cv()
+
 
 
 class Compressor(Component):
