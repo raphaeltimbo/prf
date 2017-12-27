@@ -257,7 +257,7 @@ class State(CP.AbstractState):
     def update_from_setup_args(self):
         """Update state from setup args."""
         props = {k: v for k, v in self.setup_args.items() if v is not None}
-        self.state.update2(**props)
+        self.update2(**props)
 
     def __repr__(self):
         return 'State: {:.5} Pa @ {:.5} K'.format(self.p(), self.T())

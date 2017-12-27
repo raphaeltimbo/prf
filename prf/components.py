@@ -163,7 +163,6 @@ class Component:
             for con in self.connections:
                 if con.name == s_name:
                     if prop == 'flow_m':
-                        print(con)
                         con.flow_m = x[i]
                     else:
                         con.state.setup_args[prop] = x[i]
@@ -194,7 +193,7 @@ class Component:
         x0 = []
         for unk in self.unks:
             if unk[-1] == 'p':
-                x0.append(1000)
+                x0.append(100000)
             if unk[-1] == 'T':
                 x0.append(300)
             if unk[-1] == 'm':
@@ -280,25 +279,31 @@ class Valve(Component):
             inp.constrain_mass(out.flow_m)
 
         if self.cv is not None:
-            m = inp.flow_m
-            cv = self.cv
-            v_open = self.v_open
-            try:
-                rho = inp.state.rhomass()
-            except ValueError:
-                rho = out.state.rhomass()
+            if inp.state.init_args['p'] is None:
+                x0 = out.state.init_args['p'] + 100
+            else:
+                x0 = inp.state.init_args['p'] - 100
+            newton(self.calc_p, x0)
 
-            dP = ((m / cv)**2) / (v_open * rho)
-
-    def calc_dP(self, p):
+    def calc_p(self, p):
         inp = self.inputs[0]
         out = self.outputs[0]
 
-        if inp.state.setup_args['p'] is None:
-            inp.state.setup_args['p'] = p
-        else:
-            out.state.setup_args['p'] = p
+        # check which p is None
+        for con in self.connections:
+            if con.state.init_args['p'] is None:
+                con.state.setup_args['p'] = p
 
+        m0 = inp.flow_m
+        rho = inp.state.rhomass()
+        cv = self.cv
+        v_open = self.v_open
+
+        dP = inp.state.setup_args['p'] - out.state.setup_args['p']
+
+        m1 = cv * np.sqrt(v_open * dP * rho)
+
+        return m0 - m1
 
     def calc_cv(self):
         m = self.inputs[0].flow_m
@@ -313,7 +318,6 @@ class Valve(Component):
 
         if self.cv is None:
             self.cv = self.calc_cv()
-
 
 
 class Compressor(Component):
