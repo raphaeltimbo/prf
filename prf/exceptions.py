@@ -8,7 +8,11 @@ class PrfError(Exception):
     """Base class for prf exceptions."""
 
 
-class MassError(PrfError):
+class UnderDefinedSystem(PrfError):
+    pass
+
+
+class OverDefinedSystem(PrfError):
     pass
 
 
@@ -18,3 +22,4 @@ class PrfWarning(Warning):
 
 class OverDefinedWarning(PrfWarning):
     pass
+

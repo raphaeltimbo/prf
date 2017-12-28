@@ -35,4 +35,4 @@ from .state import *
 from .point import *
 from .results import *
 from .components import *
-from .exceptions import (PrfError, MassError)
+from .exceptions import (PrfError, UnderDefinedSystem, OverDefinedSystem)

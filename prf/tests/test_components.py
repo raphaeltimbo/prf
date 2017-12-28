@@ -1,10 +1,10 @@
 import prf
-from prf.exceptions import MassError, OverDefinedWarning
+from prf.exceptions import UnderDefinedSystem, OverDefinedSystem
 import pytest
 from numpy.testing import assert_allclose
 
 
-def test_exceptions():
+def test_under_defined():
     state0 = prf.State.define(p=1.1e6, T=300, fluid='CO2')
     state1 = prf.State.define(p=1.1e6, fluid='CO2')
     state2 = prf.State.define(p=1.1e6, T=305, fluid='CO2')
@@ -15,12 +15,12 @@ def test_exceptions():
 
     mix0 = prf.Mixer('mix0')
     mix0.link(inputs=[stream0, stream1], outputs=[stream2])
-    with pytest.raises(MassError) as exc:
+    with pytest.raises(UnderDefinedSystem) as exc:
         mix0.run()
-        assert 'More than one' in exc.excinfo
+        assert 'System is over defined' in exc.excinfo
 
 
-def test_warnings():
+def test_over_defined():
     # over defined pressure to equalize all
     state0 = prf.State.define(p=1e6, T=300, fluid='CO2')
     state1 = prf.State.define(p=1.1e6, fluid='CO2')
@@ -30,7 +30,7 @@ def test_warnings():
     stream1 = prf.Stream('s1', state=state1, flow_m=2)
     stream2 = prf.Stream('s2', state=state2, flow_m=None)
 
-    with pytest.warns(OverDefinedWarning):
+    with pytest.raises(OverDefinedSystem):
         mix0 = prf.Mixer('mix0')
         mix0.link(inputs=[stream0, stream1], outputs=[stream2])
         mix0.run()

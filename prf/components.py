@@ -3,7 +3,7 @@ import inspect
 from copy import copy, deepcopy
 from itertools import chain
 from scipy.optimize import newton, root
-from .exceptions import MassError, OverDefinedWarning
+from .exceptions import OverDefinedSystem, UnderDefinedSystem
 from warnings import warn
 from .impeller import Impeller
 from .point import Point
@@ -167,13 +167,13 @@ class Component:
                     else:
                         con.state.setup_args[prop] = x[i]
                 props = {k: v for k, v in con.state.setup_args.items() if v is not None}
-        try:
-            con.state.update2(**props)
-        except ValueError:
-            # if refprop does not converge, try CP's HEOS
-            heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
-            heos_state.setup_args = con.state.setup_args
-            con.state = heos_state
+                try:
+                    con.state.update2(**props)
+                except ValueError:
+                    # if refprop does not converge, try CP's HEOS
+                    heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                    heos_state.setup_args = con.state.setup_args
+                    con.state = heos_state
 
         y = np.zeros_like(x)
 
@@ -188,6 +188,13 @@ class Component:
             y[1] = self.energy_balance()
 
         return y
+
+    def check_consistency(self):
+        """Check system consistency"""
+        if len(self.unks) < 2:
+            raise OverDefinedSystem(f'System is over defined. Unknowns : {self.unks}')
+        elif len(self.unks) > 2:
+            raise UnderDefinedSystem(f'System is under defined. Unknowns : {self.unks}')
 
     def set_x0(self):
         x0 = []
@@ -217,6 +224,7 @@ class Component:
                     unks.append(con.name + '_T')
 
         self.unks = unks
+        self.check_consistency()
 
         x0 = self.set_x0()
 
@@ -275,7 +283,7 @@ class Valve(Component):
 
         if out.flow_m is None:
             out.constrain_mass(inp.flow_m)
-        else:
+        elif inp.flow_m is None:
             inp.constrain_mass(out.flow_m)
 
         if self.cv is not None:
@@ -312,6 +320,18 @@ class Valve(Component):
         rho = self.inputs[0].state.rhomass()
 
         return m / np.sqrt(v_open * dP * rho)
+
+    def check_consistency(self):
+        try:
+            super().check_consistency()
+        except OverDefinedSystem:
+            # check if we have constrained mass
+            for con in self.connections:
+                if con.constrained_mass:
+                    break
+            else:
+                raise OverDefinedSystem(f'System is over defined. '
+                                        f'Unknowns : {self.unks}')
 
     def run(self):
         super().run()
