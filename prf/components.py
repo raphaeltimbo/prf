@@ -350,7 +350,8 @@ class Valve(Component):
 
 
 class Compressor(Component):
-    def __init__(self, impeller=None, speed=None, flow_m=None, b=None, D=None):
+    def __init__(self, name, impeller=None, speed=None, flow_m=None, b=None, D=None):
+        self.name = name
         self.init_impeller = impeller
         self.impeller = None
         self.speed = speed
