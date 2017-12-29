@@ -70,24 +70,35 @@ class Stream:
     def __init__(self, name, state=None, flow_m=None):
         self.name = name
         self.state = state
-        self.flow_m = flow_m
+        self._flow_m = flow_m
 
         # setup args will initially be set to init_args.
         # later this attribute can be used to store args
         # defined during the setup process.
         self.state.setup_args = copy(state.init_args)
 
-        self.constrained_mass = False
+        # self.constrained_mass = False
+        self.linked_stream = None
 
-    def constrain_mass(self, value):
+    @property
+    def flow_m(self):
+        if self.linked_stream is None:
+            return self._flow_m
+        else:
+            return self.linked_stream.flow_m
+
+    @flow_m.setter
+    def flow_m(self, value):
         """Constrain the mass flow to a value.
 
         This function should be used during setup of a unit
         to constrain the flow mass value of a stream.
         """
-
-        self.constrained_mass = True
-        self.flow_m = value
+        if isinstance(value, Stream):
+            self._flow_m = value.flow_m
+            self.linked_stream = value
+        else:
+            self._flow_m = value
 
     def __repr__(self):
         return f'\n' \
@@ -125,7 +136,8 @@ class Component:
         self.connections = None
 
         # unknowns
-        self.unks = None
+        self.unks = []
+        self.x0 = []
 
     def link(self, inputs, outputs):
         self.inputs = inputs
@@ -197,7 +209,7 @@ class Component:
             raise UnderDefinedSystem(f'System is under defined. Unknowns : {self.unks}')
 
     def set_x0(self):
-        x0 = []
+        x0 = self.x0
         for unk in self.unks:
             if unk[-1] == 'p':
                 x0.append(100000)
@@ -206,29 +218,25 @@ class Component:
             if unk[-1] == 'm':
                 x0.append(1)
 
-        return x0
-
     def run(self):
         # apply constraints
         self.setup()
         # check all unknowns
-        unks = []
         for con in self.connections:
-            if con.flow_m is None:
-                unks.append(con.name + '_flow_m')
+            if con.flow_m is None and con.linked_stream is None:
+                self.unks.append(con.name + '_flow_m')
 
             if con.state.not_defined:
                 if con.state.setup_args['p'] is None:
-                    unks.append(con.name + '_p')
+                    self.unks.append(con.name + '_p')
                 if con.state.setup_args['T'] is None:
-                    unks.append(con.name + '_T')
+                    self.unks.append(con.name + '_T')
 
-        self.unks = unks
         self.check_consistency()
 
-        x0 = self.set_x0()
+        self.set_x0()
 
-        root(self.balance, x0)
+        root(self.balance, self.x0)
 
     def __repr__(self):
         return f'Inputs: \n {self.inputs} \n' \
@@ -284,79 +292,60 @@ class Valve(Component):
         inp = self.inputs[0]
         out = self.outputs[0]
 
+        # constrain mass
         if out.flow_m is None:
-            out.constrain_mass(inp.flow_m)
+            out.flow_m = inp
+        elif inp.flow_m is None:
+            inp.flow_m = out
         else:
-            inp.constrain_mass(out.flow_m)
-
-        if self.cv is not None:
-            if inp.state.init_args['p'] is None:
-                x0 = out.state.init_args['p'] + 100
-            else:
-                x0 = inp.state.init_args['p'] - 100
-            newton(self.calc_p, x0)
-
-    def calc_m(self):
-        # TODO calc_m
-        pass
-
-    def calc_p(self, p):
-        inp = self.inputs[0]
-        out = self.outputs[0]
-
-        # check which p is None
-        for con in self.connections:
-            if con.state.init_args['p'] is None:
-                con.state.setup_args['p'] = p
-
-        m0 = inp.flow_m
-        rho = inp.state.rhomass()
-        cv = self.cv
-        v_open = self.v_open
-
-        dP = inp.state.setup_args['p'] - out.state.setup_args['p']
-
-        m1 = cv * np.sqrt(v_open * dP * rho)
-
-        return m0 - m1
+            if out.flow_m != inp.flow_m:
+                raise OverDefinedSystem(f'Different mass for {inp} and {out}')
 
     def calc_cv(self):
+
         m = self.inputs[0].flow_m
         v_open = self.v_open
         dP = self.inputs[0].state.p() - self.outputs[0].state.p()
         rho = self.inputs[0].state.rhomass()
+        cv = self.cv
 
-        return m / np.sqrt(v_open * dP * rho)
+        return cv - m / np.sqrt(v_open * dP * rho)
 
-    def check_consistency(self):
-        flow_ms = []
-        for con in self.connections:
-            if con.flow_m is not None:
-                flow_ms.append(con.name + f'flow: {con.flow_m}')
-        if len(flow_ms) > 1:
+    def balance(self, x):
+        for i, unk in enumerate(self.unks):
+            s_name, prop = unk.split('_', maxsplit=1)
+            if s_name == 'valve':
+                self.cv = x[i]
             for con in self.connections:
-                if con.constrained_mass:
-                    break
-            else:
-                raise OverDefinedSystem(f'System is over defined. '
-                                        f'Unknowns : {self.unks}')
+                if con.name == s_name:
+                    if prop == 'flow_m':
+                        con.flow_m = x[i]
+                    else:
+                        con.state.setup_args[prop] = x[i]
 
-        try:
-            super().check_consistency()
-        except (OverDefinedSystem, UnderDefinedSystem):
-            # check if we have constrained mass
-            for con in self.connections:
-                if con.constrained_mass:
-                    break
-            else:
-                raise OverDefinedSystem(f'System is over defined. '
-                                        f'Unknowns : {self.unks}')
+                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                    try:
+                        con.state.update2(**props)
+                    except ValueError:
+                        # if refprop does not converge, try CP's HEOS
+                        heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                        heos_state.setup_args = con.state.setup_args
+                        con.state = heos_state
+
+        y = np.zeros_like(x)
+
+        # mass balance is already satisfied for a valve
+        y[0] = self.energy_balance()
+        y[1] = self.calc_cv()
+
+        return y
 
     def run(self):
-        super().run()
-
         if self.cv is None:
-            self.cv = self.calc_cv()
+            self.unks.append('valve_cv')
+            self.x0.append(0.1)
+
+        super().run()
 
 
 class Compressor(Component):
