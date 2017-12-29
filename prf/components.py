@@ -258,6 +258,9 @@ class Mixer(Component):
             for con in self.connections:
                 if con.state.init_args['p'] is None:
                     con.state.setup_args['p'] = pressure[0]
+                if len(pressure) > 1:
+                    raise OverDefinedSystem('System is over determined for '
+                                            '"Equalize All"')
 
         if self.pressure_assignment.current_value == 'Set Outlet to Lowest Inlet':
             for con in self.connections:
@@ -283,7 +286,7 @@ class Valve(Component):
 
         if out.flow_m is None:
             out.constrain_mass(inp.flow_m)
-        elif inp.flow_m is None:
+        else:
             inp.constrain_mass(out.flow_m)
 
         if self.cv is not None:
@@ -292,6 +295,10 @@ class Valve(Component):
             else:
                 x0 = inp.state.init_args['p'] - 100
             newton(self.calc_p, x0)
+
+    def calc_m(self):
+        # TODO calc_m
+        pass
 
     def calc_p(self, p):
         inp = self.inputs[0]
@@ -322,9 +329,21 @@ class Valve(Component):
         return m / np.sqrt(v_open * dP * rho)
 
     def check_consistency(self):
+        flow_ms = []
+        for con in self.connections:
+            if con.flow_m is not None:
+                flow_ms.append(con.name + f'flow: {con.flow_m}')
+        if len(flow_ms) > 1:
+            for con in self.connections:
+                if con.constrained_mass:
+                    break
+            else:
+                raise OverDefinedSystem(f'System is over defined. '
+                                        f'Unknowns : {self.unks}')
+
         try:
             super().check_consistency()
-        except OverDefinedSystem:
+        except (OverDefinedSystem, UnderDefinedSystem):
             # check if we have constrained mass
             for con in self.connections:
                 if con.constrained_mass:

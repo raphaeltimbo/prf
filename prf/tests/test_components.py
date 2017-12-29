@@ -6,8 +6,8 @@ from numpy.testing import assert_allclose
 
 def test_under_defined():
     state0 = prf.State.define(p=1.1e6, T=300, fluid='CO2')
-    state1 = prf.State.define(p=1.1e6, fluid='CO2')
-    state2 = prf.State.define(p=1.1e6, T=305, fluid='CO2')
+    state1 = prf.State.define(fluid='CO2')
+    state2 = prf.State.define(T=305, fluid='CO2')
 
     stream0 = prf.Stream('s0', state=state0, flow_m=1)
     stream1 = prf.Stream('s1', state=state1, flow_m=None)
@@ -38,7 +38,7 @@ def test_over_defined():
     # over defined pressure to set outlet to lowest inlet
     state0 = prf.State.define(p=1.e6, T=300, fluid='CO2')
     state1 = prf.State.define(p=1.0e6, fluid='CO2')
-    state2 = prf.State.define(1.0e6, T=305, fluid='CO2')
+    state2 = prf.State.define(p=1.0e6, T=305, fluid='CO2')
 
     stream0 = prf.Stream('s0', state=state0, flow_m=1)
     stream1 = prf.Stream('s1', state=state1, flow_m=2)
@@ -57,9 +57,10 @@ def test_over_defined():
     stream0 = prf.Stream('s0', state=state0, flow_m=2)
     stream1 = prf.Stream('s1', state=state1, flow_m=3)
 
-    valve0 = prf.Valve('valve0')
-    valve0.link(inputs=[stream0], outputs=[stream1])
-    valve0.run()
+    with pytest.raises(OverDefinedSystem):
+        valve0 = prf.Valve('valve0')
+        valve0.link(inputs=[stream0], outputs=[stream1])
+        valve0.run()
 
 
 def test_mixer():
