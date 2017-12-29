@@ -179,13 +179,14 @@ class Component:
                     else:
                         con.state.setup_args[prop] = x[i]
                 props = {k: v for k, v in con.state.setup_args.items() if v is not None}
-                try:
-                    con.state.update2(**props)
-                except ValueError:
-                    # if refprop does not converge, try CP's HEOS
-                    heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
-                    heos_state.setup_args = con.state.setup_args
-                    con.state = heos_state
+                if len(props) == 2:
+                    try:
+                        con.state.update2(**props)
+                    except ValueError:
+                        # if refprop does not converge, try CP's HEOS
+                        heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                        heos_state.setup_args = con.state.setup_args
+                        con.state = heos_state
 
         y = np.zeros_like(x)
 
@@ -302,7 +303,6 @@ class Valve(Component):
                 raise OverDefinedSystem(f'Different mass for {inp} and {out}')
 
     def calc_cv(self):
-
         m = self.inputs[0].flow_m
         v_open = self.v_open
         dP = self.inputs[0].state.p() - self.outputs[0].state.p()
@@ -323,7 +323,8 @@ class Valve(Component):
                     else:
                         con.state.setup_args[prop] = x[i]
 
-                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                if len(props) == 2:
                     try:
                         con.state.update2(**props)
                     except ValueError:
