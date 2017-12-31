@@ -9,8 +9,8 @@ from .impeller import Impeller
 from .point import Point
 from .state import State
 
-__all__ = ['Stream', 'Component', 'Mixer', 'Valve', 'Parameter', 'Compressor',
-           'ConvergenceBlock']
+__all__ = ['Stream', 'Component', 'Mixer', 'Tee', 'Valve',
+           'Parameter', 'Compressor', 'ConvergenceBlock']
 
 
 ##################################################
@@ -207,7 +207,8 @@ class Component:
         if len(self.unks) < 2:
             raise OverDefinedSystem(f'System is over defined. Unknowns : {self.unks}')
         elif len(self.unks) > 2:
-            raise UnderDefinedSystem(f'System is under defined. Unknowns : {self.unks}')
+            raise UnderDefinedSystem(f'System is under defined for {self.name}.'
+                                     f' Unknowns : {self.unks}')
 
     def set_x0(self):
         x0 = self.x0
@@ -275,6 +276,27 @@ class Mixer(Component):
             for con in self.connections:
                 if con.state.init_args['p'] is None:
                     con.state.setup_args['p'] = min(pressure)
+
+
+class Tee(Component):
+    """Tee operation.
+
+    Splits feed stream into multiple outputs with the same conditions and
+    composition.
+    """
+    def setup(self):
+        pressure = []
+        temperature = []
+
+        for con in self.connections:
+            if con.state.init_args['p'] is not None:
+                pressure.append(con.state.init_args['p'])
+            if con.state.init_args['T'] is not None:
+                temperature.append(con.state.init_args['T'])
+
+
+
+
 
 
 class Valve(Component):
@@ -359,6 +381,20 @@ class Compressor(Component):
         self.D = D
         super().__init__()
 
+    def setup(self):
+        # same input and output mass
+        inp = self.inputs[0]
+        out = self.outputs[0]
+
+        # constrain mass
+        if out.flow_m is None:
+            out.flow_m = inp
+        elif inp.flow_m is None:
+            inp.flow_m = out
+        else:
+            if out.flow_m != inp.flow_m:
+                raise OverDefinedSystem(f'Different mass for {inp} and {out}')
+
     def run(self):
         inp = self.inputs[0]
         out = self.outputs[0]
@@ -390,7 +426,7 @@ class ConvergenceBlock(Component):
         self.y1 = None
         super().__init__()
 
-    def converge(self, new_x):
+    def converge(self, x):
         # initialize
         if self.iter == 0:
             self._units = deepcopy(self.units)
@@ -405,7 +441,9 @@ class ConvergenceBlock(Component):
                     s1 = deepcopy(stream)
 
         # select prop
-        s0.state.setup_args['T'] = new_x
+        # TODO automate the selection of properties
+        s0.state.setup_args['T'] = x[0]
+        s0.flow_m = x[1]
 
         for unit in units0:
             new_inputs = []
@@ -425,17 +463,21 @@ class ConvergenceBlock(Component):
             unit.link(inputs=new_inputs, outputs=new_outputs)
 
         for unit in units0:
+            unit.setup()
+        for unit in units0:
             unit.run()
 
-        self.y0 = s0.state.T()
-        self.y1 = s1.state.T()
+        y = np.zeros_like(x)
+
+        y[0] = s1.state.T() - s0.state.T()
+        y[1] = s1.flow_m - s0.flow_m
 
         self.iter += 1
 
         self.converged_units = units0
 
-        return self.y1 - self.y0
+        return y
 
     def run(self):
-        newton(self.converge, 300)
+        root(self.converge, [300, 0.1])
 
