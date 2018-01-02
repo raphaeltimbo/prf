@@ -72,12 +72,6 @@ class Stream:
         self.state = state
         self._flow_m = flow_m
 
-        # setup args will initially be set to init_args.
-        # later this attribute can be used to store args
-        # defined during the setup process.
-        self.state.setup_args = copy(state.init_args)
-
-        # self.constrained_mass = False
         self.linked_stream = None
 
     @property
@@ -119,7 +113,6 @@ class Stream:
         memo[id(self)] = result
         for k, v in self.__dict__.items():
             setattr(result, k, deepcopy(v, memo))
-        result.state.setup_args = self.state.setup_args
 
         return result
 
@@ -205,9 +198,9 @@ class Component:
     def check_consistency(self):
         """Check system consistency"""
         if len(self.unks) < 2:
-            raise OverDefinedSystem(f'System is over defined. Unknowns : {self.unks}')
+            raise OverDefinedSystem(f'System {self.name} is over defined. Unknowns : {self.unks}')
         elif len(self.unks) > 2:
-            raise UnderDefinedSystem(f'System is under defined for {self.name}.'
+            raise UnderDefinedSystem(f'System {self.name} is under defined for {self.name}.'
                                      f' Unknowns : {self.unks}')
 
     def set_x0(self):
@@ -387,7 +380,7 @@ class Compressor(Component):
         self.speed = speed
         self.b = b
         self.D = D
-        super().__init__()
+        super().__init__(name)
 
     def setup(self):
         # same input and output mass
@@ -403,6 +396,9 @@ class Compressor(Component):
             if out.flow_m != inp.flow_m:
                 raise OverDefinedSystem(f'Different mass for {inp} and {out}')
 
+    def check_consistency(self):
+        pass
+
     def run(self):
         inp = self.inputs[0]
         out = self.outputs[0]
@@ -414,15 +410,12 @@ class Compressor(Component):
             self.impeller.suc = inp.state
             out.state.update2(p=self.impeller.disch.p(), T=self.impeller.disch.T())
 
-        super().run()
-
 
 class ConvergenceBlock(Component):
     def __init__(self, stream, units):
         self.stream = stream
         self.units = units
-
-        self._units = None
+        self.units0 = deepcopy(units)
 
         self.converged_units = None
 
@@ -432,60 +425,70 @@ class ConvergenceBlock(Component):
         self.converged = False
         self.y0 = None
         self.y1 = None
-        super().__init__()
 
-    def converge(self, x):
-        # initialize
-        if self.iter == 0:
-            self._units = deepcopy(self.units)
+        super().__init__('ConvBlock')
 
-        units0 = deepcopy(self._units)
-
-        # select stream
-        for unit in units0:
-            for stream in unit.connections:
-                if stream.name == self.stream:
-                    s0 = deepcopy(stream)
-                    s1 = deepcopy(stream)
-
-        # select prop
-        # TODO automate the selection of properties
-        s0.state.setup_args['T'] = x[0]
-        s0.flow_m = x[1]
-
-        for unit in units0:
+    def setup(self):
+        # create convergence block
+        sc = 0
+        for unit in self.units0:
             new_inputs = []
             for i, inp in enumerate(unit.inputs):
                 if inp.name == self.stream:
-                    new_inputs.append(s0)
+                    new_inp = deepcopy(inp)
+                    new_inp.name = f'sc{sc}'
+                    sc += 1
+                    new_inputs.append(new_inp)
                 else:
                     new_inputs.append(inp)
 
             new_outputs = []
             for i, out in enumerate(unit.outputs):
                 if out.name == self.stream:
-                    new_outputs.append(s1)
+                    new_out = deepcopy(out)
+                    new_out.name = f'sc{sc}'
+                    sc += 1
+                    new_outputs.append(new_out)
                 else:
                     new_outputs.append(out)
 
             unit.link(inputs=new_inputs, outputs=new_outputs)
 
-        for unit in units0:
-            unit.setup()
-        for unit in units0:
+    def balance(self, x):
+        for unit in self.units0:
+            for con in unit.connections:
+                if con.name == 'sc0':
+                    con.flow_m = x[0]
+                    con.state.setup_args['T'] = x[1]
+
+                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                    if len(props) == 2:
+                        try:
+                            con.state.update2(**props)
+                        except ValueError:
+                            # if refprop does not converge, try CP's HEOS
+                            heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                            heos_state.setup_args = con.state.setup_args
+                            con.state = heos_state
             unit.run()
 
         y = np.zeros_like(x)
 
-        y[0] = s1.state.T() - s0.state.T()
-        y[1] = s1.flow_m - s0.flow_m
-
-        self.iter += 1
-
-        self.converged_units = units0
-
-        return y
+        for unit in self.units0:
+            for con in unit.connections:
+                if con.name == 'sc1':
+                    y[0] = con.flow_m - x[0]
+                    y[1] = con.state.T() - x[1]
 
     def run(self):
-        root(self.converge, [300, 0.1])
+        self.setup()
+        root(self.balance, [0.1, 300])
+
+
+
+
+
+
+
+
 
