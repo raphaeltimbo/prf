@@ -35,21 +35,6 @@ def test_over_defined():
         mix0.link(inputs=[stream0, stream1], outputs=[stream2])
         mix0.run()
 
-    # over defined pressure to set outlet to lowest inlet
-    state0 = prf.State.define(p=1.e6, T=300, fluid='CO2')
-    state1 = prf.State.define(p=1.0e6, fluid='CO2')
-    state2 = prf.State.define(p=1.0e6, T=305, fluid='CO2')
-
-    stream0 = prf.Stream('s0', state=state0, flow_m=1)
-    stream1 = prf.Stream('s1', state=state1, flow_m=2)
-    stream2 = prf.Stream('s2', state=state2, flow_m=None)
-
-    mix0 = prf.Mixer('mix0')
-    mix0.pressure_assignment.set_to(1)
-    mix0.link(inputs=[stream0, stream1], outputs=[stream2])
-    mix0.setup()
-    mix0.run()
-
     # over defined mass flow for valve
     state0 = prf.State.define(p=100000, T=305, fluid='CO2')
     state1 = prf.State.define(p=70000, fluid='CO2')
@@ -83,6 +68,21 @@ def test_mixer():
     assert_allclose(stream0.state.hmass(), 498833.05345178104, rtol=1e-4)
     assert_allclose(stream1.state.hmass(), 505740.4737134241, rtol=1e-4)
     assert_allclose(stream2.state.hmass(), 503438.00029393873, rtol=1e-4)
+
+
+def test_tee():
+    units = dict(p_units='bar', speed_units='RPM')
+    fluid = dict(CO2=0.79585, R134a=0.16751, Nitrogen=0.02903, Oxygen=0.007616)
+    state0 = prf.State.define(fluid=fluid)
+    state1 = prf.State.define(p=7.656, T=410.4, fluid=fluid, **units)
+    state2 = prf.State.define(fluid=fluid)
+    stream0 = prf.Stream(name='s0', state=state0, flow_m=5.593)
+    stream1 = prf.Stream(name='s1', state=state1)
+    stream2 = prf.Stream(name='s2', state=state2, flow_m=0.1444)
+
+    tee0 = prf.Tee('tee0')
+    tee0.link(inputs=[stream0], outputs=[stream1, stream2])
+    tee0.run()
 
 
 def test_valve():
