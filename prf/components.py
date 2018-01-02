@@ -454,6 +454,11 @@ class ConvergenceBlock(Component):
 
             unit.link(inputs=new_inputs, outputs=new_outputs)
 
+        for unit in self.units0:
+            for con in unit.connections:
+                if 'sc' in con.name:
+                    setattr(self, con.name, con)
+
     def balance(self, x):
         for unit in self.units0:
             for con in unit.connections:
@@ -461,15 +466,33 @@ class ConvergenceBlock(Component):
                     con.flow_m = x[0]
                     con.state.setup_args['T'] = x[1]
 
-                    props = {k: v for k, v in con.state.setup_args.items() if v is not None}
+                    props = {k: v for k, v in
+                             con.state.setup_args.items() if v is not None}
                     if len(props) == 2:
                         try:
                             con.state.update2(**props)
                         except ValueError:
                             # if refprop does not converge, try CP's HEOS
-                            heos_state = State.define(**props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                            heos_state = State.define(
+                                **props, fluid=con.state.fluid_dict(), EOS='HEOS')
                             heos_state.setup_args = con.state.setup_args
                             con.state = heos_state
+
+                if con.name == 'sc1':
+                    con.state.setup_args['p'] = self.sc0.state.setup_args['p']
+
+                    props = {k: v for k, v in
+                             con.state.setup_args.items() if v is not None}
+                    if len(props) == 2:
+                        try:
+                            con.state.update2(**props)
+                        except ValueError:
+                            # if refprop does not converge, try CP's HEOS
+                            heos_state = State.define(
+                                **props, fluid=con.state.fluid_dict(), EOS='HEOS')
+                            heos_state.setup_args = con.state.setup_args
+                            con.state = heos_state
+
             unit.run()
 
         y = np.zeros_like(x)
@@ -480,15 +503,24 @@ class ConvergenceBlock(Component):
                     y[0] = con.flow_m - x[0]
                     y[1] = con.state.T() - x[1]
 
+        return y
+
     def run(self):
         self.setup()
+
+        for unit in self.units0:
+            unit.setup()
+            for con in unit.connections:
+                try:
+                    con.state.update_from_setup_args()
+                except KeyError:
+                    continue
+
         root(self.balance, [0.1, 300])
 
-
-
-
-
-
-
-
+        for unit, unit0 in zip(self.units, self.units0):
+            for con, con0 in zip(unit.connections, unit0.connections):
+                con.flow_m = con0.flow_m
+                con.state.setup_args = con0.state.setup_args
+                con.state.update_from_setup_args()
 
