@@ -285,18 +285,26 @@ class Tee(Component):
     composition.
     """
     def setup(self):
-        pressure = []
-        temperature = []
+        pressure = {}
+        temperature = {}
 
         for con in self.connections:
             if con.state.init_args['p'] is not None:
-                pressure.append(con.state.init_args['p'])
+                pressure[f'{con.name}_p'] = con.state.init_args['p']
             if con.state.init_args['T'] is not None:
-                temperature.append(con.state.init_args['T'])
+                temperature[f'{con.name}_T'] = con.state.init_args['T']
 
+        if len({i for i in pressure.values()}) > 1:
+            raise OverDefinedSystem(f'System is over defined {pressure}')
+        if len({i for i in temperature.values()}) > 1:
+            raise OverDefinedSystem(f'System is over defined {temperature}')
 
+        for con in self.connections:
+            con.state.setup_args['p'] = [i for i in pressure.values()][0]
+            con.state.setup_args['T'] = [i for i in temperature.values()][0]
 
-
+    def check_consistency(self):
+        pass
 
 
 class Valve(Component):
