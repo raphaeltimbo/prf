@@ -518,11 +518,7 @@ class ConvergenceBlock(Component):
 
         root(self.balance, [0.1, 300])
 
-        for unit, unit0 in zip(self.units, self.units0):
-            if isinstance(unit, Valve):
-                unit.cv = unit0.cv
-            for con, con0 in zip(unit.connections, unit0.connections):
-                con.flow_m = con0.flow_m
-                con.state.setup_args = con0.state.setup_args
-                con.state.update_from_setup_args()
-
+        for unit in self.units0:
+            for con in unit.connections:
+                if 'sc' in con.name:
+                    con.name = self.stream
