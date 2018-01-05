@@ -452,7 +452,25 @@ class Valve(Component):
 
 
 class Compressor(Component):
+    """Compressor."""
     def __init__(self, name, impeller=None, speed=None, flow_m=None, b=None, D=None):
+        """
+        # TODO change this to impeller or and create compressor class
+        Parameters
+        ----------
+        name : str
+            Compressor name.
+        impeller : prf.Impeller
+            Impeller object.
+        speed : float
+            Impeller speed.
+        flow_m : float
+            Mass flow.
+        b : float
+            Impeller width
+        D : float
+            Impeller diameter.
+        """
         self.name = name
         self.init_impeller = impeller
         self.impeller = None
