@@ -94,6 +94,10 @@ class Stream:
         else:
             self._flow_m = value
 
+    def break_link(self):
+        self.linked_stream = None
+        self.flow_m = None
+
     def __repr__(self):
         return f'\n' \
                f'Stream: {self.name} - \n Flow: {self.flow_m} kg/s - {self.state.__repr__()}'
@@ -219,20 +223,29 @@ class Component:
         self.setup()
         # check all unknowns
         for con in self.connections:
-            if con.flow_m is None and con.linked_stream is None:
+            if con.flow_m is None \
+                    and con.linked_stream is None\
+                    and (con.name + '_flow_m') not in self.unks:
                 self.unks.append(con.name + '_flow_m')
 
             if con.state.not_defined:
-                if con.state.setup_args['p'] is None:
+                if con.state.setup_args['p'] is None\
+                        and (con.name + '_p') not in self.unks:
                     self.unks.append(con.name + '_p')
-                if con.state.setup_args['T'] is None:
+                if con.state.setup_args['T'] is None\
+                        and (con.name + '_T') not in self.unks:
                     self.unks.append(con.name + '_T')
 
         self.check_consistency()
 
         self.set_x0()
 
-        root(self.balance, self.x0)
+        if len(self.unks) == 0:
+            if np.allclose(self.balance([0, 0]), np.array([0, 0])) is False:
+                raise OverDefinedSystem(f'System is over defined and'
+                                        f'not balanced {self.balance(0)}')
+        else:
+            root(self.balance, self.x0)
 
     def is_solved(self):
         for con in self.connections:
@@ -317,6 +330,8 @@ class Valve(Component):
     def __init__(self, name, cv=None, v_open=0.5):
         self.cv = cv
         self.v_open = v_open
+
+        self.init_cv = deepcopy(cv)
 
         super().__init__(name)
 
@@ -506,6 +521,13 @@ class ConvergenceBlock(Component):
                                 **props, fluid=con.state.fluid_dict(), EOS='HEOS')
                             heos_state.setup_args = con.state.setup_args
                             con.state = heos_state
+
+            # if cv is given, calculate mass
+            if isinstance(unit, Valve):
+                if unit.init_cv is not None:
+                    # break connections
+                    for con in unit.connections:
+                        con.break_link()
 
             unit.run()
             if not unit.is_solved():
