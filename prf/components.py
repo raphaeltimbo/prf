@@ -44,6 +44,18 @@ class Parameter:
 
     """
     def __init__(self, values):
+        """
+
+        Parameters
+        ----------
+        values : list
+            List with options of for the parameter.
+
+        Examples
+        --------
+        self.pressure_assignment = Parameter(['Equalize All',
+                                              'Set Outlet to Lowest Inlet'])
+        """
         self.values = values
         try:
             self.current_value = values[0]
