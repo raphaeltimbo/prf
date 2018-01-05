@@ -115,6 +115,45 @@ def test_valve():
     assert_allclose(stream4.state.T(), 294.4749311434537, rtol=1e-5)
 
 
+def test_conv_block():
+    units = dict(p_units='bar', speed_units='RPM')
+    fluid = dict(CO2=0.79585, R134a=0.16751, Nitrogen=0.02903, Oxygen=0.007616)
+    state0 = prf.State.define(p=1.611, T=297.2, fluid=fluid, **units)
+    state1 = prf.State.define(fluid=fluid)
+    state2 = prf.State.define(fluid=fluid)
+    state3 = prf.State.define(p=7.656, T=410.4, fluid=fluid, **units)
+    state4 = prf.State.define(fluid=fluid)
+    state5 = prf.State.define(fluid=fluid)
+
+    stream0 = prf.Stream(name='s0', state=state0, flow_m=5.593)
+    stream1 = prf.Stream(name='s1', state=state1)
+    stream2 = prf.Stream(name='s2', state=state2)
+    stream3 = prf.Stream(name='s3', state=state3)
+    stream4 = prf.Stream(name='s4', state=state4, flow_m=0.1444)
+    stream5 = prf.Stream(name='s5', state=state5)
+
+    mix0 = prf.Mixer('mix0')
+    mix0.link(inputs=[stream0, stream5], outputs=[stream1])
+
+    comp0 = prf.Compressor('comp0', speed=8038, b=0.0285, D=0.365)
+    comp0.link(inputs=[stream1], outputs=[stream2])
+
+    tee0 = prf.Tee('tee0')
+    tee0.link(inputs=[stream2], outputs=[stream3, stream4])
+
+    valve0 = prf.Valve('valve0')
+    valve0.link(inputs=[stream4], outputs=[stream5])
+
+    conv_block = prf.ConvergenceBlock('s5', units=[mix0, comp0, tee0, valve0])
+    conv_block.run()
+
+    mix0, comp0, tee0, valve0 = conv_block.units0
+
+    assert_allclose(comp0.impeller.current_point.eff, 0.8651011221)
+    assert_allclose(valve0.cv, 7.544877088211e-5)
+
+
+
 
 
 

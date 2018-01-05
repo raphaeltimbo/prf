@@ -154,9 +154,10 @@ class Component:
             out_energy = out.flow_m * out.state.hmass()
             output_energy += out_energy
 
-        total_mass = sum((inp.flow_m for inp in self.inputs))
+        input_mass = sum((inp.flow_m for inp in self.inputs))
+        output_mass = sum((out.flow_m for out in self.outputs))
 
-        return (input_energy / total_mass) - (output_energy / total_mass)
+        return (input_energy / input_mass) - (output_energy / output_mass)
 
     def setup(self):
         """setup constraints"""
@@ -207,11 +208,11 @@ class Component:
         x0 = self.x0
         for unk in self.unks:
             if unk[-1] == 'p':
-                x0.append(100000)
+                x0.append(100000.)
             if unk[-1] == 'T':
-                x0.append(300)
+                x0.append(300.)
             if unk[-1] == 'm':
-                x0.append(1)
+                x0.append(1.)
 
     def run(self):
         # apply constraints
@@ -232,6 +233,14 @@ class Component:
         self.set_x0()
 
         root(self.balance, self.x0)
+
+    def is_solved(self):
+        for con in self.connections:
+            if con.flow_m is None:
+                return False
+            elif con.state.not_defined():
+                return False
+        return True
 
     def __repr__(self):
         return f'Inputs: \n {self.inputs} \n' \
@@ -356,9 +365,10 @@ class Valve(Component):
                         heos_state.setup_args = con.state.setup_args
                         con.state = heos_state
 
-        y = np.zeros_like(x)
+        y = np.zeros_like(x, dtype=np.float)
 
         # mass balance is already satisfied for a valve
+
         y[0] = self.energy_balance()
         y[1] = self.calc_cv()
 
@@ -367,7 +377,7 @@ class Valve(Component):
     def run(self):
         if self.cv is None:
             self.unks.append('valve_cv')
-            self.x0.append(0.1)
+            self.x0.append(0.8)
 
         super().run()
 
@@ -422,6 +432,7 @@ class ConvergenceBlock(Component):
         # convergence information
         self.tolerance = 0.1
         self.iter = 0
+        self.convergence_info = None
         self.converged = False
         self.y0 = None
         self.y1 = None
@@ -460,6 +471,9 @@ class ConvergenceBlock(Component):
                     setattr(self, con.name, con)
 
     def balance(self, x):
+        # store units that are not solved and go forward
+        not_solved_units = []
+
         for unit in self.units0:
             for con in unit.connections:
                 if con.name == 'sc0':
@@ -494,6 +508,12 @@ class ConvergenceBlock(Component):
                             con.state = heos_state
 
             unit.run()
+            if not unit.is_solved():
+                not_solved_units.append(unit)
+
+        # try to go back and run unsolved units
+        for unit in not_solved_units:
+            unit.run()
 
         y = np.zeros_like(x)
 
@@ -516,7 +536,7 @@ class ConvergenceBlock(Component):
                 except KeyError:
                     continue
 
-        root(self.balance, [0.1, 300])
+        self.convergence_info = root(self.balance, [0.8, 300])
 
         for unit in self.units0:
             for con in unit.connections:
