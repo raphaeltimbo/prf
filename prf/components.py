@@ -79,7 +79,25 @@ class Parameter:
 
 
 class Stream:
+    """Material Stream."""
     def __init__(self, name, state=None, flow_m=None):
+        """
+        A material stream has a flow and a thermodynamic state.
+
+        Parameters
+        ----------
+        name : str
+            Stream name.
+        state : prf.State
+            Thermodynamic state.
+        flow_m : float
+            Mass flow
+
+        Examples
+        --------
+        state0 = prf.State.define(p=1e6, T=300, fluid='CO2')
+        stream0 = prf.Stream('s0', state=state0, flow_m=1)
+        """
         self.name = name
         self.state = state
         self._flow_m = flow_m
