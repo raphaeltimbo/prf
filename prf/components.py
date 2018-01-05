@@ -509,7 +509,22 @@ class Compressor(Component):
 
 
 class ConvergenceBlock(Component):
+    """Convergence block."""
     def __init__(self, stream, units):
+        """
+        A convergence block is used to converge the recycles.
+        The selected stream is split in two streams (sc0 and sc1).
+        A guess is made for one of the streams (sc0). Units are calculated
+        and the values for the other stream (sc1) are compared with the
+        guessed stream (sc0).
+
+        Parameters
+        ----------
+        stream : str
+            Name of the stream that will be used for iteration.
+        units : list
+            List with prf.Component objects
+        """
         self.stream = stream
         self.units = units
         self.units0 = deepcopy(units)
