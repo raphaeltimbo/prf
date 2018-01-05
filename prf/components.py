@@ -370,6 +370,17 @@ class Valve(Component):
     Valve that will give an isenthalpic expansion.
     """
     def __init__(self, name, cv=None, v_open=0.5):
+        """
+
+        Parameters
+        ----------
+        name : str
+            Valve name
+        cv : float
+            Valve cv.
+        v_open : float
+            Valve opening.
+        """
         self.cv = cv
         self.v_open = v_open
 
@@ -392,6 +403,7 @@ class Valve(Component):
                 raise OverDefinedSystem(f'Different mass for {inp} and {out}')
 
     def calc_cv(self):
+        """Calculate cv based on simple resistance equation."""
         m = self.inputs[0].flow_m
         v_open = self.v_open
         dP = self.inputs[0].state.p() - self.outputs[0].state.p()
