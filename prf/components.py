@@ -156,7 +156,14 @@ class Stream:
 
 
 class Component:
+    """Component (unit)."""
     def __init__(self, name=None):
+        """
+        Parameters
+        ----------
+        name : str
+            Component name.
+        """
         self.name = name
         self.inputs = None
         self.outputs = None
@@ -167,17 +174,20 @@ class Component:
         self.x0 = []
 
     def link(self, inputs, outputs):
+        """Connects the components inputs and outputs."""
         self.inputs = inputs
         self.outputs = outputs
         self.connections = list(chain(self.inputs, self.outputs))
 
     def mass_balance(self):
+        """Calculates the mass balance for the component."""
         input_mass = sum((inp.flow_m for inp in self.inputs))
         output_mass = sum((out.flow_m for out in self.outputs))
 
         return input_mass - output_mass
 
     def energy_balance(self):
+        """Calculates the energy balance for the component."""
         input_energy = 0
         for inp in self.inputs:
             inp_energy = inp.flow_m * inp.state.hmass()
@@ -194,10 +204,10 @@ class Component:
         return (input_energy / input_mass) - (output_energy / output_mass)
 
     def setup(self):
-        """setup constraints"""
+        """Setup constraints."""
 
     def balance(self, x):
-        """update each stream with iteration value"""
+        """Update each stream with iteration value."""
         for i, unk in enumerate(self.unks):
             s_name, prop = unk.split('_', maxsplit=1)
             for con in self.connections:
@@ -231,14 +241,15 @@ class Component:
         return y
 
     def check_consistency(self):
-        """Check system consistency"""
+        """Check component consistency"""
         if len(self.unks) < 2:
-            raise OverDefinedSystem(f'System {self.name} is over defined. Unknowns : {self.unks}')
+            raise OverDefinedSystem(f'Unit {self.name} is over defined. Unknowns : {self.unks}')
         elif len(self.unks) > 2:
-            raise UnderDefinedSystem(f'System {self.name} is under defined for {self.name}.'
+            raise UnderDefinedSystem(f'Unit {self.name} is under defined for {self.name}.'
                                      f' Unknowns : {self.unks}')
 
     def set_x0(self):
+        """Set initial values for convergence."""
         x0 = self.x0
         for unk in self.unks:
             if unk[-1] == 'p':
@@ -249,6 +260,7 @@ class Component:
                 x0.append(1.)
 
     def run(self):
+        """Run the unit and calculate unknowns."""
         # apply constraints
         self.setup()
         # check all unknowns
