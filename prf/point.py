@@ -124,12 +124,17 @@ class Point:
         # first disch state will consider an isentropic compression
         s_disch = suc.smass()
         disch = State.define(fluid=suc.fluid_dict(), h=h_disch, s=s_disch)
+        if disch.not_defined():
+            raise ValueError(f'state not defined: {disch}')
 
         def update_pressure(p):
             disch.update(CP.HmassP_INPUTS, h_disch, p)
             new_head = self.head_pol_schultz(suc, disch)
 
             return new_head - head
+
+        # with newton we have a risk of falling outside a reasonable state
+        # region. #TODO evaluate pressure interval to use brent method
 
         newton(update_pressure, disch.p(), tol=1e-4)
 

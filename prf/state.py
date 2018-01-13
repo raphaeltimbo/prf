@@ -249,7 +249,7 @@ class State(CP.AbstractState):
 
     def not_defined(self):
         """Verifies if the state is defined."""
-        if self.T() == -np.infty:
+        if self.T() == -np.infty or self.p() == -np.infty:
             return True
         else:
             return False
