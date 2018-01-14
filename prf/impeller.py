@@ -200,7 +200,9 @@ class Impeller:
             if not all([p.mach_comparison['valid'],
                         p.reynolds_comparison['valid'],
                         p.volume_ratio_comparison['valid']]):
-                not_valid_points['p' + str(i)] = p
+                not_valid_points['p' + str(i)] = {'Mach': p.mach_comparison,
+                                                  'Reynolds': p.reynolds_comparison,
+                                                  'Volume ration': p.volume_ratio_comparison}
 
         if len(not_valid_points) > 0:
             pts = ', '.join(not_valid_points)
@@ -607,8 +609,10 @@ def compare_mach(mach_sp, mach_t):
     else:
         valid = False
 
-    return {'diff': diff, 'valid': valid,
-            'lower_limit': lower_limit, 'upper_limit': upper_limit}
+    d = {'diff': diff, 'valid': valid, 'lower_limit': lower_limit,
+         'upper_limit': upper_limit}
+
+    return pd.Series(d)
 
 
 def compare_reynolds(reynolds_sp, reynolds_t):
@@ -652,8 +656,10 @@ def compare_reynolds(reynolds_sp, reynolds_t):
     else:
         valid = False
 
-    return {'ratio': ratio, 'valid': valid,
-            'lower_limit': lower_limit, 'upper_limit': upper_limit}
+    d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
+         'upper_limit': upper_limit}
+
+    return pd.Series(d)
 
 
 def compare_volume_ratio(ratio_sp, ratio_t):
@@ -684,5 +690,7 @@ def compare_volume_ratio(ratio_sp, ratio_t):
     else:
         valid = False
 
-    return {'ratio': ratio, 'valid': valid,
-            'lower_limit': lower_limit, 'upper_limit': upper_limit}
+    d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
+         'upper_limit': upper_limit}
+
+    return pd.Series(d)
