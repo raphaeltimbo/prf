@@ -192,21 +192,26 @@ class Impeller:
         
         This function will verify the similarity between points stored and 
         new points that are generated based on the non dimensional points.
-        
-        """
-        not_valid_points = {}
 
-        for i, p in enumerate(self.new_points):
-            if not all([p.mach_comparison['valid'],
-                        p.reynolds_comparison['valid'],
-                        p.volume_ratio_comparison['valid']]):
-                not_valid_points['p' + str(i)] = {'Mach': p.mach_comparison,
-                                                  'Reynolds': p.reynolds_comparison,
-                                                  'Volume ration': p.volume_ratio_comparison}
+        """
+        # build df with dimensionless comparison for all points
+        df = self.new_points[0].dimensionless_comparison
+
+        for p in self.new_points[1:]:
+            df = df.append(p.dimensionless_comparison)
+
+        self.new_curve.dimensionless_comparison = df
+
+        not_valid_points = df
+        # get non valid
+        not_valid_points = not_valid_points[
+            (not_valid_points['mach']['valid'] == False)
+            | (not_valid_points['reynolds']['valid'] == False)
+            | (not_valid_points['volume_ratio']['valid'] == False)]
 
         if len(not_valid_points) > 0:
-            pts = ', '.join(not_valid_points)
-            warn('Following points out of similarity: %s' % pts)
+            pts = ', '.join(not_valid_points.index.values)
+            warn(f'Following points out of similarity: {pts}')
 
         self.not_valid_points = not_valid_points
 
