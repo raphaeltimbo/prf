@@ -55,4 +55,5 @@ def test_mach(impeller):
 
 # TODO Add tests for current_point property
 # TODO Add tests for load_from_excel
+# TODO Add tests for similarity check
 

@@ -532,11 +532,6 @@ class Impeller:
         point_old = self.points[idx]
         non_dim_point = self.non_dim_points[idx]
 
-        # store mach, reynolds and volume ratio from original point
-        mach_old = self.mach(point=point_old)
-        reynolds_old = self.reynolds(point=point_old)
-        volume_ratio_old = self.volume_ratio(point=point_old)
-
         rho = suc.rhomass()
         u = self.tip_speed(speed)
 
@@ -552,19 +547,12 @@ class Impeller:
 
         point_new = Point(flow_m=flow_m, speed=speed, suc=suc, head=head, eff=eff)
 
-        # store mach, reynolds and volume ratio from original point
-        mach_new = self.mach(point=point_new)
-        reynolds_new = self.reynolds(point=point_new)
-        volume_ratio_new = self.volume_ratio(point=point_new)
-
         point_new.mach_comparison = self.compare_dimensionless(
             'mach', point_old, point_new)
-        # point_new.mach_comparison = compare_mach(mach_sp=mach_new,
-        #                                          mach_t=mach_old)
-        point_new.reynolds_comparison = compare_reynolds(reynolds_sp=reynolds_new,
-                                                         reynolds_t=reynolds_old)
-        point_new.volume_ratio_comparison = compare_volume_ratio(ratio_sp=volume_ratio_new,
-                                                                 ratio_t=volume_ratio_old)
+        point_new.reynolds_comparison = self.compare_dimensionless(
+            'reynolds', point_old, point_new)
+        point_new.volume_ratio_comparison = self.compare_dimensionless(
+            'volume_ratio', point_old, point_new)
 
         return point_new
 
@@ -680,124 +668,3 @@ class NonDimPoint:
 
         return cls(flow_coeff=flow_coeff, head_coeff=head_coeff, eff=eff)
 
-
-def compare_mach(mach_sp, mach_t):
-    """Compare mach numbers.
-
-    Compares the mach numbers and evaluates
-    them according to the PTC10 criteria.
-
-    Parameters
-    ----------
-    mach_sp : float
-        Mach number from specified condition.
-    mach_t : float
-        Mach number from test condition.
-
-    Returns
-    -------
-    Dictionary with diff (Mmsp - Mmt), valid (True if diff is within limits),
-    lower limit and upper limit.
-    """
-    if mach_sp < 0.214:
-        lower_limit = -mach_sp
-        upper_limit = -0.25 * mach_sp + 0.286
-    elif 0.215 < mach_sp < 0.86:
-        lower_limit = 0.266 * mach_sp - 0.271
-        upper_limit = -0.25 * mach_sp + 0.286
-    else:
-        lower_limit = -0.042
-        upper_limit = 0.07
-
-    diff = mach_sp - mach_t
-
-    if lower_limit < diff < upper_limit:
-        valid = True
-    else:
-        valid = False
-
-    d = {'diff': diff, 'valid': valid, 'lower_limit': lower_limit,
-         'upper_limit': upper_limit}
-
-    return pd.Series(d)
-
-
-def compare_reynolds(reynolds_sp, reynolds_t):
-    """Compare reynolds numbers.
-
-    Compares the reynolds numbers and evaluates
-    them according to the PCT10 criteria.
-
-    Parameters
-    ----------
-    reynolds_sp : float
-        Reynolds number from specified condition.
-    reynolds_t : float
-        Reynolds number from test condition.
-
-    Returns
-    -------
-    Dictionary with ratio (Ret/Resp), valid (True if ratio is within limits),
-    lower limit and upper limit.
-    """
-    x = (reynolds_sp/1e7)**0.3
-
-    if 9e4 < reynolds_sp < 1e7:
-        upper_limit = 100**x
-    elif 1e7 < reynolds_sp:
-        upper_limit = 100
-    else:
-        upper_limit = 100
-
-    if 9e4 < reynolds_sp < 1e6:
-        lower_limit = 0.01**x
-    elif 1e6 < reynolds_sp:
-        lower_limit = 0.1
-    else:
-        lower_limit = 0.1
-
-    ratio = reynolds_t/reynolds_sp
-
-    if lower_limit < ratio < upper_limit:
-        valid = True
-    else:
-        valid = False
-
-    d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
-         'upper_limit': upper_limit}
-
-    return pd.Series(d)
-
-
-def compare_volume_ratio(ratio_sp, ratio_t):
-    """Compare volume ratio.
-
-    Compares the volume ratio and evaluates
-    them according to the PCT10 criteria.
-
-    Parameters
-    ----------
-    ratio_sp : float
-        Volume ratio from specified condition.
-    ratio_t : float
-        Volume ratio from test condition.
-
-    Returns
-    -------
-    Dictionary with ratio (ratio_sp / ratio_t), valid (True if ratio is within limits),
-    lower limit and upper limit.
-    """
-    ratio = ratio_t / ratio_sp
-
-    lower_limit = 0.95
-    upper_limit = 1.05
-
-    if lower_limit < ratio < upper_limit:
-        valid = True
-    else:
-        valid = False
-
-    d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
-         'upper_limit': upper_limit}
-
-    return pd.Series(d)
