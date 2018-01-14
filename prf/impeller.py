@@ -397,8 +397,8 @@ class Impeller:
             Suction state.
         disch : prf.State
             Discharge state.
-        point : int 
-            Index for a point inside the impeller instance.
+        point : prf.Point, int
+            Point or index for a point inside the impeller instance.
             If the point is provided, no need to provide suc and disch.
         
         Returns
@@ -415,6 +415,111 @@ class Impeller:
         volume_ratio = suc.rhomass() / disch.rhomass()
 
         return volume_ratio
+
+    def compare_dimensionless(self, dimensionless, point=None, other_point=None):
+        """Compare dimensionless number.
+
+        This method compares dimensionless number between points and return
+        a pandas series with limits and values from the comparison.
+
+        Parameters
+        ----------
+        other : prf.Point
+            Other point.
+
+        dimensionless : str
+            Dimensionless number to be compared.
+            Options are: volume_ratio, mach and reynolds
+
+        point : int
+            Index for a point inside the impeller instance.
+            If the point is provided, no need to provide suc and disch.
+
+        Returns
+        -------
+        S : pd.Series
+            pandas series with limits and values from the comparison.
+        """
+        args = {'volume_ratio', 'mach', 'reynolds'}
+
+        if dimensionless not in args:
+            raise ValueError(f'Argument not valid: {dimensionless}. '
+                             f'Should be in {args}.')
+
+        if dimensionless == 'volume_ratio':
+            ratio = (self.volume_ratio(point=point)
+                     / self.volume_ratio(point=other_point))
+
+            lower_limit = 0.95
+            upper_limit = 1.05
+
+            if lower_limit < ratio < upper_limit:
+                valid = True
+            else:
+                valid = False
+
+            d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
+                 'upper_limit': upper_limit}
+
+            return pd.Series(d)
+
+        elif dimensionless == 'mach':
+            mach_sp = self.mach(point=point)
+            mach_t = self.mach(point=other_point)
+
+            if mach_sp < 0.214:
+                lower_limit = -mach_sp
+                upper_limit = -0.25 * mach_sp + 0.286
+            elif 0.215 < mach_sp < 0.86:
+                lower_limit = 0.266 * mach_sp - 0.271
+                upper_limit = -0.25 * mach_sp + 0.286
+            else:
+                lower_limit = -0.042
+                upper_limit = 0.07
+
+            diff = mach_sp - mach_t
+
+            if lower_limit < diff < upper_limit:
+                valid = True
+            else:
+                valid = False
+
+            d = {'diff': diff, 'valid': valid, 'lower_limit': lower_limit,
+                 'upper_limit': upper_limit}
+
+            return pd.Series(d)
+
+        elif dimensionless == 'reynolds':
+            reynolds_sp = self.reynolds(point=point)
+            reynolds_t = self.reynolds(point=other_point)
+
+            x = (reynolds_sp/1e7)**0.3
+
+            if 9e4 < reynolds_sp < 1e7:
+                upper_limit = 100**x
+            elif 1e7 < reynolds_sp:
+                upper_limit = 100
+            else:
+                upper_limit = 100
+
+            if 9e4 < reynolds_sp < 1e6:
+                lower_limit = 0.01**x
+            elif 1e6 < reynolds_sp:
+                lower_limit = 0.1
+            else:
+                lower_limit = 0.1
+
+            ratio = reynolds_t/reynolds_sp
+
+            if lower_limit < ratio < upper_limit:
+                valid = True
+            else:
+                valid = False
+
+            d = {'ratio': ratio, 'valid': valid, 'lower_limit': lower_limit,
+                 'upper_limit': upper_limit}
+
+            return pd.Series(d)
 
     @convert_to_base_units
     def new_point(self, suc, speed, idx, **kwargs):
@@ -452,8 +557,10 @@ class Impeller:
         reynolds_new = self.reynolds(point=point_new)
         volume_ratio_new = self.volume_ratio(point=point_new)
 
-        point_new.mach_comparison = compare_mach(mach_sp=mach_new,
-                                                 mach_t=mach_old)
+        point_new.mach_comparison = self.compare_dimensionless(
+            'mach', point_old, point_new)
+        # point_new.mach_comparison = compare_mach(mach_sp=mach_new,
+        #                                          mach_t=mach_old)
         point_new.reynolds_comparison = compare_reynolds(reynolds_sp=reynolds_new,
                                                          reynolds_t=reynolds_old)
         point_new.volume_ratio_comparison = compare_volume_ratio(ratio_sp=volume_ratio_new,
