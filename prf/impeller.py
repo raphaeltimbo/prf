@@ -554,6 +554,20 @@ class Impeller:
         point_new.volume_ratio_comparison = self.compare_dimensionless(
             'volume_ratio', point_old, point_new)
 
+        # create df for all comparisons
+        dfm = pd.DataFrame(point_new.mach_comparison, columns=[f'p{idx}'])
+        dfr = pd.DataFrame(point_new.reynolds_comparison, columns=[f'p{idx}'])
+        dfv = pd.DataFrame(point_new.volume_ratio_comparison, columns=[f'p{idx}'])
+
+        dfm = dfm.T
+        dfr = dfr.T
+        dfv = dfv.T
+
+        df = pd.concat([dfm, dfr, dfv], axis=1,
+                       keys=['mach', 'reynolds', 'volume_ratio'])
+
+        point_new.dimensionless_comparison = df
+
         return point_new
 
     @classmethod
