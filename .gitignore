@@ -93,3 +93,6 @@ ENV/
 *.profile
 /prf/tests/coverage/
 /prf/REFPROP/
+/prf/~$input.xlsx
+prf/CASOS/
+prf/~$input.xlsx
