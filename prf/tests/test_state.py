@@ -138,6 +138,23 @@ def test_state_si_main_test(state_si_main_test):
     assert_allclose(state_si_main_test.rhomass(), rhomass, rtol=1e-4)
 
 
+def test_update2(state_si_main_test):
+    assert_allclose(state_si_main_test.hmass(), 465259.11039224325, rtol=1e-5)
+
+    state_si_main_test.update2(p=200000, T=state_si_main_test.T())
+
+    assert_allclose(state_si_main_test.p(), 200000)
+    assert_allclose(state_si_main_test.hmass(), 465079.0360722606, rtol=1e-5)
+
+    state_si_main_test.update2(T=292, p=state_si_main_test.p())
+    assert_allclose(state_si_main_test.hmass(), 465503.7486914678, rtol=1e-5)
+
+    state_si_main_test.update2(Q=1, p=state_si_main_test.p())
+    assert_allclose(state_si_main_test.hmass(), 417658.1777523439, rtol=1e-5)
+
+    # TODO add tests for pQ, sp, ps, ...
+
+
 def test_copy(state_si_main_test):
     p = 183900
     T = 291.5
@@ -206,5 +223,7 @@ def test_ps_hs_ds():
     # this does not occur if we only run test_state
     hs = State.define(h=741544.2914857446, s=4163.202483953783, fluid=fluid, **units)
     assert_allclose(hs.T(), 311.54999999999995, rtol=1e-4)
+
+
 
 

@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import CoolProp as CP
+import matplotlib.pyplot as plt
+import warnings
 from copy import copy
 from scipy.optimize import newton
 from prf.state import *
@@ -122,12 +124,17 @@ class Point:
         # first disch state will consider an isentropic compression
         s_disch = suc.smass()
         disch = State.define(fluid=suc.fluid_dict(), h=h_disch, s=s_disch)
+        if disch.not_defined():
+            raise ValueError(f'state not defined: {disch}')
 
         def update_pressure(p):
             disch.update(CP.HmassP_INPUTS, h_disch, p)
             new_head = self.head_pol_schultz(suc, disch)
 
             return new_head - head
+
+        # with newton we have a risk of falling outside a reasonable state
+        # region. #TODO evaluate pressure interval to use brent method
 
         newton(update_pressure, disch.p(), tol=1e-4)
 
@@ -461,6 +468,68 @@ class Point:
 # TODO add power
 
 
+class InterpolatedCurve(np.poly1d):
+    """Auxiliary class to create interpolated curve.
+
+    This class inherit from np.poly1d, changing the polydegree to a
+    property to that its value can be changed after instantiation.
+
+    Plots are also added in this class.
+    """
+    def __init__(self, x, y, deg=3, ylabel=None):
+        """
+        Auxiliary function to create an interpolated curve
+        for each various points attributes.
+
+        Parameters
+        ----------
+        x : array_like, shape (M,)
+            x-coordinates of the M sample points (x[i], y[i]).
+        y : array_like, shape (M,) or (M, K)
+            y-coordinates of the sample points. Several data sets of sample points sharing the same x-coordinates can be fitted at once by passing in a 2D-array that contains one dataset per column.
+        deg : int
+            Degree of the fitting polynomial
+
+        Returns
+        -------
+        interpolated_curve : np.poly1d
+            Interpolated curve using np.poly1d function.
+        """
+        # create a list for the attribute iterating on the points list
+        self.x = x
+        self.y = y
+        self._deg = deg
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self.args = np.polyfit(self.x, self.y, self._deg)
+        self.ylabel = ylabel
+
+        super().__init__(self.args)
+
+    @property
+    def deg(self):
+        return self._deg
+
+    @deg.setter
+    def deg(self, value):
+        self._deg = value
+        self.__init__(self.x, self.y, self._deg, self.ylabel)
+
+    def plot(self, ax=None, plot_kws=None):
+        if ax is None:
+            ax = plt.gca()
+
+        if plot_kws is None:
+            plot_kws = dict()
+
+        flow = np.linspace(self.x[0], self.x[-1], 20)
+        ax.plot(flow, self(flow), **plot_kws)
+
+        ax.set_xlabel('Volumetric flow $(m^3 / s)$')
+        ax.set_ylabel(self.ylabel)
+        return ax
+
+
 class Curve:
     """Curve.
     
@@ -494,55 +563,32 @@ class Curve:
         self.suc = self._point0.suc
         self.speed = self._point0.speed
 
+        # attributes from each point
+        self.flow_v = [p.flow_v for p in self.points]
+        self.flow_m = [p.flow_m for p in self.points]
+        self.suc_p = [p.suc.p() for p in self.points]
+        self.suc_T = [p.suc.T() for p in self.points]
+        self.disch_p = [p.disch.p() for p in self.points]
+        self.disch_T = [p.disch.T() for p in self.points]
+        self.head = [p.head for p in self.points]
+        self.eff = [p.eff for p in self.points]
+        self.power = [p.power for p in self.points]
+
         # interpolated curves
-        self.suc_p_curve = self._interpolate_curve('suc', 'p')
-        self.suc_T_curve = self._interpolate_curve('suc', 'T')
-        self.disch_p_curve = self._interpolate_curve('disch', 'p')
-        self.disch_T_curve = self._interpolate_curve('disch', 'T')
-        self.head_curve = self._interpolate_curve('head')
-        self.eff_curve = self._interpolate_curve('eff')
-        self.power_curve = self._interpolate_curve('power')
-
-    def _interpolate_curve(self, *attributes):
-        """
-        Auxiliary function to create an interpolated curve
-        for each various points attributes.
-        
-        Parameters
-        ----------
-        attributes : points.attribute
-            The point attributes to create the interpolated curve.
-            
-        Returns
-        -------
-        interpolated_curve : np.poly1d
-            Interpolated curve using np.poly1d function.
-        """
-        # create a list for the attribute iterating on the points list
-        flow_v = []
-        attr_list = []
-
-        for point in self.points:
-            attribute = point  # start with point
-            for attr in attributes:
-                # iterate on attributes (e.g. first point.suc is called, then suc.T)
-                attribute = getattr(attribute, attr)
-            if callable(attribute):
-                attr_list.append(attribute.__call__())
-            else:
-                attr_list.append(attribute)
-
-            flow_v.append(point.flow_v)
-
-        poly_degree = 1
-        if len(flow_v) > 2:
-            poly_degree = 3
-
-        curve = np.poly1d(
-            np.polyfit(flow_v, attr_list, poly_degree)
-        )
-
-        return curve
+        self.suc_p_curve = InterpolatedCurve(self.flow_v, self.suc_p,
+                                             ylabel='Pressure $(Pa)$')
+        self.suc_T_curve = InterpolatedCurve(self.flow_v, self.suc_T,
+                                             ylabel='Temperature $(K)$')
+        self.disch_p_curve = InterpolatedCurve(self.flow_v, self.disch_p,
+                                               ylabel='Pressure $(Pa)$')
+        self.disch_T_curve = InterpolatedCurve(self.flow_v, self.disch_T,
+                                               ylabel='Temperature $(K)$')
+        self.head_curve = InterpolatedCurve(self.flow_v, self.head,
+                                            ylabel='Head $(J / kg)$')
+        self.eff_curve = InterpolatedCurve(self.flow_v, self.eff,
+                                           ylabel='Efficiency')
+        self.power_curve = InterpolatedCurve(self.flow_v, self.power,
+                                             ylabel='Power $(W)$')
 
     def __getitem__(self, item):
         return self.points[item]

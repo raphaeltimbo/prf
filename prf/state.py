@@ -6,8 +6,8 @@ import CoolProp
 import pint
 import matplotlib.pyplot as plt
 from copy import copy
-from pathlib import Path
-from itertools import combinations
+from pathlib import Path, PosixPath
+from itertools import combinations, permutations
 from functools import wraps
 from CoolProp.Plots import PropertyPlot
 from CoolProp.Plots.Common import interpolate_values_1d
@@ -15,6 +15,11 @@ from CoolProp.Plots.Common import interpolate_values_1d
 
 __all__ = ['State', 'fluid_list', 'ureg', 'Q_', 'convert_to_base_units',
            '__version__CP', '__version__REFPROP']
+
+
+############################################################
+# Config path and styles
+############################################################
 
 # set style and colors
 plt.style.use('seaborn-white')
@@ -54,7 +59,19 @@ for path in paths:
         file = Path(path + f)
         if file.is_file():
             set_refprop_path(path)
-            REFPROP_LOADED = True
+            # check if fluids are there
+            path_dirs = set(i.name for i in Path(path).iterdir())
+            if isinstance(Path(path), PosixPath):
+                if 'fluids' in path_dirs:
+                    REFPROP_LOADED = True
+                    hmx_file = Path(path + '/fluids/HMX.BNC')
+                    break
+            else:
+                if 'fluids' in path_dirs or 'FLUIDS' in path_dirs:
+                    REFPROP_LOADED = True
+                    hmx_file = Path(path + '/fluids/HMX.BNC')
+                    break
+
 if REFPROP_LOADED is False:
     warnings.warn("Error trying to set REFPROP path.")
 
@@ -66,11 +83,62 @@ for mix1, mix2 in combinations(mixture, 2):
     CP.apply_simple_mixing_rule(cas1, cas2, 'linear')
 
 # list of available fluids
-fluid_list = CP.get_global_param_string('fluids_list').split(',')
+_fluid_list = CP.get_global_param_string('fluids_list').split(',')
 
 # versions
 __version__CP = CP.get_global_param_string('version')
 __version__REFPROP = CP.get_global_param_string('REFPROP_version')
+
+
+############################################################
+# Fluid names
+############################################################
+
+
+class Fluid:
+    def __init__(self, name):
+        self.name = name
+        self.possible_names = []
+
+    def __repr__(self):
+        return f'{type(self).__name__}({self.__dict__}'
+
+# create from _fluid_list
+fluid_list = {name: Fluid(name) for name in _fluid_list}
+
+# define possible names
+fluid_list['n-Pentane'].possible_names.extend(
+    ['pentane', 'n-pentane'])
+fluid_list['Isopentane'].possible_names.extend(
+    ['isopentane', 'i-pentane'])
+fluid_list['n-Hexane'].possible_names.extend(
+    ['hexane', 'n-hexane'])
+fluid_list['Isohexane'].possible_names.extend(
+    ['isohexane', 'i-hexane'])
+fluid_list['HydrogenSulfide'].possible_names.extend(
+    ['hydrogen sulfide'])
+fluid_list['CarbonDioxide'].possible_names.extend(
+    ['carbon dioxide'])
+
+
+def get_name(name):
+    """Seach for compatible fluid name."""
+
+    for k, v in fluid_list.items():
+        if name in v.possible_names:
+            name = k
+
+    fluid_name = CP.get_REFPROPname(name)
+
+    if fluid_name == '':
+        raise ValueError(f'Fluid {name} not available. See prf.fluid_list. ')
+
+    return fluid_name
+
+
+############################################################
+# Helper functions
+############################################################
 
 
 def normalize_mix(molar_fractions):
@@ -113,6 +181,7 @@ def convert_to_base_units(func):
         flow_m_units = kwargs.get('flow_m_units', ureg.kg / ureg.s)
         flow_v_units = kwargs.get('flow_v_units', ureg.m**3 / ureg.s)
         power_units = kwargs.get('power_units', ureg.W)
+        head_units = kwargs.get('head_units', ureg.J / ureg.kg)
 
         for arg_name, value in kwargs.items():
             if arg_name == 'p':
@@ -139,10 +208,18 @@ def convert_to_base_units(func):
                 power_ = Q_(value, power_units)
                 power_.ito_base_units()
                 kwargs[arg_name] = power_.magnitude
+            elif arg_name is 'head':
+                head_ = Q_(value, head_units)
+                head_.ito_base_units()
+                kwargs[arg_name] = head_.magnitude
 
         return func(*args, **kwargs)
 
     return inner
+
+############################################################
+# State
+############################################################
 
 
 class State(CP.AbstractState):
@@ -170,6 +247,18 @@ class State(CP.AbstractState):
             fluid_dict[k] = v
         return fluid_dict
 
+    def not_defined(self):
+        """Verifies if the state is defined."""
+        if self.T() == -np.infty or self.p() == -np.infty:
+            return True
+        else:
+            return False
+
+    def update_from_setup_args(self):
+        """Update state from setup args."""
+        props = {k: v for k, v in self.setup_args.items() if v is not None}
+        self.update2(**props)
+
     def __repr__(self):
         return 'State: {:.5} Pa @ {:.5} K'.format(self.p(), self.T())
 
@@ -189,20 +278,14 @@ class State(CP.AbstractState):
         )
 
     def __reduce__(self):
-        # implemented to enable pickling
-        p_ = self.p()
-        T_ = self.T()
         fluid_ = self.fluid_dict()
-        kwargs = {'p': p_, 'T': T_, 'fluid': fluid_}
+        kwargs = {k: v for k, v in self.init_args.items() if v is not None}
+        kwargs['fluid'] = fluid_
         return self._rebuild, (self.__class__, kwargs)
 
     @staticmethod
     def _rebuild(cls, kwargs):
-        p = kwargs.get('p')
-        T = kwargs.get('T')
-        fluid = kwargs.get('fluid')
-
-        return cls.define(p=p, T=T, fluid=fluid)
+        return cls.define(**kwargs)
 
     @classmethod
     @convert_to_base_units
@@ -261,8 +344,8 @@ class State(CP.AbstractState):
         if isinstance(fluid, str):
             fluid = {fluid: 1}
         for k, v in fluid.items():
-            if EOS == 'REFPROP':
-                k = CP.get_REFPROPname(k)
+            k = get_name(k)
+
             constituents.append(k)
             molar_fractions.append(v)
 
@@ -272,18 +355,33 @@ class State(CP.AbstractState):
         try:
             state = cls(EOS, _fluid)
         except ValueError as exc:
+            # check if pair is available at hmx.bnc file
+            with open(hmx_file, encoding='latin') as f:
+                for pair in permutations(constituents, 2):
+                    pair = '/'.join(pair).upper()
+                    for line in f:
+                        if pair in str(line).upper():
+                            continue
+                        else:
+                            raise ValueError(
+                                f'Pair {pair} is not available in HMX.BNC.'
+                            ) from exc
             raise ValueError(
                 f'This fluid is not be supported by {EOS}.'
             ) from exc
 
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
+        state.init_args = dict(p=p, T=T, h=h, s=s, d=d)
+        state.setup_args = copy(state.init_args)
 
         if p is not None:
             if T is not None:
                 state.update(CP.PT_INPUTS, p, T)
             if s is not None:
                 state.update(CP.PSmass_INPUTS, p, s)
+            if h is not None:
+                state.update(CP.HmassP_INPUTS, h, p)
         if h and s is not None:
             state.update(CP.HmassSmass_INPUTS, h, s)
         if d and s is not None:
@@ -310,7 +408,8 @@ class State(CP.AbstractState):
         order_dict = {'Tp': 'pT',
                       'Qp': 'pQ',
                       'sp': 'ps',
-                      'ph': 'hp'}
+                      'ph': 'hp',
+                      'Th': 'hT'}
 
         if inputs in order_dict:
             inputs = order_dict[inputs]
@@ -318,12 +417,13 @@ class State(CP.AbstractState):
         cp_update_dict = {'pT': CP.PT_INPUTS,
                           'pQ': CP.PQ_INPUTS,
                           'ps': CP.PSmass_INPUTS,
-                          'hp': CP.HmassP_INPUTS}
+                          'hp': CP.HmassP_INPUTS,
+                          'hT': CP.HmassT_INPUTS}
 
         try:
             cp_update = cp_update_dict[inputs]
         except:
-            raise KeyError('Update key not implemented')
+            raise KeyError(f'Update key {inputs} not implemented')
 
         self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
 
@@ -396,6 +496,13 @@ class State(CP.AbstractState):
 
     def kinematic_viscosity(self):
         return self.viscosity() / self.rhomass()
+
+    def z(self):
+        """Compressibility factor"""
+        z = (self.p() * self.molar_mass()
+             / (self.rhomass() * self.gas_constant() * self.T()))
+
+        return z
 
     def plot_point(self, ax, **kwargs):
         """Plot point.
