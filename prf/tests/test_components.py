@@ -110,7 +110,7 @@ def test_valve():
     valve0.link(inputs=[stream3], outputs=[stream4])
     valve0.run()
 
-    assert_allclose(valve0.cv, 10)
+    assert_allclose(valve0.cv, 10, rtol=1e-5)
     assert_allclose(stream4.flow_m, 21551.930, rtol=1e-5)
     assert_allclose(stream4.state.T(), 294.4749311434537, rtol=1e-5)
 

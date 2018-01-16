@@ -127,7 +127,10 @@ class Point:
         if disch.not_defined():
             raise ValueError(f'state not defined: {disch}')
 
+        print('----------')
+
         def update_pressure(p):
+            print(h_disch, p)
             disch.update(CP.HmassP_INPUTS, h_disch, p)
             new_head = self.head_pol_schultz(suc, disch)
 

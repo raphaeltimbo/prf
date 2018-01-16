@@ -103,9 +103,11 @@ class Fluid:
     def __repr__(self):
         return f'{type(self).__name__}({self.__dict__}'
 
+
 # create from _fluid_list
 fluid_list = {name: Fluid(name) for name in _fluid_list}
 
+# TODO check if CP.get_aliases can replace this
 # define possible names
 fluid_list['n-Pentane'].possible_names.extend(
     ['pentane', 'n-pentane'])
@@ -122,7 +124,7 @@ fluid_list['CarbonDioxide'].possible_names.extend(
 
 
 def get_name(name):
-    """Seach for compatible fluid name."""
+    """Search for compatible fluid name."""
 
     for k, v in fluid_list.items():
         if name in v.possible_names:
@@ -375,17 +377,8 @@ class State(CP.AbstractState):
         state.init_args = dict(p=p, T=T, h=h, s=s, d=d)
         state.setup_args = copy(state.init_args)
 
-        if p is not None:
-            if T is not None:
-                state.update(CP.PT_INPUTS, p, T)
-            if s is not None:
-                state.update(CP.PSmass_INPUTS, p, s)
-            if h is not None:
-                state.update(CP.HmassP_INPUTS, h, p)
-        if h and s is not None:
-            state.update(CP.HmassSmass_INPUTS, h, s)
-        if d and s is not None:
-            state.update(CP.DmassSmass_INPUTS, d, s)
+        kwargs = {k: v for k, v in state.init_args.items() if v is not None}
+        state.update2(**kwargs)
 
         return state
 
@@ -409,7 +402,9 @@ class State(CP.AbstractState):
                       'Qp': 'pQ',
                       'sp': 'ps',
                       'ph': 'hp',
-                      'Th': 'hT'}
+                      'Th': 'hT',
+                      'sh': 'hs',
+                      'sd': 'ds'}
 
         if inputs in order_dict:
             inputs = order_dict[inputs]
@@ -418,14 +413,15 @@ class State(CP.AbstractState):
                           'pQ': CP.PQ_INPUTS,
                           'ps': CP.PSmass_INPUTS,
                           'hp': CP.HmassP_INPUTS,
-                          'hT': CP.HmassT_INPUTS}
+                          'hT': CP.HmassT_INPUTS,
+                          'hs': CP.HmassSmass_INPUTS,
+                          'ds': CP.DmassSmass_INPUTS}
 
         try:
             cp_update = cp_update_dict[inputs]
-        except:
-            raise KeyError(f'Update key {inputs} not implemented')
-
-        self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
+            self.update(cp_update, kwargs[inputs[0]], kwargs[inputs[1]])
+        except KeyError:
+            pass
 
     @classmethod
     @convert_to_base_units
