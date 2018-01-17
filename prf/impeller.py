@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import CoolProp.CoolProp as CP
+import xlwings as xw
 from .point import *
 from .state import *
 from warnings import warn
 from copy import copy
+from collections import namedtuple
 
 
 __all__ = ['Impeller', 'NonDimPoint']
@@ -575,8 +577,173 @@ class Impeller:
 
         return point_new
 
+    @staticmethod
+    def data_from_excel(get=None, sht=None, point=None, curve='curve0'):
+        """Load known curve and new condition from input file.
+
+        Parameters
+        ----------
+        get : str
+            String for desired data
+            point_k - known point
+            cond_n - new condition
+            geometry - geometry
+        sht : xw.sheets
+            Spreadsheet
+        point : int
+            Index for the point.
+        curve : str
+            Curve 0 to 4
+
+        Returns
+        -------
+        point_k : prf.Point
+            A known point.
+        cond_n : namedtuple
+            New condition suction and speed.
+        g_k : namedtuple
+            Known geometry.
+        g_n : namedtuple
+            New geometry.
+
+
+        """
+
+        # map from excel points
+        curves_points = dict(curve0={k: v for v, k in
+                                     zip('EFGHIJKLMN', range(10))},
+                             curve1={k: v for v, k in
+                                     zip('EFGHIJKLMN', range(10))},
+                             curve2={k: v for v, k in
+                                     zip('OPQRSTUVWX', range(10))},
+                             curve3={k: v for v, k in
+                                     zip(['Y', 'Z', 'AA', 'AB', 'AC',
+                                          'AD', 'AE', 'AF', 'AG', 'AH'],
+                                         range(10))},
+                             curve4={k: v for v, k in
+                                     zip(['AI', 'AJ', 'AK', 'AL', 'AM',
+                                          'AN', 'AO', 'AP', 'AQ', 'AR'],
+                                         range(10))})
+
+        col = curves_points[curve][point]
+
+        if get == 'point_k':
+
+            # get fluid composition
+            components = sht.range('B12:B30').value
+            mol_frac = sht.range(f'{col}12:{col}30').value
+            fluid = {k: v for k, v in zip(components, mol_frac)
+                     if v is not None and v > 0}
+
+            # get variables names and values
+            names = sht.range('C5:C81').value
+            values = sht.range(f'{col}5:{col}81').value
+            variables = {k: v for k, v in zip(names, values)}
+
+            # define point
+            units = dict(p_units='MPa', speed_units='RPM', flow_m_units='kg/hr',
+                         head_units='kJ/kg', flow_v_units='m**3/hr')
+            suc = State.define(p=variables['Ps1F_k'], T=variables['Ts1F_k'],
+                               fluid=fluid, **units)
+
+            speed = variables['N']
+            flow_v = variables['Qs1F_k']
+            flow_m = variables['Ms1F_k']
+            flow_m_end = variables['Mend_k']
+            head = variables['Wp (F)_k']
+            eff = variables['np (F)_k']
+
+            point_k = Point(speed=speed, flow_v=flow_v, suc=suc, head=head,
+                            eff=eff, **units)
+
+            return point_k
+
+        elif get == 'geometry':
+            row_n0 = 6
+            row_n1 = row_n0 + 3
+
+            # get D, b
+            geometry = namedtuple('geometry', ['D', 'b', 'e'])
+
+            names = sht.range(f'C{row_n0}:C{row_n1}').value
+            values = sht.range(f'{col}{row_n0}:{col}{row_n1}').value
+            variables = {k: v for k, v in zip(names, values)}
+
+            # assume for now that geometry is the same
+            # TODO implement modification in g to consider trimming for ex.
+            g = geometry(D=variables['D'] / 1000,
+                         b=variables['b'] / 1000,
+                         e=variables['ε'])
+            g_n = g
+
+            return g_n
+
+        elif get == 'cond_n':
+            # new point
+            # get fluid composition
+            components = sht.range('B162:B180').value
+            mol_frac = sht.range(f'{col}162:{col}180').value
+            fluid = {k: v for k, v in zip(components, mol_frac)
+                     if v is not None and v > 0}
+
+            # get variables names and values
+            names = sht.range('C155:C228').value
+            values = sht.range(f'{col}155:{col}228').value
+            variables = {k: v for k, v in zip(names, values)}
+            N = variables['N']
+
+            # define point
+            units = dict(p_units='MPa', speed_units='RPM', flow_m_units='kg/hr',
+                         head_units='kJ/kg', flow_v_units='m**3/hr')
+            suc = State.define(p=variables['Ps1F_n'], T=variables['Ts1F_n'],
+                               fluid=fluid, **units)
+
+            return suc, N
+
+    def write_to_excel(self, sht):
+        var = {i.value: i.address.split('$')[-1]
+               for i in sht.range('C155:C228')}
+
+        for col, point in zip('EFGHI', self.new_points):
+            sht.range(f'{col}{var["Ms1F_n"]}').value = point.flow_m * 3600
+            sht.range(f'{col}{var["Qs1F_n"]}').value = point.flow_v * 3600
+            sht.range(f'{col}{var["Vs1F_n"]}').value = 1 / point.suc.rhomass()
+            sht.range(f'{col}{var["Zs1F_n"]}').value = point.suc.z()
+            sht.range(f'{col}{var["Hs1F_n"]}').value = point.suc.hmass() / 1000
+            sht.range(f'{col}{var["Ss1F_n"]}').value = point.suc.smass() / 1000
+
+            sht.range(f'{col}{var["Wp (F)_n"]}').value = point.head / 1000
+            sht.range(f'{col}{var["np (F)_n"]}').value = point.eff
+            sht.range(f'{col}{var["Pg (F)_n"]}').value = point.power / 1000
+
+            sht.range(f'{col}{var["Td1F_n"]}').value = point.disch.T()
+            sht.range(f'{col}{var["Pd1F_n"]}').value = point.disch.p() / 1e6
+
     @classmethod
-    def load_from_excel(cls, file, **kwargs):
+    def load_from_excel(cls, file):
+        wb = xw.Book(file)
+        sht = wb.sheets('CONVERSOR CURV')
+
+        points = []
+        for i in range(5):
+            points.append(cls.data_from_excel(
+                get='point_k', sht=sht, point=i)
+            )
+
+        g = cls.data_from_excel(get='geometry', sht=sht, point=0)
+        b = g.b
+        D = g.D
+        imp = cls(points, b=b, D=D)
+
+        new_suc, new_N = cls.data_from_excel(get='cond_n', sht=sht, point=0)
+        # TODO check if this can be done in only one call to new_suc and new_N
+        imp.suc = new_suc
+        imp.N = new_N
+
+        imp.write_to_excel(sht=sht)
+
+    @classmethod
+    def load_from_excel2(cls, file, **kwargs):
         """Load curve from excel file.
 
         Parameters
