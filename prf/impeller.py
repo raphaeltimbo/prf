@@ -613,16 +613,18 @@ class Impeller:
         curves_points = dict(curve0={k: v for v, k in
                                      zip('EFGHIJKLMN', range(10))},
                              curve1={k: v for v, k in
-                                     zip('EFGHIJKLMN', range(10))},
-                             curve2={k: v for v, k in
                                      zip('OPQRSTUVWX', range(10))},
-                             curve3={k: v for v, k in
+                             curve2={k: v for v, k in
                                      zip(['Y', 'Z', 'AA', 'AB', 'AC',
                                           'AD', 'AE', 'AF', 'AG', 'AH'],
                                          range(10))},
-                             curve4={k: v for v, k in
+                             curve3={k: v for v, k in
                                      zip(['AI', 'AJ', 'AK', 'AL', 'AM',
                                           'AN', 'AO', 'AP', 'AQ', 'AR'],
+                                         range(10))},
+                             curve4={k: v for v, k in
+                                     zip(['AS', 'AT', 'AU', 'AV', 'AW',
+                                          'AX', 'AY', 'AZ', 'BA', 'BB'],
                                          range(10))})
 
         col = curves_points[curve][point]
@@ -687,8 +689,8 @@ class Impeller:
                      if v is not None and v > 0}
 
             # get variables names and values
-            names = sht.range('C155:C228').value
-            values = sht.range(f'{col}155:{col}228').value
+            names = sht.range('C154:C228').value
+            values = sht.range(f'{col}154:{col}228').value
             variables = {k: v for k, v in zip(names, values)}
             N = variables['N']
 
@@ -702,38 +704,62 @@ class Impeller:
 
     def write_to_excel(self, sht):
         var = {i.value: i.address.split('$')[-1]
-               for i in sht.range('C155:C228')}
+               for i in sht.range('C5:C228')}
 
-        for col, point in zip('EFGHI', self.new_points):
-            sht.range(f'{col}{var["Ms1F_n"]}').value = point.flow_m * 3600
-            sht.range(f'{col}{var["Qs1F_n"]}').value = point.flow_v * 3600
-            sht.range(f'{col}{var["Vs1F_n"]}').value = 1 / point.suc.rhomass()
-            sht.range(f'{col}{var["Zs1F_n"]}').value = point.suc.z()
-            sht.range(f'{col}{var["Hs1F_n"]}').value = point.suc.hmass() / 1000
-            sht.range(f'{col}{var["Ss1F_n"]}').value = point.suc.smass() / 1000
+        # map from excel points
+        curves_cols = dict(curve0='EFGHIJKLMN',
+                           curve1='OPQRSTUVWX',
+                           curve2=['Y', 'Z', 'AA', 'AB', 'AC',
+                                   'AD', 'AE', 'AF', 'AG', 'AH'],
+                           curve3=['AI', 'AJ', 'AK', 'AL', 'AM',
+                                   'AN', 'AO', 'AP', 'AQ', 'AR'],
+                           curve4=['AS', 'AT', 'AU', 'AV', 'AW',
+                                   'AX', 'AY', 'AZ', 'BA', 'BB'])
 
-            sht.range(f'{col}{var["Wp (F)_n"]}').value = point.head / 1000
-            sht.range(f'{col}{var["np (F)_n"]}').value = point.eff
-            sht.range(f'{col}{var["Pg (F)_n"]}').value = point.power / 1000
+        for i in range(5):
+            curve_col = curves_cols[f'curve{i}']
+            for col, point in zip(curve_col, self.points):
+                # known condition
+                sht.range(f'{col}{var["Td1F_k"]}').value = point.disch.T()
+                sht.range(f'{col}{var["Pd1F_k"]}').value = point.disch.p() / 1e6
 
-            sht.range(f'{col}{var["Td1F_n"]}').value = point.disch.T()
-            sht.range(f'{col}{var["Pd1F_n"]}').value = point.disch.p() / 1e6
+        for i in range(5):
+            curve_col = curves_cols[f'curve{i}']
+            for col, point in zip(curve_col, self.new_points):
+                # new condition
+                sht.range(f'{col}{var["Ms1F_n"]}').value = point.flow_m * 3600
+                sht.range(f'{col}{var["Qs1F_n"]}').value = point.flow_v * 3600
+                sht.range(f'{col}{var["Vs1F_n"]}').value = 1 / point.suc.rhomass()
+                sht.range(f'{col}{var["Zs1F_n"]}').value = point.suc.z()
+                sht.range(f'{col}{var["Hs1F_n"]}').value = point.suc.hmass() / 1000
+                sht.range(f'{col}{var["Ss1F_n"]}').value = point.suc.smass() / 1000
+
+                sht.range(f'{col}{var["Wp (F)_n"]}').value = point.head / 1000
+                sht.range(f'{col}{var["np (F)_n"]}').value = point.eff
+                sht.range(f'{col}{var["Pg (F)_n"]}').value = point.power / 1000
+
+                sht.range(f'{col}{var["Td1F_n"]}').value = point.disch.T()
+                sht.range(f'{col}{var["Pd1F_n"]}').value = point.disch.p() / 1e6
 
     @classmethod
     def load_from_excel(cls, file):
         wb = xw.Book(file)
         sht = wb.sheets('CONVERSOR CURV')
 
-        points = []
-        for i in range(5):
-            points.append(cls.data_from_excel(
-                get='point_k', sht=sht, point=i)
-            )
-
-        g = cls.data_from_excel(get='geometry', sht=sht, point=0)
-        b = g.b
-        D = g.D
-        imp = cls(points, b=b, D=D)
+        curves = []
+        for c in range(5):
+            points = []
+            for i in range(5):
+                points.append(cls.data_from_excel(
+                    get='point_k', sht=sht, curve=f'curve{c}', point=i)
+                )
+                g = cls.data_from_excel(
+                    get='geometry', sht=sht, curve=f'curve{c}', point=0)
+                b = g.b
+                D = g.D
+                curve = Curve(points)
+            curves.append(curve)
+        imp = cls(curves, b=b, D=D)
 
         new_suc, new_N = cls.data_from_excel(get='cond_n', sht=sht, point=0)
         # TODO check if this can be done in only one call to new_suc and new_N
