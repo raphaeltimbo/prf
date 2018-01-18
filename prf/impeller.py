@@ -768,6 +768,8 @@ class Impeller:
 
         imp.write_to_excel(sht=sht)
 
+        return imp
+
     @classmethod
     def load_from_excel2(cls, file, **kwargs):
         """Load curve from excel file.
