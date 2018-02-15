@@ -8,7 +8,8 @@ label = subprocess.check_output(['git', 'describe', '--always'])
 label = str(label)
 date = datetime.now()
 date_label = (
-    str(date.hour) + 'h' + '-'.join([str(getattr(date, attr)) for attr in ['day', 'month', 'year']]))
+    '-'.join([str(getattr(date, attr)) 
+              for attr in ['year', 'month', 'day']]) + str(date.hour) + 'h')
 if len(label) == 12:
     label = label[2:-3] + '-' + date_label + '.profile'
 
