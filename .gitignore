@@ -93,3 +93,4 @@ ENV/
 *.profile
 /prf/tests/coverage/
 /prf/REFPROP/
+/prf/notebooks/
