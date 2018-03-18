@@ -92,4 +92,5 @@ ENV/
 /prf/debug.py
 *.profile
 /prf/tests/coverage/
+/prf/notebooks/
 /prf/REFPROP/
