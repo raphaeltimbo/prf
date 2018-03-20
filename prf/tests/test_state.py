@@ -197,6 +197,17 @@ def test_heos_error():
         State.define(p=16.99, T=38.4, fluid=fluid, EOS='HEOS', **units)
 
 
+def test_not_fluid_list():
+    with pytest.raises(ValueError) as exc:
+        State.define(p=100000, T=300, fluid='fake')
+        assert 'Fluid fake not available' in str(exc.excinfo)
+
+
+def test_not_in_hmx():
+    # TODO implement this test
+    pass
+
+
 @pytest.mark.skipif(skip is True, reason='Slow test')
 def test_ps_hs_ds():
     fluid = {'Methane': 0.69945,
