@@ -103,6 +103,7 @@ class Fluid:
     def __repr__(self):
         return f'{type(self).__name__}({self.__dict__}'
 
+
 # create from _fluid_list
 fluid_list = {name: Fluid(name) for name in _fluid_list}
 
@@ -110,11 +111,19 @@ fluid_list = {name: Fluid(name) for name in _fluid_list}
 fluid_list['n-Pentane'].possible_names.extend(
     ['pentane', 'n-pentane'])
 fluid_list['Isopentane'].possible_names.extend(
-    ['isopentane', 'i-pentane'])
+    ['isopentane', 'i-pentane', 'ipentane'])
 fluid_list['n-Hexane'].possible_names.extend(
     ['hexane', 'n-hexane'])
 fluid_list['Isohexane'].possible_names.extend(
     ['isohexane', 'i-hexane'])
+fluid_list['n-Heptane'].possible_names.extend(
+    ['heptane', 'n-heptane'])
+fluid_list['n-Octane'].possible_names.extend(
+    ['octane', 'n-octane'])
+fluid_list['n-Undecane'].possible_names.extend(
+    ['undecane', 'n-undecane'])
+fluid_list['n-Dodecane'].possible_names.extend(
+    ['dodecane', 'n-dodecane'])
 fluid_list['HydrogenSulfide'].possible_names.extend(
     ['hydrogen sulfide'])
 fluid_list['CarbonDioxide'].possible_names.extend(
@@ -357,18 +366,19 @@ class State(CP.AbstractState):
         except ValueError as exc:
             # check if pair is available at hmx.bnc file
             with open(hmx_file, encoding='latin') as f:
-                for pair in permutations(constituents, 2):
-                    pair = '/'.join(pair).upper()
-                    for line in f:
-                        if pair in str(line).upper():
-                            continue
-                        else:
-                            raise ValueError(
-                                f'Pair {pair} is not available in HMX.BNC.'
-                            ) from exc
-            raise ValueError(
-                f'This fluid is not be supported by {EOS}.'
-            ) from exc
+                all_lines = ' '.join(line for line in f)
+                for pair in permutations(fluid.keys(), 2):
+                    pair = [p.capitalize() for p in pair]
+                    pair = '/'.join(pair)
+                    if pair in all_lines:
+                        continue
+                    else:
+                        raise ValueError(
+                            f'Pair {pair} is not available in HMX.BNC.'
+                        ) from exc
+                raise ValueError(
+                    f'This fluid is not be supported by {EOS}.'
+                ) from exc
 
         normalize_mix(molar_fractions)
         state.set_mole_fractions(molar_fractions)
