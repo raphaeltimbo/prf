@@ -4,6 +4,9 @@ from prf.point import Point, Curve
 from prf.impeller import Impeller
 
 
+__all__ = ['load']
+
+
 def load(file):
     """Load impeller from yaml file.
 
