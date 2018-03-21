@@ -21,7 +21,7 @@ class Impeller:
 
     Parameters
     ----------
-    init_curves : list
+    curves_init : list
         List with curves instances used to instantiate the impeller.
     b : float
         Impeller width (m).
@@ -42,7 +42,7 @@ class Impeller:
     Examples
     --------
     """
-    def __init__(self, init_curves, b, D, e=0.87e-6,
+    def __init__(self, curves_init, b, D, e=0.87e-6,
                  suc=None, speed=None, flow_v=None):
 
         class Config:
@@ -51,24 +51,24 @@ class Impeller:
                 # TODO create config
                 pass
 
-        if isinstance(init_curves, list) and isinstance(init_curves[0], Curve):
-            self.init_curves = init_curves
-        elif isinstance(init_curves, Curve):
-            self.init_curves = [init_curves]
-        elif isinstance(init_curves, list) and isinstance(init_curves[0], Point):
-            self.init_curves = [Curve(init_curves)]
-        elif isinstance(init_curves, Point):
-            self.init_curves = [Curve(init_curves)]
+        if isinstance(curves_init, list) and isinstance(curves_init[0], Curve):
+            self.curves_init = curves_init
+        elif isinstance(curves_init, Curve):
+            self.curves_init = [curves_init]
+        elif isinstance(curves_init, list) and isinstance(curves_init[0], Point):
+            self.curves_init = [Curve(curves_init)]
+        elif isinstance(curves_init, Point):
+            self.curves_init = [Curve(curves_init)]
         else:
             raise TypeError('Must be a point, curve or list of points - curves')
 
         # set each curve as an attribute
-        for c in self.init_curves:
-            setattr(self, 'init_curve_' + f'{c.speed:.0f}', c)
+        for c in self.curves_init:
+            setattr(self, 'curve_init_' + f'{c.speed:.0f}', c)
 
         self.config = Config()
 
-        self.points = list(self.init_curves[0])
+        self.points = list(self.curves_init[0])
         self.b = b
         self.D = D
         self.e = e
