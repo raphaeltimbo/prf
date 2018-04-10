@@ -49,8 +49,8 @@ def set_refprop_path(REFPROP_PATH):
     """
     CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, REFPROP_PATH)
 
-
-paths = ['C:/Program Files (x86)/REFPROP', '/home/raphael/REFPROP-cmake/build/',
+RPPREFIX = os.environ['RPPREFIX']
+paths = ['C:/Program Files (x86)/REFPROP', RPPREFIX,
          os.path.join(os.path.dirname(__file__))]
 
 REFPROP_LOADED = False

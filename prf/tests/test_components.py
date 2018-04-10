@@ -149,7 +149,7 @@ def test_conv_block():
 
     mix0, comp0, tee0, valve0 = conv_block.units0
 
-    assert_allclose(comp0.impeller.current_point.eff, 0.8651011221)
+    assert_allclose(comp0.impeller.current_point.eff, 0.8651011221, rtol=1e-5)
     assert_allclose(valve0.cv, 7.544877088211e-5)
 
     units = dict(p_units='bar', speed_units='RPM')
@@ -185,5 +185,5 @@ def test_conv_block():
 
     mix0, comp0, tee0, valve0 = conv_block.units0
 
-    assert_allclose(comp0.impeller.current_point.eff, 0.8651011221)
+    assert_allclose(comp0.impeller.current_point.eff, 0.8651011221, rtol=1e-5)
     assert_allclose(valve0.inputs[0].flow_m, 0.1444)
