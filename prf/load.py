@@ -51,6 +51,7 @@ def load(file):
 
     return imp
 
+
 def _interpolated_curve_from_csv(file):
     """Convert from csv file to interpolated curve.
 
@@ -70,6 +71,7 @@ def _interpolated_curve_from_csv(file):
     parameter_interpolated_curve = UnivariateSpline(flow_values, parameter)
     
     return parameter_interpolated_curve, flow_values
+
 
 def convert_csv_to_yaml(dir_path='', number_of_points_to_yaml=6):
     """Convert csv head and eff from csv to yaml.
@@ -92,8 +94,8 @@ def convert_csv_to_yaml(dir_path='', number_of_points_to_yaml=6):
 
     data = {}
 
-    data['flow']= np.linspace(min(flow_values), max(flow_values),
-            number_of_points_to_yaml)
+    data['flow'] = np.linspace(min(flow_values), max(flow_values),
+                               number_of_points_to_yaml)
 
     data['head'] = head_interpolated_curve(data['flow'])
     data['eff'] = eff_interpolated_curve(data['flow']) / 1e2
@@ -104,5 +106,5 @@ def convert_csv_to_yaml(dir_path='', number_of_points_to_yaml=6):
     yaml_file = os.path.join(dir_path, 'input_head_eff.yml')
 
     with open(yaml_file, 'w') as f:
-        yaml.dump(data, f, default_flow_style=False)
+        yaml.dump(data, f)
         

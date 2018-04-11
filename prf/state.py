@@ -49,9 +49,17 @@ def set_refprop_path(REFPROP_PATH):
     """
     CP.set_config_string(CP.ALTERNATIVE_REFPROP_PATH, REFPROP_PATH)
 
-RPPREFIX = os.environ['RPPREFIX']
-paths = ['C:/Program Files (x86)/REFPROP', RPPREFIX,
+
+try:
+    RPPREFIX = os.environ['RPPREFIX']
+except KeyError:
+    RPPREFIX = ''
+    warnings.warn('RPPREFIX not set.')
+
+paths = ['C:/Program Files (x86)/REFPROP',
          os.path.join(os.path.dirname(__file__))]
+if RPPREFIX != '':
+    paths.insert(0, RPPREFIX)
 
 REFPROP_LOADED = False
 for path in paths:
