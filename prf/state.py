@@ -173,6 +173,9 @@ def normalize_mix(molar_fractions):
         Molar fractions list will be modified in place.
     """
     total = sum(molar_fractions)
+    if abs(total - 1) > 0.05:
+        warnings.warn(f'Molar fraction far from 1 -> Total: {total}')
+
     for i, comp in enumerate(molar_fractions):
         molar_fractions[i] = comp / total
 
