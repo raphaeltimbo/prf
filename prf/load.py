@@ -66,7 +66,7 @@ def _interpolated_curve_from_csv(file):
         next(data)
         for row in data:
             flow_values.append(float(row[0]))
-            parameter.append(float(row[0]))
+            parameter.append(float(row[1]))
 
     parameter_interpolated_curve = UnivariateSpline(flow_values, parameter)
     
@@ -92,19 +92,17 @@ def convert_csv_to_yaml(dir_path='', number_of_points_to_yaml=6):
     head_interpolated_curve, flow_values = _interpolated_curve_from_csv(head_file)
     eff_interpolated_curve, _ = _interpolated_curve_from_csv(eff_file)
 
-    data = {}
+    flow_range = np.linspace(min(flow_values), max(flow_values),
+                             number_of_points_to_yaml)
 
-    data['flow'] = np.linspace(min(flow_values), max(flow_values),
-                               number_of_points_to_yaml)
+    data = dict(flow=flow_range,
+                head=head_interpolated_curve(flow_range),
+                eff=eff_interpolated_curve(flow_range) / 1e2)
 
-    data['head'] = head_interpolated_curve(data['flow'])
-    data['eff'] = eff_interpolated_curve(data['flow']) / 1e2
-
+    # change np.ndarray to list before dumping to yaml
     data = {k: [round(float(i), 5) for i in v] for k, v in data.items()}
-    print(data)
 
     yaml_file = os.path.join(dir_path, 'input_head_eff.yml')
 
     with open(yaml_file, 'w') as f:
         yaml.dump(data, f)
-        
