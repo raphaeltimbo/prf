@@ -1,0 +1,42 @@
+units:
+    p: bar
+    T: C
+    flow_v: m**3/h
+    speed: RPM
+    head: kJ/kg
+
+suction:
+    ps: 249.53
+    Ts: 40
+
+composition:
+    methane:          0.76025
+    ethane:           0.10628
+    propane:          0.06299
+    butane:           0.0176
+    isobutane:        0.0083
+    pentane:          0.0049
+    isopentane:       0.0023
+    hexane:           0
+    heptane:          0
+    octane:           0
+    nonane:           0
+    decane:           0
+    undecane:         0
+    dodecane:         0
+    nitrogen:         0.0064
+    hydrogen sulfide: 0.0002
+    carbon dioxide:   0.03079
+    water:            0
+
+curve:
+    flow: [664.87, 837.376, 1009.882, 1182.388, 1354.894, 1527.4]
+    head: [110.94018, 105.86572, 99.74788, 91.45379, 79.85057, 63.80532]
+    eff: [0.69374, 0.70997, 0.72012, 0.71182, 0.67271, 0.59039]
+
+speed: 10865
+
+geometry:
+    D: 0.318
+    b: 0.00853
+
