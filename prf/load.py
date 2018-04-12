@@ -8,7 +8,8 @@ from prf.point import Point, Curve
 from prf.impeller import Impeller
 
 
-__all__ = ['load', 'load_curve', 'convert_csv_to_yaml']
+__all__ = ['load', 'load_curve', 'convert_csv_to_dict',
+           'convert_head_eff_csv_to_yaml']
 
 
 def load_curve(file):
@@ -110,8 +111,34 @@ def _interpolated_curve_from_csv(file):
     return parameter_interpolated_curve, flow_values
 
 
-def convert_csv_to_yaml(head_path='head.csv', eff_path='eff.csv',
-                        yaml_path='input_head_eff.yml', number_of_points_to_yaml=6):
+def convert_csv_to_dict(input_path=None, number_of_points=6):
+    """Convert csv head and eff from csv to yaml.
+
+    Parameters:
+    -----------
+    input_path : str
+        Path to head csv file.
+    output_path : str
+        Path to save yaml file.
+    number_of_points : int
+        Number of points that will be returned from interpolated curve.
+    """
+    param_interpolated_curve, flow_values = _interpolated_curve_from_csv(input_path)
+    flow_range = np.linspace(min(flow_values), max(flow_values),
+                             number_of_points)
+
+    # parameter name from input file
+    dir_name, file_name = os.path.split(input_path)
+    param_name = file_name.split('_')[0]
+
+    data = {'flow': flow_range,
+            f'{param_name}': param_interpolated_curve(flow_range)}
+
+    return data
+
+
+def convert_head_eff_csv_to_yaml(head_path='head.csv', eff_path='eff.csv',
+                                 yaml_path='input_head_eff.yml', number_of_points_to_yaml=6):
     """Convert csv head and eff from csv to yaml.
     
     Parameters:
